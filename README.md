@@ -1,50 +1,61 @@
-# VibeGuard AI 🛡️
+# VibeGuard AI
 
-**The First Line of Defense for Sui Transactions**
+*The First Line of Defense for Your Sui Assets*
 
-VibeGuard AI is a cutting-edge Web3 security tool that eliminates blind signing by providing instant, human-readable transaction analysis for the Sui blockchain. Built with a dark, high-tech, cyberpunk-inspired interface designed for clarity and focus.
-
----
-
-## 🚀 Core Features
-
-### 🧠 **Smart Input Detection**
-Automatically detects and processes both transaction digests and raw transaction blocks without manual configuration.
-
-### 🎯 **Visual Risk Engine**
-Our three-tier security assessment system provides instant visual feedback:
-
-- 🛡️ **SAFE** (Green Shield): Normal operations, simple logging, gas-only transactions
-- ⚠️ **CAUTION** (Yellow Triangle): Asset swaps and trades requiring user review
-- 💀 **DANGER** (Red Skull): Assets leaving wallet without compensation - potential security threat
-
-### 🔍 **Deep Dive Analysis**
-Collapsible JSON views allow technical users to inspect:
-- Raw transaction blocks
-- Balance changes and effects
-- Event logs and object modifications
-- Gas usage and computation costs
-
-### 📱 **Responsive Design**
-Fully optimized cyberpunk interface that works seamlessly across desktop, tablet, and mobile devices.
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Sui SDK](https://img.shields.io/badge/Sui-SDK-4DA6FF?style=flat-square)](https://docs.sui.io/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ---
 
-## 🛠️ Tech Stack
+## Project Overview
 
-| Component | Technology |
-|-----------|------------|
+**The Problem:** Raw blockchain transaction digests are cryptographic hashes—completely unreadable to humans. Users are forced to "blind sign" transactions without understanding what they're actually approving.
+
+**The Solution:** VibeGuard AI transforms these incomprehensible digests into instant, visual risk assessments. Our rule-based analysis engine parses Sui transaction data and delivers human-readable security insights in real-time.
+
+*Demystifying Sui Transactions with Human-Readable Risk Analysis.*
+
+---
+
+## Key Features
+
+🔍 **Smart Input Detection**  
+Auto-detects transaction digests instantly—no manual configuration required.
+
+🛡️ **Three-Tier Risk Engine**  
+- **SAFE (Green Shield):** Normal operations, standard logging, gas-only transactions
+- **CAUTION (Yellow Triangle):** Asset swaps/trades requiring user review  
+- **DANGER (Red Skull):** Assets leaving wallet without compensation—potential security threat
+
+⚡ **Real-Time Analysis**  
+Direct blockchain state lookups using `@mysten/sui` SDK for instant transaction parsing.
+
+📱 **Responsive Cyber-UI**  
+Dark, high-tech interface optimized for all devices with custom cyberpunk aesthetics.
+
+🔒 **Zero External Dependencies**  
+Rule-based analysis engine requires no third-party APIs—complete privacy and reliability.
+
+---
+
+## Technical Architecture
+
+| Layer | Technology |
+|-------|------------|
 | **Frontend** | Next.js 14 (App Router), React, TypeScript |
 | **Styling** | TailwindCSS with custom cyberpunk theme |
-| **Blockchain** | @mysten/sui (Official Sui SDK) |
-| **Backend** | Rule-based analysis engine (Zero external dependencies) |
-| **Icons** | Lucide React (Modern, consistent iconography) |
+| **Blockchain** | Sui TypeScript SDK (@mysten/sui) |
+| **Backend Logic** | Server-side API route (`/api/analyze`) |
+| **Analysis Engine** | Rule-based transaction risk assessment |
 
 ---
 
-## ⚡ Quick Start
+## Getting Started
 
 ### Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/mianohh/vibeguard-ai.git
@@ -58,11 +69,11 @@ npm run dev
 ```
 
 ### Access the Application
-Open [http://localhost:3000](http://localhost:3000) in your browser to access the VibeGuard AI interface.
+Open [http://localhost:3000](http://localhost:3000) to access the VibeGuard AI interface.
 
 ---
 
-## 📡 API Documentation
+## API Usage
 
 ### Endpoint
 ```
@@ -72,8 +83,15 @@ POST /api/analyze
 ### Request Format
 ```json
 {
-  "digest": "TRANSACTION_DIGEST_HASH"
+  "digest": "YOUR_TRANSACTION_DIGEST_HERE"
 }
+```
+
+### Example Request
+```bash
+curl -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"digest": "tgJndGrUxor7t7cxkYMHN5xxYAZTocz9fzQKgUtDZ3P"}'
 ```
 
 ### Response Format
@@ -88,81 +106,46 @@ POST /api/analyze
   "transactionData": {
     "balanceChanges": [...],
     "objectChanges": [...],
-    "effects": {...},
-    "events": [...]
+    "effects": {...}
   }
 }
 ```
 
-### Example Usage
-```bash
-# Analyze a Sui transaction
-curl -X POST http://localhost:3000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"digest": "tgJndGrUxor7t7cxkYMHN5xxYAZTocz9fzQKgUtDZ3P"}'
-```
+---
+
+## Roadmap
+
+### Coming Soon
+- 🤖 **AI Agent Integration:** Advanced pattern recognition using machine learning models
+- 📊 **Historical Risk Patterning:** Track and analyze transaction patterns over time
+- 🌐 **Multi-Chain Support:** Expand beyond Sui to other blockchain networks
+- 🔌 **Browser Extension:** Seamless wallet integration for real-time protection
+- 📱 **Mobile Application:** On-the-go transaction security analysis
 
 ---
 
-## 🏗️ Project Structure
+## Contributing
 
-```
-vibeguard-ai/
-├── src/
-│   ├── app/
-│   │   ├── api/analyze/          # Core analysis API route
-│   │   ├── globals.css           # Tailwind CSS imports
-│   │   ├── layout.tsx            # Root layout with dark theme
-│   │   └── page.tsx              # Main VibeGuard interface
-│   └── types/                    # TypeScript definitions
-├── public/                       # Static assets
-├── tailwind.config.js            # Custom styling configuration
-└── package.json                  # Dependencies and scripts
-```
+We welcome contributions to VibeGuard AI! Here's how to get started:
 
-The modular API architecture allows for future expansion into standalone oracle services and integration with other Web3 security tools.
+1. **Fork the repository** and clone your fork
+2. **Install dependencies:** `npm install`
+3. **Create a feature branch:** `git checkout -b feature/your-feature-name`
+4. **Make your changes** and test locally
+5. **Submit a pull request** with a clear description
+
+### Areas for Contribution
+- Security analysis improvements
+- UI/UX enhancements  
+- Documentation updates
+- Performance optimizations
 
 ---
 
-## 🎨 Design Philosophy
-
-VibeGuard AI embraces a **cyberpunk aesthetic** with:
-- **Deep slate backgrounds** for reduced eye strain during extended use
-- **High contrast typography** for maximum readability
-- **Color-coded risk indicators** for instant threat assessment
-- **Minimalist interface** that prioritizes critical security information
-
----
-
-## 🔒 Security Features
-
-- **Zero External Dependencies**: No third-party APIs required for core functionality
-- **Client-Side Processing**: Transaction analysis happens locally for maximum privacy
-- **Real-Time Analysis**: Instant feedback without network delays
-- **Comprehensive Coverage**: Supports all Sui transaction types and patterns
-
----
-
-## 🚀 Future Roadmap
-
-- [ ] Browser extension for seamless wallet integration
-- [ ] Advanced pattern recognition for emerging threat vectors
-- [ ] Multi-chain support beyond Sui
-- [ ] Community-driven threat intelligence feeds
-- [ ] Mobile application for on-the-go security analysis
-
----
-
-## 🤝 Contributing
-
-VibeGuard AI is built for the Web3 community. Contributions, feature requests, and security improvements are welcome.
-
----
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built with ❤️ for the Sui ecosystem and Web3 security community.**
+**Built for the future of Web3 security** 🛡️
