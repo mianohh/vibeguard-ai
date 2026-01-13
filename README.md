@@ -47,7 +47,7 @@ Fully optimized cyberpunk interface that works seamlessly across desktop, tablet
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/vibeguard-ai.git
+git clone https://github.com/mianohh/vibeguard-ai.git
 cd vibeguard-ai
 
 # Install dependencies
@@ -140,12 +140,6 @@ VibeGuard AI embraces a **cyberpunk aesthetic** with:
 - **Client-Side Processing**: Transaction analysis happens locally for maximum privacy
 - **Real-Time Analysis**: Instant feedback without network delays
 - **Comprehensive Coverage**: Supports all Sui transaction types and patterns
-
----
-
-## 📸 Project Screenshots
-
-*Screenshots will be added here to showcase the interface and key features.*
 
 ---
 

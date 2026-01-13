@@ -5,7 +5,7 @@ We welcome contributions to VibeGuard AI! This document provides guidelines for 
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/vibeguard-ai.git`
+2. Clone your fork: `git clone https://github.com/mianohh/vibeguard-ai.git`
 3. Install dependencies: `npm install`
 4. Start development server: `npm run dev`
 
