@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Security-grade color system */
+  --bg-primary: #0b0f14;
+  --bg-surface: #121826;
+  --bg-surface-elevated: #161d2e;
+  --border-subtle: #232b3a;
+  --border-muted: #1a2332;
+  
+  /* Risk colors - muted, institutional */
+  --risk-safe: #065f46;
+  --risk-safe-text: #10b981;
+  --risk-caution: #92400e;
+  --risk-caution-text: #f59e0b;
+  --risk-danger: #7f1d1d;
+  --risk-danger-text: #ef4444;
+  
+  /* Text hierarchy */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-subtle: #475569;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Security console aesthetics */
+.security-surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.security-surface-elevated {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+}
+
+.monospace-input {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
