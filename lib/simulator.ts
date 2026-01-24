@@ -32,13 +32,6 @@ export class SuiSimulator {
       try {
         const simulationPromise = client.dryRunTransactionBlock({
           transactionBlock: transactionBytes,
-          options: {
-            showEffects: true,
-            showBalanceChanges: true,
-            showObjectChanges: true,
-            showEvents: false,
-            showInput: false,
-          },
         });
 
         const rawDryRun = await Promise.race([simulationPromise, timeoutPromise]);
@@ -106,21 +99,21 @@ export class SuiSimulator {
 
       // Create transfers by analyzing balance changes
       // Group by coinType to find transfer pairs
-      const coinTypes = [...new Set(rawBalanceChanges.map(c => c.coinType))];
+      const coinTypes = Array.from(new Set(rawBalanceChanges.map((c: any) => c.coinType)));
       
       for (const coinType of coinTypes) {
-        const changesForCoin = rawBalanceChanges.filter(c => c.coinType === coinType);
+        const changesForCoin = rawBalanceChanges.filter((c: any) => c.coinType === coinType);
         
         // Find decreases (outgoing) and increases (incoming)
-        const decreases = changesForCoin.filter(c => parseInt(c.amount) < 0);
-        const increases = changesForCoin.filter(c => parseInt(c.amount) > 0);
+        const decreases = changesForCoin.filter((c: any) => parseInt(c.amount) < 0);
+        const increases = changesForCoin.filter((c: any) => parseInt(c.amount) > 0);
         
         // Create transfers for each decrease
         for (const decrease of decreases) {
           const fromOwner = this.normalizeAddress(decrease.owner, userAddress);
           
           // Find corresponding increase (if any)
-          const correspondingIncrease = increases.find(inc => 
+          const correspondingIncrease = increases.find((inc: any) => 
             Math.abs(parseInt(inc.amount)) === Math.abs(parseInt(decrease.amount))
           );
           
@@ -132,7 +125,7 @@ export class SuiSimulator {
             from: fromOwner,
             to: toOwner,
             amount: Math.abs(parseInt(decrease.amount)).toString(),
-            coinType: this.normalizeCoinType(coinType)
+            coinType: this.normalizeCoinType(coinType as string)
           });
         }
       }

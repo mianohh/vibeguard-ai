@@ -21,6 +21,10 @@ export class GeminiExplainer {
         contents: prompt,
       });
 
+      if (!response.text) {
+        throw new Error('Empty response from Gemini API');
+      }
+
       const explanation = this.parseResponse(response.text);
       
       if (this.containsTechnicalData(explanation)) {
