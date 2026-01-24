@@ -61,7 +61,7 @@ Blind signing is when you approve a blockchain transaction without understanding
    - Copy the base64 transaction bytes from your wallet
 
 2. **Analyze with VibeGuard**:
-   - Go to [VibeGuard AI](https://your-deployment-url.com)
+   - Go to [VibeGuard AI](https://vibeguardai.netlify.app)
    - Paste the transaction bytes
    - Add your wallet address (recommended for accuracy)
    - Select the correct network
@@ -309,7 +309,7 @@ A: Check that your `GEMINI_API_KEY` is valid and has sufficient quota. The app w
 **⚠️ Important Disclaimer**: VibeGuard AI is a security tool, not a guarantee. Always verify transactions independently and never sign anything you don't fully understand. The blockchain is immutable - once signed, transactions cannot be reversed.
 
 **🔗 Links**
-- [Live Demo](https://your-deployment-url.com)
+- [Live Demo](https://vibeguardai.netlify.app)
 - [Sui Documentation](https://docs.sui.io/)
 - [Gemini API](https://ai.google.dev/)
 - [Report Security Issues](mailto:security@vibeguard.ai)
