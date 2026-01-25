@@ -78,8 +78,8 @@ Blind signing is when you approve a blockchain transaction without understanding
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/vibeGuard_AI.git
-cd vibeGuard_AI
+git clone https://github.com/mianohh/vibeguard-ai
+cd vibeguard-ai
 
 # Install dependencies
 npm install
@@ -197,33 +197,6 @@ Full analysis with AI explanation.
 - Simple operations with low complexity
 - No permission escalations
 
-## 🌐 Deployment
-
-### Vercel (Recommended)
-
-1. **Push to GitHub**:
-```bash
-git add .
-git commit -m "Deploy VibeGuard AI"
-git push origin main
-```
-
-2. **Deploy to Vercel**:
-   - Connect your GitHub repository to Vercel
-   - Add `GEMINI_API_KEY` in environment variables
-   - Deploy automatically
-
-3. **Custom Domain** (Optional):
-   - Add your domain in Vercel dashboard
-   - Update DNS records as instructed
-
-### Other Platforms
-
-VibeGuard works on any Next.js hosting platform:
-- **Netlify**: Add build command `npm run build`
-- **Railway**: Auto-deploys from GitHub
-- **DigitalOcean App Platform**: Use Node.js buildpack
-- **AWS Amplify**: Connect GitHub repository
 
 ## 🔒 Security & Privacy
 
@@ -298,11 +271,6 @@ A: Make sure you're providing your wallet address in the "Your Address" field fo
 **Q: "Gemini API errors"**  
 A: Check that your `GEMINI_API_KEY` is valid and has sufficient quota. The app will fall back to deterministic explanations.
 
-### Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/vibeGuard_AI/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/vibeGuard_AI/discussions)
-- **Security**: Email security@vibeguard.ai for security-related concerns
 
 ---
 
