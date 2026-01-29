@@ -2,9 +2,9 @@
 
 **Eliminate blind signing on Sui blockchain**
 
-VibeGuard AI is a production-ready security tool that analyzes real Sui transactions before you sign them. It uses live blockchain simulation, deterministic risk analysis, and AI explanations to help you make informed decisions.
+VibeGuard AI is a deployment-ready MVP security tool that analyzes real Sui transactions before you sign them. It uses live blockchain simulation, deterministic risk analysis, and AI explanations to help you make informed decisions.
 
-![Security Grade](https://img.shields.io/badge/Security-Production%20Ready-green)
+![Security Grade](https://img.shields.io/badge/Security-MVP%20Ready-green)
 ![Network](https://img.shields.io/badge/Sui-Mainnet%20%7C%20Testnet%20%7C%20Devnet-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
@@ -37,7 +37,7 @@ Blind signing is when you approve a blockchain transaction without understanding
 
 ### ✅ SAFE Transaction (Self-Transfer)
 ```
-🛡️ SAFE - High confidence
+🛡️ SAFE - High confidence (based on balance change detection)
 ✓ Self-transfer detected - assets remain in your control
 ✓ No assets leaving your wallet to other addresses
 ✓ No permission changes
@@ -45,9 +45,9 @@ Blind signing is when you approve a blockchain transaction without understanding
 
 ### 🚨 DANGEROUS Transaction (Transfer to Others)
 ```
-🚨 DANGEROUS - High confidence  
+🚨 DANGEROUS - High confidence (based on balance change detection)  
 ● Assets leave your wallet to another address
-● Net asset loss detected
+● Net asset outflow detected
 ⚠️ Recommendation: Do Not Sign
 ```
 
@@ -57,11 +57,11 @@ Blind signing is when you approve a blockchain transaction without understanding
 
 1. **Get Transaction Bytes**:
    - Use any Sui wallet (Sui Wallet, Ethos, Martian, etc.)
-   - Create a transaction but **DON'T sign it yet**
-   - Copy the base64 transaction bytes from your wallet
+   - Create and submit a transaction using a Sui wallet
+   - Copy the transaction digest and retrieve the base64 transaction bytes via explorer, CLI, or RPC
 
 2. **Analyze with VibeGuard**:
-   - Go to [VibeGuard AI](https://vibeguardai.netlify.app)
+   - Go to [VibeGuard AI](https://vibeguardai.vercel.app)
    - Paste the transaction bytes
    - Add your wallet address (recommended for accuracy)
    - Select the correct network
@@ -108,7 +108,7 @@ SUI_RPC_DEVNET=https://fullnode.devnet.sui.io:443
 npm run dev
 
 # Generate test transactions
-npm run test <YOUR_SUI_ADDRESS>
+node generate_test.js <YOUR_SUI_ADDRESS>
 
 # Build for production
 npm run build
@@ -147,18 +147,8 @@ Runs live dry-run simulation only.
 ```
 
 ### POST /api/analyze  
-Runs simulation + risk analysis.
-
-```json
-{
-  "simulation": { "rawDryRun": {...}, "effectsSummary": {...} },
-  "risk": {
-    "riskLevel": "GREEN|YELLOW|RED",
-    "reasons": ["reason1", "reason2"],
-    "confidence": 0.95
-  }
-}
-```
+Runs simulation and deterministic risk analysis.
+Response includes normalized simulation data and risk classification.
 
 ### POST /api/explain
 Full analysis with AI explanation.
@@ -187,8 +177,8 @@ Full analysis with AI explanation.
 
 ### 🟡 YELLOW (Caution)
 - Interaction with smart contracts
-- Complex state changes (>3 objects affected)
-- High gas usage (>10M units)
+- Complex state changes affecting multiple objects
+- Unusually high gas usage
 - Object deletions or permission changes
 
 ### 🟢 GREEN (Safe)
@@ -203,7 +193,7 @@ Full analysis with AI explanation.
 - **No Private Keys**: Never handles or requests private keys
 - **No Wallet Connection**: No browser wallet integration required
 - **Server-Side AI**: Gemini API calls happen server-side only
-- **No Data Storage**: No transaction data is stored or logged
+- **No Persistent Storage**: Transaction data is not persisted or indexed
 - **Open Source**: All code is publicly auditable
 
 ## 🛠️ Technical Architecture
@@ -277,7 +267,7 @@ A: Check that your `GEMINI_API_KEY` is valid and has sufficient quota. The app w
 **⚠️ Important Disclaimer**: VibeGuard AI is a security tool, not a guarantee. Always verify transactions independently and never sign anything you don't fully understand. The blockchain is immutable - once signed, transactions cannot be reversed.
 
 **🔗 Links**
-- [Live Demo](https://vibeguardai.netlify.app)
+- [Live Demo](https://vibeguardai.vercel.app)
 - [Sui Documentation](https://docs.sui.io/)
 - [Gemini API](https://ai.google.dev/)
-- [Report Security Issues](mailto:security@vibeguard.ai)
+- [Report Issues](https://github.com/mianohh/vibeguard-ai/issues)
