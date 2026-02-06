@@ -63,6 +63,29 @@ export class SuiSimulator {
     throw lastError || new Error('Simulation failed after retries');
   }
 
+  async fetchTransactionBytes(digest: string, network: SuiNetwork): Promise<string> {
+    const client = this.clients.get(network);
+    if (!client) {
+      throw new Error(`Unsupported network: ${network}`);
+    }
+
+    try {
+      const txBlock = await client.getTransactionBlock({
+        digest,
+        options: { showInput: true, showRawInput: true }
+      });
+
+      const txBytes = (txBlock as any).rawTransaction;
+      if (!txBytes) {
+        throw new Error('Transaction bytes not found in response');
+      }
+
+      return txBytes;
+    } catch (error: any) {
+      throw new Error(`Failed to fetch transaction: ${error.message}`);
+    }
+  }
+
   private normalizeEffects(dryRun: any, userAddress?: string): EffectsSummary {
     if (!dryRun) {
       return {

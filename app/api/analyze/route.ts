@@ -5,7 +5,7 @@ import { validateTransactionInput, validateNetwork } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { transactionBytes, network, userAddress } = await request.json();
+    const { transactionBytes, network, userAddress, userIntent } = await request.json();
 
     // Validate inputs
     const txValidation = validateTransactionInput(transactionBytes);
@@ -24,17 +24,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Run simulation
     const simulator = new SuiSimulator();
+    let txBytes = transactionBytes.trim();
+
+    // If input is a hash, fetch the transaction bytes
+    if (txValidation.isHash) {
+      txBytes = await simulator.fetchTransactionBytes(txBytes, networkValidation.network!);
+    }
+
+    // Run simulation
     const simulation = await simulator.simulate(
-      transactionBytes.trim(),
+      txBytes,
       networkValidation.network!,
       userAddress
     );
 
     // Analyze risk
     const riskEngine = new RiskEngine();
-    const risk = riskEngine.analyze(simulation.effectsSummary);
+    const risk = riskEngine.analyze(simulation.effectsSummary, userIntent);
 
     return NextResponse.json({
       simulation,

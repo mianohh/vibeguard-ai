@@ -23,10 +23,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Run simulation
     const simulator = new SuiSimulator();
+    let txBytes = transactionBytes.trim();
+
+    // If input is a hash, fetch the transaction bytes
+    if (txValidation.isHash) {
+      txBytes = await simulator.fetchTransactionBytes(txBytes, networkValidation.network!);
+    }
+
+    // Run simulation
     const result = await simulator.simulate(
-      transactionBytes.trim(),
+      txBytes,
       networkValidation.network!,
       userAddress
     );
