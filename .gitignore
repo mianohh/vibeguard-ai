@@ -34,6 +34,5 @@ yarn-error.log*
 next-env.d.ts
 
 # Development artifacts
-package-lock.json
 sui-debug
 *.tgz

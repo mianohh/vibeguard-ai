@@ -1,13 +1,13 @@
 import { EffectsSummary, RiskAnalysis, RiskLevel } from '@/types';
 
 export class RiskEngine {
-  analyze(effects: EffectsSummary): RiskAnalysis {
+  analyze(effects: EffectsSummary, userIntent?: string): RiskAnalysis {
     const reasons: string[] = [];
     let riskLevel: RiskLevel = 'GREEN';
     let confidence = 1.0;
 
     // RED conditions (highest priority)
-    const redFlags = this.checkRedFlags(effects);
+    const redFlags = this.checkRedFlags(effects, userIntent);
     if (redFlags.length > 0) {
       reasons.push(...redFlags);
       riskLevel = 'RED';
@@ -43,7 +43,7 @@ export class RiskEngine {
     };
   }
 
-  private checkRedFlags(effects: EffectsSummary): string[] {
+  private checkRedFlags(effects: EffectsSummary, userIntent?: string): string[] {
     const flags: string[] = [];
 
     // Direct analysis of balance changes for outflows to others
@@ -55,16 +55,27 @@ export class RiskEngine {
       change => change.type === 'increase' && change.owner === 'another_address'
     );
 
+    // Check if amounts suggest a transfer (not just gas)
+    const significantOutgoing = userOutgoing.some(change => {
+      const amount = parseInt(change.amount);
+      return amount > 1000000; // > 0.001 SUI
+    });
+
     // RED FLAG: User loses assets AND someone else gains assets (transfer to others)
-    if (userOutgoing.length > 0 && othersIncoming.length > 0) {
-      // Check if amounts suggest a transfer (not just gas)
-      const significantOutgoing = userOutgoing.some(change => {
-        const amount = parseInt(change.amount);
-        return amount > 1000000; // > 0.001 SUI
-      });
+    if (userOutgoing.length > 0 && othersIncoming.length > 0 && significantOutgoing) {
+      flags.push('Assets leave your wallet to another address');
+    }
+
+    // Intent mismatch detection
+    if (userIntent) {
+      const intentLower = userIntent.toLowerCase();
+      const isClaimIntent = /claim|airdrop|free|reward|gift/i.test(intentLower);
+      const isMintIntent = /mint|nft|create/i.test(intentLower);
+      const isReceiveIntent = /receive|get|earn/i.test(intentLower);
       
-      if (significantOutgoing) {
-        flags.push('Assets leave your wallet to another address');
+      // If user expects to RECEIVE but assets are LEAVING
+      if ((isClaimIntent || isMintIntent || isReceiveIntent) && significantOutgoing) {
+        flags.push('⚠️ INTENT MISMATCH: You expect to receive assets, but this sends assets away');
       }
     }
 
