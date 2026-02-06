@@ -2,167 +2,114 @@
 
 **Eliminate blind signing on Sui blockchain**
 
-VibeGuard AI is a deployment-ready MVP security tool that analyzes real Sui transactions before you sign them. It uses live blockchain simulation, deterministic risk analysis, and AI explanations to help you make informed decisions.
+VibeGuard AI is a security tool that analyzes Sui transactions before you sign them. It uses live blockchain simulation, intent-based scam detection, and AI explanations to protect you from honeypot attacks and phishing scams.
 
 ![Security Grade](https://img.shields.io/badge/Security-MVP%20Ready-green)
 ![Network](https://img.shields.io/badge/Sui-Mainnet%20%7C%20Testnet%20%7C%20Devnet-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Scam Detection](https://img.shields.io/badge/Scam%20Detection-Intent%20Based-red)
 
-## 🚨 What is Blind Signing?
+## 🚨 The Problem: Blind Signing
 
-Blind signing is when you approve a blockchain transaction without understanding what it will do. This is dangerous because:
+Blind signing is when you approve a blockchain transaction without understanding what it will do. This leads to:
 
-- **Asset Loss**: You might lose tokens or NFTs unexpectedly
-- **Permission Grants**: You could give unwanted access to your wallet
-- **Hidden Actions**: Complex transactions can hide malicious operations
-- **Irreversible**: Blockchain transactions cannot be undone
+- **Asset Loss**: Unexpected token or NFT transfers
+- **Honeypot Scams**: Fake "airdrops" that drain your wallet
+- **Permission Exploits**: Unwanted access to your assets
+- **Irreversible Damage**: Blockchain transactions cannot be undone
 
 ## ⚡ How VibeGuard Works
 
-1. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to simulate your transaction on the real network
-2. **Balance Analysis**: Detects exactly which assets move where
-3. **Risk Assessment**: Applies deterministic rules to identify dangers
-4. **AI Translation**: Converts technical data into plain English
-5. **Clear Verdict**: Shows Green (Safe) / Yellow (Caution) / Red (Danger)
+1. **Input Flexibility**: Paste transaction hash (0x...) OR base64 bytes
+2. **Intent Capture**: Describe what you think the transaction does
+3. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
+4. **Intent Mismatch Detection**: Compares expectation vs. reality
+5. **AI Analysis**: Explains risks in plain English (8th-grade reading level)
+6. **Risk Verdict**: Green (Safe) / Yellow (Caution) / Red (Danger)
 
-## 🛡️ Why VibeGuard is Trustworthy
+## 🎯 Example: Scam Detection
 
-- **Real Data Only**: No mock data, samples, or guesses - only live blockchain simulation
-- **Deterministic Risk**: Risk assessment follows strict rules, not AI opinions  
-- **Transparent Process**: Shows exactly what the transaction will do
-- **Privacy First**: No wallet connection required, no data stored
-- **Open Source**: All code is auditable and verifiable
-
-## 🎯 Live Demo Results
-
-### ✅ SAFE Transaction (Self-Transfer)
+### Without Intent (Limited Protection)
 ```
-🛡️ SAFE - High confidence (based on balance change detection)
-✓ Self-transfer detected - assets remain in your control
-✓ No assets leaving your wallet to other addresses
-✓ No permission changes
+Transaction: Sends 100 SUI to unknown address
+VibeGuard: "⚠️ Assets leave your wallet"
+User: "Maybe that's just how airdrops work?" ❌ Signs anyway
 ```
 
-### 🚨 DANGEROUS Transaction (Transfer to Others)
+### With Intent (Full Protection)
 ```
-🚨 DANGEROUS - High confidence (based on balance change detection)  
-● Assets leave your wallet to another address
-● Net asset outflow detected
-⚠️ Recommendation: Do Not Sign
+Transaction: Sends 100 SUI to unknown address
+User Intent: "Claim free airdrop"
+VibeGuard: "🚨 SCAM DETECTED - You expect to receive assets, 
+            but this transaction sends 100 SUI away. 
+            Real airdrops NEVER ask you to send assets first."
+User: ✅ Does not sign
 ```
 
 ## 🚀 Quick Start
 
-### For End Users
-
-1. **Get Transaction Bytes**:
-   - Use any Sui wallet (Sui Wallet, Ethos, Martian, etc.)
-   - Create and submit a transaction using a Sui wallet
-   - Copy the transaction digest and retrieve the base64 transaction bytes via explorer, CLI, or RPC
-
-2. **Analyze with VibeGuard**:
-   - Go to [VibeGuard AI](https://vibeguardai.vercel.app)
-   - Paste the transaction bytes
-   - Add your wallet address (recommended for accuracy)
-   - Select the correct network
-   - Click "Analyze Transaction"
-
-3. **Review Results**:
-   - **Green**: Safe to sign
-   - **Yellow**: Review carefully before signing  
-   - **Red**: Do not sign unless absolutely certain
-
-### For Developers
-
-#### Installation
+### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/mianohh/vibeguard-ai
 cd vibeguard-ai
-
-# Install dependencies
 npm install
+```
 
-# Set up environment
+### Environment Setup
+
+```bash
 cp .env.example .env
-# Edit .env and add your Gemini API key
+# Edit .env and add your Gemini API key from https://ai.google.dev/
 ```
 
-#### Environment Setup
+### Run Development Server
 
 ```bash
-# Required: Get a free Gemini API key from Google AI Studio
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Optional: Custom RPC endpoints
-SUI_RPC_MAINNET=https://fullnode.mainnet.sui.io:443
-SUI_RPC_TESTNET=https://fullnode.testnet.sui.io:443
-SUI_RPC_DEVNET=https://fullnode.devnet.sui.io:443
-```
-
-#### Development
-
-```bash
-# Start development server
 npm run dev
-
-# Generate test transactions
-node generate_test.js <YOUR_SUI_ADDRESS>
-
-# Build for production
-npm run build
+# Open http://localhost:3000
 ```
 
-## 🧪 Testing with Real Transactions
-
-VibeGuard includes a test generator that creates real Sui transactions:
+### Generate Test Transactions
 
 ```bash
-# Generate SAFE and DANGER test transactions
-node generate_test.js 0x1234...your_address...5678
+# Get testnet SUI from https://faucet.testnet.sui.io/
+node generate_test.js YOUR_TESTNET_ADDRESS
 
-# This outputs:
-# ✅ SAFE transaction (self-transfer) 
+# Output:
+# ✅ SAFE transaction (self-transfer)
+#    Intent: "Send to myself" → Should show GREEN
 # 🚨 DANGER transaction (transfer to stranger)
+#    Intent: "Claim free airdrop" → Should show RED with scam warning
 ```
 
-**Test Flow**:
-1. Get testnet SUI from [Sui Faucet](https://faucet.testnet.sui.io/)
-2. Run the test generator with your address
-3. Copy each base64 string into VibeGuard
-4. Verify SAFE shows Green, DANGER shows Red
+## 📡 API Endpoints
 
-## 📡 API Reference
-
-### POST /api/simulate
-Runs live dry-run simulation only.
+### POST /api/explain
+Full analysis with AI explanation and scam detection.
 
 ```json
 {
-  "transactionBytes": "base64_encoded_transaction",
+  "transactionBytes": "base64_or_0x_hash",
   "network": "testnet",
-  "userAddress": "0x123...abc" // optional but recommended
+  "userAddress": "0x...",
+  "userIntent": "Claim airdrop"
 }
 ```
 
-### POST /api/analyze  
-Runs simulation and deterministic risk analysis.
-Response includes normalized simulation data and risk classification.
-
-### POST /api/explain
-Full analysis with AI explanation.
-
+**Response:**
 ```json
 {
-  "simulation": {...},
-  "risk": {...},
+  "simulation": { "effectsSummary": {...} },
+  "risk": {
+    "riskLevel": "RED",
+    "reasons": ["⚠️ INTENT MISMATCH: You expect to receive assets, but this sends assets away"],
+    "confidence": 0.9
+  },
   "explanation": {
-    "headline": "What this transaction does",
-    "plainEnglish": "Detailed explanation in simple terms",
-    "bulletPoints": ["Key point 1", "Key point 2"],
-    "recommendedAction": "Sign|Be Careful|Do Not Sign",
-    "whatToCheck": ["Verification item 1", "Verification item 2"]
+    "headline": "Honeypot Scam Detected",
+    "plainEnglish": "This transaction will send 100 SUI from your wallet...",
+    "recommendedAction": "Do Not Sign"
   }
 }
 ```
@@ -171,103 +118,73 @@ Full analysis with AI explanation.
 
 ### 🔴 RED (Danger)
 - Assets leave your wallet to another address
-- Net asset loss detected  
+- **Intent mismatch**: You expect to receive but assets are leaving
 - Transaction will fail if executed
-- Multiple transfers to unknown addresses
 
 ### 🟡 YELLOW (Caution)
 - Interaction with smart contracts
-- Complex state changes affecting multiple objects
-- Unusually high gas usage
-- Object deletions or permission changes
+- Complex state changes
+- High gas usage
 
 ### 🟢 GREEN (Safe)
 - Self-transfers (assets stay with you)
 - No assets leaving to other addresses
-- Simple operations with low complexity
-- No permission escalations
+- No permission changes
 
+## 🛠️ Tech Stack
+
+- **Next.js 14**: React framework with API routes
+- **@mysten/sui.js**: Official Sui SDK
+- **Google Gemini API**: AI explanations
+- **TypeScript**: Type safety
+- **Tailwind CSS**: UI styling
 
 ## 🔒 Security & Privacy
 
-- **No Private Keys**: Never handles or requests private keys
-- **No Wallet Connection**: No browser wallet integration required
-- **Server-Side AI**: Gemini API calls happen server-side only
-- **No Persistent Storage**: Transaction data is not persisted or indexed
-- **Open Source**: All code is publicly auditable
-
-## 🛠️ Technical Architecture
-
-```
-Frontend (Next.js 14)
-├── Security Console UI
-├── Risk Status Display  
-└── Transaction Input
-
-Backend (API Routes)
-├── Sui Simulator (Live dry-run)
-├── Risk Engine (Deterministic rules)
-└── Gemini Explainer (AI translation)
-
-External Services
-├── Sui RPC (Live blockchain data)
-└── Google Gemini API (AI explanations)
-```
-
-### Key Technologies
-- **Next.js 14**: React framework with API routes
-- **@mysten/sui.js**: Official Sui SDK for blockchain interaction
-- **@google/genai**: Gemini API for AI explanations
-- **TypeScript**: Type safety throughout
-- **Tailwind CSS**: Security-grade dark UI
+- ✅ No private keys required
+- ✅ No wallet connection needed
+- ✅ No data stored or logged
+- ✅ Server-side AI processing
+- ✅ Open source & auditable
 
 ## 📋 Known Limitations
 
-- **Input Format**: Only accepts base64 transaction bytes from wallets
-- **Network Dependency**: Requires live Sui RPC access
-- **Complex Contracts**: May not understand all smart contract interactions
-- **AI Explanations**: Falls back to deterministic explanations if Gemini fails
-- **No Auto-Blocking**: Does not prevent you from signing dangerous transactions
+- Hash lookup only works for **unsigned** transactions (not from explorer)
+- Intent detection works best with keywords: claim, airdrop, free, mint, receive
+- AI explanations may fall back to deterministic rules if API fails
+- Does not auto-block dangerous transactions (user decision required)
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and test with real Sui transactions
-4. Commit your changes: `git commit -m 'Add amazing feature'`
-5. Push to the branch: `git push origin feature/amazing-feature`
+3. Test with real Sui transactions
+4. Commit: `git commit -m 'Add amazing feature'`
+5. Push: `git push origin feature/amazing-feature`
 6. Open a Pull Request
-
-### Development Guidelines
-- Test with real Sui transactions, never mock data
-- Follow the existing TypeScript patterns
-- Maintain security-first approach
-- Update documentation for new features
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🆘 Support & FAQ
+## 🆘 Support
 
-### Common Issues
+**Common Issues:**
 
-**Q: "Analysis Failed - Invalid transaction format"**  
-A: Ensure you copied the complete base64 transaction bytes from your wallet, not a transaction hash or partial data.
+- **"Hash lookup failed"**: Use base64 bytes from wallet BEFORE signing, not hashes from explorer
+- **"Intent mismatch not detected"**: Use keywords like "claim", "airdrop", "free", "mint"
+- **"AI errors"**: Check your `GEMINI_API_KEY` is valid
 
-**Q: "Both SAFE and DANGER transactions show the same risk"**  
-A: Make sure you're providing your wallet address in the "Your Address" field for accurate risk detection.
+## ⚠️ Disclaimer
 
-**Q: "Gemini API errors"**  
-A: Check that your `GEMINI_API_KEY` is valid and has sufficient quota. The app will fall back to deterministic explanations.
+VibeGuard AI is a security tool, not a guarantee. Always verify transactions independently. The blockchain is immutable - once signed, transactions cannot be reversed.
 
+## 💡 Pro Tip
+
+**Always fill in the intent field!** This activates scam detection and significantly improves protection against honeypot attacks.
 
 ---
 
-**⚠️ Important Disclaimer**: VibeGuard AI is a security tool, not a guarantee. Always verify transactions independently and never sign anything you don't fully understand. The blockchain is immutable - once signed, transactions cannot be reversed.
+**Built with ❤️ for the Sui community**
 
-**🔗 Links**
-- [Live Demo](https://vibeguardai.vercel.app)
-- [Sui Documentation](https://docs.sui.io/)
-- [Gemini API](https://ai.google.dev/)
-- [Report Issues](https://github.com/mianohh/vibeguard-ai/issues)
+🔗 [Live Demo](https://vibeguardai.vercel.app) | [Report Issues](https://github.com/mianohh/vibeguard-ai/issues)

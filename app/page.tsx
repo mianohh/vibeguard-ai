@@ -8,6 +8,7 @@ import { ErrorDisplay } from './components/ErrorDisplay';
 export default function SecurityConsole() {
   const [transactionBytes, setTransactionBytes] = useState('');
   const [userAddress, setUserAddress] = useState('');
+  const [userIntent, setUserIntent] = useState('');
   const [network, setNetwork] = useState<SuiNetwork>('testnet');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -31,6 +32,7 @@ export default function SecurityConsole() {
           transactionBytes: transactionBytes.trim(),
           network,
           userAddress: userAddress.trim() || undefined,
+          userIntent: userIntent.trim() || undefined,
         }),
       });
 
@@ -75,12 +77,12 @@ export default function SecurityConsole() {
             {/* Transaction Input */}
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-3 tracking-wide">
-                TRANSACTION BYTES
+                TRANSACTION HASH OR BYTES
               </label>
               <textarea
                 value={transactionBytes}
                 onChange={(e) => setTransactionBytes(e.target.value)}
-                placeholder="Paste base64-encoded transaction blocks from real Sui wallets"
+                placeholder="Paste Transaction Hash (0x...) or Base64 Bytes"
                 className="
                   w-full h-32 px-4 py-4 
                   bg-slate-900/50 border border-slate-700 rounded-lg 
@@ -93,7 +95,7 @@ export default function SecurityConsole() {
                 disabled={loading}
               />
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Only accepts base64-encoded transaction blocks from real Sui wallets
+                Accepts transaction hash (digest) or base64-encoded transaction bytes
               </p>
             </div>
 
@@ -119,6 +121,30 @@ export default function SecurityConsole() {
               />
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 Providing your address enables accurate detection of asset outflows and improves risk analysis
+              </p>
+            </div>
+
+            {/* User Intent Input */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-3 tracking-wide">
+                WHAT DO YOU THINK THIS TRANSACTION DOES?
+              </label>
+              <input
+                type="text"
+                value={userIntent}
+                onChange={(e) => setUserIntent(e.target.value)}
+                placeholder="e.g., 'Claim airdrop', 'Mint NFT', 'Swap tokens', 'Send 10 SUI to friend'"
+                className="
+                  w-full px-4 py-3 
+                  bg-slate-900/50 border border-slate-700 rounded-lg 
+                  text-slate-200 placeholder-slate-500
+                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+                  transition-all duration-200
+                "
+                disabled={loading}
+              />
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                Helps detect scams by comparing your expectation vs. what actually happens
               </p>
             </div>
 
@@ -164,7 +190,11 @@ export default function SecurityConsole() {
               {loading ? (
                 <div className="flex items-center justify-center space-x-3">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Analyzing Transaction...</span>
+                  <span>
+                    {transactionBytes.trim().startsWith('0x') 
+                      ? 'Fetching Transaction Data...' 
+                      : 'Analyzing Transaction...'}
+                  </span>
                 </div>
               ) : (
                 'Analyze Transaction'

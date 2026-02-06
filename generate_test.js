@@ -129,11 +129,13 @@ const AMOUNT = 100000n; // Larger amount to make balance changes visible
     console.log('\n===================== OUTPUT =====================');
 
     console.log('\n✅ SAFE MODE — COPY THIS BASE64 STRING:');
+    console.log('Expected Intent: "Send SUI to myself" or "Move assets between my wallets"');
     console.log('---------------------------------------------------');
     console.log(safeB64);
     console.log('---------------------------------------------------');
 
     console.log('\n🚨 DANGER MODE — COPY THIS BASE64 STRING:');
+    console.log('Expected Intent: "Claim free airdrop" or "Mint free NFT" (SCAM TEST)');
     console.log('---------------------------------------------------');
     console.log(dangerB64);
     console.log('---------------------------------------------------');

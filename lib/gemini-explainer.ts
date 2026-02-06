@@ -12,9 +12,9 @@ export class GeminiExplainer {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
-  async explain(effects: EffectsSummary, risk: RiskAnalysis): Promise<GeminiExplanation> {
+  async explain(effects: EffectsSummary, risk: RiskAnalysis, userIntent?: string): Promise<GeminiExplanation> {
     try {
-      const prompt = this.buildPrompt(effects, risk);
+      const prompt = this.buildPrompt(effects, risk, userIntent);
 
       const response = await this.ai.models.generateContent({
         model: 'gemini-2.0-flash-exp',
@@ -22,7 +22,7 @@ export class GeminiExplainer {
       });
 
       if (!response.text) {
-        throw new Error('Empty response from Gemini API');
+        throw new Error('Empty response from AI Security Analyst');
       }
 
       const explanation = this.parseResponse(response.text);
@@ -33,13 +33,17 @@ export class GeminiExplainer {
 
       return explanation;
     } catch (error) {
-      console.error('Gemini API error:', error);
+      console.error('AI Security Analyst error:', error);
       return this.generateDeterministicExplanation(effects, risk);
     }
   }
 
-  private buildPrompt(effects: EffectsSummary, risk: RiskAnalysis): string {
-    return `Explain this blockchain transaction in plain English.
+  private buildPrompt(effects: EffectsSummary, risk: RiskAnalysis, userIntent?: string): string {
+    const intentSection = userIntent 
+      ? `\n\nUSER'S STATED INTENTION: "${userIntent}"\n\nCRITICAL: Compare what the user THINKS will happen vs. what ACTUALLY happens. If there's a mismatch, this is likely a SCAM. Flag it as DANGEROUS and explain the deception clearly.`
+      : '';
+
+    return `You are an Agentic Security Analyst for the Sui Blockchain. Your goal is to protect everyday users. Explain this transaction at an 8th-grade reading level. Do NOT use technical jargon like 'Move Call', 'Object ID', or 'Bytecode' in the summary. Focus strictly on: 1. Assets leaving the wallet. 2. Assets entering the wallet. 3. Key permissions granted.${intentSection}
 
 Risk Level: ${risk.riskLevel}
 Transaction Success: ${effects.success}
@@ -77,7 +81,7 @@ Return JSON:
         whatToCheck: parsed.whatToCheck || []
       };
     } catch (error) {
-      throw new Error('Failed to parse Gemini response');
+      throw new Error('Failed to parse AI response');
     }
   }
 

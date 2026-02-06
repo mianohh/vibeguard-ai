@@ -1,6 +1,6 @@
 import { SuiNetwork } from '@/types';
 
-export function validateTransactionInput(input: string): { valid: boolean; error?: string } {
+export function validateTransactionInput(input: string): { valid: boolean; error?: string; isHash?: boolean } {
   if (!input || typeof input !== 'string') {
     return { valid: false, error: 'Transaction input is required' };
   }
@@ -10,10 +10,16 @@ export function validateTransactionInput(input: string): { valid: boolean; error
     return { valid: false, error: 'Transaction input cannot be empty' };
   }
 
+  // Check if it's a transaction hash (0x + 64 hex chars)
+  const hashRegex = /^0x[a-fA-F0-9]{64}$/;
+  if (hashRegex.test(trimmed)) {
+    return { valid: true, isHash: true };
+  }
+
   // Check if it's base64 encoded
   const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
   if (!base64Regex.test(trimmed)) {
-    return { valid: false, error: 'Transaction must be base64-encoded bytes from a Sui wallet' };
+    return { valid: false, error: 'Transaction must be a hash (0x...) or base64-encoded bytes' };
   }
 
   // Try to decode to verify it's valid base64
@@ -26,7 +32,7 @@ export function validateTransactionInput(input: string): { valid: boolean; error
     return { valid: false, error: 'Invalid base64 encoding' };
   }
 
-  return { valid: true };
+  return { valid: true, isHash: false };
 }
 
 export function validateNetwork(network: string): { valid: boolean; error?: string; network?: SuiNetwork } {
