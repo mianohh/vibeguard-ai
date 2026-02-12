@@ -5,6 +5,22 @@ export type RiskLevel = 'GREEN' | 'YELLOW' | 'RED';
 export interface SimulationResult {
   rawDryRun: any;
   effectsSummary: EffectsSummary;
+  staticAnalysis?: StaticAnalysis;
+}
+
+export interface StaticAnalysis {
+  moveCalls: MoveCallTarget[];
+  gasBudget?: string;
+  isHighGas: boolean;
+  containsDirectTransfer: boolean;
+  chainId?: string;
+  networkMismatch: boolean;
+}
+
+export interface MoveCallTarget {
+  packageId: string;
+  moduleName: string;
+  functionName: string;
 }
 
 export interface EffectsSummary {
