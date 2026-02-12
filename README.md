@@ -21,11 +21,12 @@ Blind signing is when you approve a blockchain transaction without understanding
 ## ⚡ How VibeGuard Works
 
 1. **Input Flexibility**: Paste transaction hash (0x...) OR base64 bytes
-2. **Intent Capture**: Describe what you think the transaction does
-3. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
-4. **Intent Mismatch Detection**: Compares expectation vs. reality
-5. **AI Analysis**: Explains risks in plain English (8th-grade reading level)
-6. **Risk Verdict**: Green (Safe) / Yellow (Caution) / Red (Danger)
+2. **Static Analysis**: Locally parses Move calls, gas budget, transfers, and chain ID
+3. **Intent Capture**: Describe what you think the transaction does
+4. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
+5. **Intent Mismatch Detection**: Compares expectation vs. reality
+6. **AI Analysis**: Explains risks in plain English (8th-grade reading level)
+7. **Risk Verdict**: Green (Safe) / Yellow (Caution) / Red (Danger)
 
 ## 🎯 Example: Scam Detection
 
@@ -100,7 +101,17 @@ Full analysis with AI explanation and scam detection.
 **Response:**
 ```json
 {
-  "simulation": { "effectsSummary": {...} },
+  "simulation": {
+    "effectsSummary": {...},
+    "staticAnalysis": {
+      "moveCalls": [{"packageId": "0x2", "moduleName": "coin", "functionName": "transfer"}],
+      "gasBudget": "10000000",
+      "isHighGas": false,
+      "containsDirectTransfer": true,
+      "chainId": "4c78adac",
+      "networkMismatch": false
+    }
+  },
   "risk": {
     "riskLevel": "RED",
     "reasons": ["⚠️ INTENT MISMATCH: You expect to receive assets, but this sends assets away"],
@@ -144,6 +155,9 @@ Full analysis with AI explanation and scam detection.
 - ✅ No private keys required
 - ✅ No wallet connection needed
 - ✅ No data stored or logged
+- ✅ Static analysis works offline
+- ✅ Input validation & sanitization
+- ✅ Chain ID validation prevents replay attacks
 - ✅ Server-side AI processing
 - ✅ Open source & auditable
 
