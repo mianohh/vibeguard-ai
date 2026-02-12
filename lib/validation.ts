@@ -1,5 +1,28 @@
 import { SuiNetwork } from '@/types';
 
+// Regex validators
+const SUI_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}$/;
+const BASE64_REGEX = /^[A-Za-z0-9+/]{4,}={0,2}$/;
+
+export function validateSuiAddress(address: string): boolean {
+  return SUI_ADDRESS_REGEX.test(address.trim());
+}
+
+export function validateBase64(input: string): boolean {
+  const trimmed = input.trim();
+  if (!BASE64_REGEX.test(trimmed)) return false;
+  try {
+    return Buffer.from(trimmed, 'base64').length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export function sanitizeUserIntent(intent: string | undefined): string {
+  if (!intent || typeof intent !== 'string') return '';
+  return intent.trim().replace(/[<>"'`\\]/g, '').slice(0, 500);
+}
+
 export function validateTransactionInput(input: string): { valid: boolean; error?: string; isHash?: boolean } {
   if (!input || typeof input !== 'string') {
     return { valid: false, error: 'Transaction input is required' };
@@ -10,29 +33,15 @@ export function validateTransactionInput(input: string): { valid: boolean; error
     return { valid: false, error: 'Transaction input cannot be empty' };
   }
 
-  // Check if it's a transaction hash (0x + 64 hex chars)
-  const hashRegex = /^0x[a-fA-F0-9]{64}$/;
-  if (hashRegex.test(trimmed)) {
+  if (validateSuiAddress(trimmed)) {
     return { valid: true, isHash: true };
   }
 
-  // Check if it's base64 encoded
-  const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-  if (!base64Regex.test(trimmed)) {
-    return { valid: false, error: 'Transaction must be a hash (0x...) or base64-encoded bytes' };
+  if (validateBase64(trimmed)) {
+    return { valid: true, isHash: false };
   }
 
-  // Try to decode to verify it's valid base64
-  try {
-    const decoded = Buffer.from(trimmed, 'base64');
-    if (decoded.length === 0) {
-      return { valid: false, error: 'Invalid base64 encoding' };
-    }
-  } catch (error) {
-    return { valid: false, error: 'Invalid base64 encoding' };
-  }
-
-  return { valid: true, isHash: false };
+  return { valid: false, error: 'Transaction must be a hash (0x...) or base64-encoded bytes' };
 }
 
 export function validateNetwork(network: string): { valid: boolean; error?: string; network?: SuiNetwork } {
