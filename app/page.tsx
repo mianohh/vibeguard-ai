@@ -68,6 +68,14 @@ export default function SecurityConsole() {
           <p className="text-slate-500 mt-2 text-sm">
             Analyze real Sui transactions before you sign them
           </p>
+          <div className="mt-4">
+            <a 
+              href="/api-docs"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+            >
+              📡 API Documentation →
+            </a>
+          </div>
         </div>
 
         {/* Input Console */}
