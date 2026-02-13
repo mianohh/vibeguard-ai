@@ -88,16 +88,6 @@ node generate_test.js YOUR_TESTNET_ADDRESS
 
 **For Developers:** Full API documentation available at [/api-docs](https://vibeguardai.vercel.app/api-docs)
 
-### Authentication
-
-API access requires an API key for external integrations:
-
-```bash
-curl -H "x-api-key: your_api_key_here" ...
-```
-
-**Note:** The web UI at vibeguardai.vercel.app does not require an API key.
-
 ### POST /api/explain
 Full analysis with AI explanation and scam detection.
 
@@ -105,8 +95,8 @@ Full analysis with AI explanation and scam detection.
 {
   "transactionBytes": "base64_or_0x_hash",
   "network": "testnet",
-  "userAddress": "0x...",
-  "userIntent": "Claim airdrop"
+  "userAddress": "0x..." // Required for intent mismatch detection
+  "userIntent": "Claim airdrop" // Optional but recommended
 }
 ```
 
@@ -170,7 +160,7 @@ Full analysis with AI explanation and scam detection.
 - ✅ Static analysis works offline
 - ✅ Input validation & sanitization
 - ✅ Chain ID validation prevents replay attacks
-- ✅ Optional API key authentication for external integrations
+- ✅ Open API access (no authentication required)
 - ✅ Server-side AI processing
 - ✅ Open source & auditable
 
@@ -199,7 +189,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 **Common Issues:**
 
 - **"Hash lookup failed"**: Use base64 bytes from wallet BEFORE signing, not hashes from explorer
-- **"Intent mismatch not detected"**: Use keywords like "claim", "airdrop", "free", "mint"
+- **"Intent mismatch not detected"**: Include `userAddress` in API request and use keywords like "claim", "airdrop", "free", "mint"
 - **"AI errors"**: Check your `GEMINI_API_KEY` is valid
 
 ## ⚠️ Disclaimer
