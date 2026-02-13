@@ -4,18 +4,9 @@ import { RiskEngine } from '@/lib/risk-engine';
 import { GeminiExplainer } from '@/lib/gemini-explainer';
 import { validateTransactionInput, validateNetwork, sanitizeUserIntent } from '@/lib/validation';
 import { parseTransactionBytes } from '@/lib/sui-parser';
-import { validateApiKey } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Optional: Check API key if configured
-    if (process.env.API_KEYS && !validateApiKey(request)) {
-      return NextResponse.json(
-        { error: 'Invalid or missing API key' },
-        { status: 401 }
-      );
-    }
-
     const { transactionBytes, network, userAddress, userIntent } = await request.json();
 
     // Validate and sanitize inputs
