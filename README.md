@@ -86,6 +86,18 @@ node generate_test.js YOUR_TESTNET_ADDRESS
 
 ## 📡 API Endpoints
 
+**For Developers:** Full API documentation available at [/api-docs](https://vibeguardai.vercel.app/api-docs)
+
+### Authentication
+
+API access requires an API key for external integrations:
+
+```bash
+curl -H "x-api-key: your_api_key_here" ...
+```
+
+**Note:** The web UI at vibeguardai.vercel.app does not require an API key.
+
 ### POST /api/explain
 Full analysis with AI explanation and scam detection.
 
@@ -158,6 +170,7 @@ Full analysis with AI explanation and scam detection.
 - ✅ Static analysis works offline
 - ✅ Input validation & sanitization
 - ✅ Chain ID validation prevents replay attacks
+- ✅ Optional API key authentication for external integrations
 - ✅ Server-side AI processing
 - ✅ Open source & auditable
 
@@ -201,4 +214,4 @@ VibeGuard AI is a security tool, not a guarantee. Always verify transactions ind
 
 **Built with ❤️ for the Sui community**
 
-🔗 [Live Demo](https://vibeguardai.vercel.app) | [Report Issues](https://github.com/mianohh/vibeguard-ai/issues)
+🔗 [Live Demo](https://vibeguardai.vercel.app) | [📡 API Docs](https://vibeguardai.vercel.app/api-docs) | [Report Issues](https://github.com/mianohh/vibeguard-ai/issues)
