@@ -86,10 +86,12 @@ node generate_test.js YOUR_TESTNET_ADDRESS
 
 ## 📡 API Endpoints
 
-**For Developers:** Full API documentation available at [/api-docs](https://vibeguardai.vercel.app/api-docs)
+**For Developers:** Our API is completely open and free to use - no API key required! Just make HTTP requests directly.
+
+Full API documentation: [/api-docs](https://vibeguardai.vercel.app/api-docs)
 
 ### POST /api/explain
-Full analysis with AI explanation and scam detection.
+Full analysis with AI explanation and scam detection. **No authentication needed.**
 
 ```json
 {
