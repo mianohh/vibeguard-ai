@@ -27,15 +27,10 @@ export default function ApiDocs() {
         <div className="security-surface p-6 mb-8">
           <h2 className="text-xl font-semibold text-slate-200 mb-4">Authentication</h2>
           <p className="text-slate-300 mb-4">
-            Include your API key in the request header:
+            ✅ <strong>No API key required!</strong> Our API is completely open and free to use.
           </p>
-          <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
-            <code className="text-sm text-slate-300">
-{`x-api-key: your_api_key_here`}
-            </code>
-          </pre>
-          <p className="text-slate-400 text-sm mt-4">
-            Contact the team to request an API key for production use.
+          <p className="text-slate-400 text-sm">
+            Just make HTTP requests directly - no authentication needed.
           </p>
         </div>
 
@@ -86,7 +81,6 @@ export default function ApiDocs() {
             <code className="text-sm text-slate-300">
 {`curl -X POST https://vibeguardai.vercel.app/api/explain \\
   -H "Content-Type: application/json" \\
-  -H "x-api-key: your_api_key_here" \\
   -d '{
     "transactionBytes": "AAACAA...",
     "network": "testnet",
@@ -104,8 +98,7 @@ export default function ApiDocs() {
 {`const response = await fetch('https://vibeguardai.vercel.app/api/explain', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': 'your_api_key_here'
+    'Content-Type': 'application/json'
   },
   body: JSON.stringify({
     transactionBytes: 'AAACAA...',
@@ -124,7 +117,7 @@ console.log(data.risk.riskLevel);`}
         <div className="security-surface p-6">
           <h2 className="text-xl font-semibold text-slate-200 mb-4">Support</h2>
           <p className="text-slate-300 mb-4">
-            Need help or want to request an API key?
+            Need help integrating the API?
           </p>
           <a 
             href="https://github.com/mianohh/vibeguard-ai/issues"
