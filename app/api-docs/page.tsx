@@ -47,13 +47,16 @@ export default function ApiDocs() {
           <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
             <code className="text-sm text-slate-300">
 {`{
-  "transactionBytes": "base64_or_0x_hash",
+  "transactionBytes": "AAACAA...",  // Base64 bytes BEFORE signing
   "network": "testnet",
   "userAddress": "0x...",
-  "userIntent": "Claim airdrop"
+  "userIntent": "Claim airdrop"  // Optional but recommended
 }`}
             </code>
           </pre>
+          <p className="text-yellow-400 text-sm mt-3">
+            ⚠️ Use base64 transaction bytes from your wallet BEFORE signing. Transaction hashes from explorers won't work.
+          </p>
 
           <h3 className="text-lg font-semibold text-slate-200 mb-3 mt-6">Response</h3>
           <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
@@ -82,13 +85,16 @@ export default function ApiDocs() {
 {`curl -X POST https://vibeguardai.vercel.app/api/explain \\
   -H "Content-Type: application/json" \\
   -d '{
-    "transactionBytes": "<base64_or_0x_hash>",
+    "transactionBytes": "AAACAA...base64...",
     "network": "testnet",
-    "userAddress": "0x...",
+    "userAddress": "0x1234...5678",
     "userIntent": "Claim free airdrop"
   }'`}
             </code>
           </pre>
+          <p className="text-slate-400 text-sm mt-3">
+            Replace with your actual base64 transaction bytes and wallet address.
+          </p>
         </div>
 
         {/* Example: JavaScript */}
@@ -102,9 +108,9 @@ export default function ApiDocs() {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    transactionBytes: '<base64_or_0x_hash>',
+    transactionBytes: 'AAACAA...base64...',
     network: 'testnet',
-    userAddress: '0x...',
+    userAddress: '0x1234...5678',
     userIntent: 'Claim free airdrop'
   })
 });

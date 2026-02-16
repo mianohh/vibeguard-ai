@@ -20,7 +20,7 @@ Blind signing is when you approve a blockchain transaction without understanding
 
 ## ⚡ How VibeGuard Works
 
-1. **Input Flexibility**: Paste transaction hash (0x...) OR base64 bytes
+1. **Input Flexibility**: Paste base64 transaction bytes from your wallet (before signing)
 2. **Static Analysis**: Locally parses Move calls, gas budget, transfers, and chain ID
 3. **Intent Capture**: Describe what you think the transaction does
 4. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
@@ -95,7 +95,7 @@ Full analysis with AI explanation and scam detection. **No authentication needed
 
 ```json
 {
-  "transactionBytes": "base64_or_0x_hash",
+  "transactionBytes": "AAACAA...",  // Base64 bytes BEFORE signing
   "network": "testnet",
   "userAddress": "0x..." // Required for intent mismatch detection
   "userIntent": "Claim airdrop" // Optional but recommended
@@ -168,7 +168,8 @@ Full analysis with AI explanation and scam detection. **No authentication needed
 
 ## 📋 Known Limitations
 
-- Hash lookup only works for **unsigned** transactions (not from explorer)
+- Only works with base64 transaction bytes from your wallet BEFORE signing
+- Transaction hashes from Sui Explorer cannot be simulated (already executed)
 - Intent detection works best with keywords: claim, airdrop, free, mint, receive
 - AI explanations may fall back to deterministic rules if API fails
 - Does not auto-block dangerous transactions (user decision required)

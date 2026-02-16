@@ -103,7 +103,7 @@ export default function SecurityConsole() {
                 disabled={loading}
               />
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Accepts transaction hash (digest) or base64-encoded transaction bytes
+                Use base64 transaction bytes from your wallet BEFORE signing. Transaction hashes from explorers won't work.
               </p>
             </div>
 
