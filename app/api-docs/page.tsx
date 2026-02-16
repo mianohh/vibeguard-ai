@@ -82,9 +82,10 @@ export default function ApiDocs() {
 {`curl -X POST https://vibeguardai.vercel.app/api/explain \\
   -H "Content-Type: application/json" \\
   -d '{
-    "transactionBytes": "AAACAA...",
+    "transactionBytes": "<base64_or_0x_hash>",
     "network": "testnet",
-    "userIntent": "Claim airdrop"
+    "userAddress": "0x...",
+    "userIntent": "Claim free airdrop"
   }'`}
             </code>
           </pre>
@@ -101,14 +102,16 @@ export default function ApiDocs() {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    transactionBytes: 'AAACAA...',
+    transactionBytes: '<base64_or_0x_hash>',
     network: 'testnet',
-    userIntent: 'Claim airdrop'
+    userAddress: '0x...',
+    userIntent: 'Claim free airdrop'
   })
 });
 
 const data = await response.json();
-console.log(data.risk.riskLevel);`}
+console.log(data.risk.riskLevel);
+console.log(data.explanation.recommendedAction);`}
             </code>
           </pre>
         </div>
