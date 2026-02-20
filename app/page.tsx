@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { SuiNetwork, AnalysisResult, ApiError } from '@/types';
 import { SecurityAnalysis } from './components/SecurityAnalysis';
 import { ErrorDisplay } from './components/ErrorDisplay';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 
 export default function SecurityConsole() {
   const [transactionBytes, setTransactionBytes] = useState('');
@@ -77,6 +78,9 @@ export default function SecurityConsole() {
             </a>
           </div>
         </div>
+
+        {/* Analytics Dashboard */}
+        <AnalyticsDashboard />
 
         {/* Input Console */}
         <div className="security-surface p-8 mb-12">
