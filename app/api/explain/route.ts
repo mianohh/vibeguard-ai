@@ -4,6 +4,7 @@ import { RiskEngine } from '@/lib/risk-engine';
 import { GeminiExplainer } from '@/lib/gemini-explainer';
 import { validateTransactionInput, validateNetwork, sanitizeUserIntent } from '@/lib/validation';
 import { parseTransactionBytes } from '@/lib/sui-parser';
+import { analytics } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,6 +65,17 @@ export async function POST(request: NextRequest) {
     // Analyze risk
     const riskEngine = new RiskEngine();
     const risk = riskEngine.analyze(simulation.effectsSummary, sanitizedIntent);
+
+    // Track analytics
+    analytics.increment('totalScans');
+    if (risk.riskLevel === 'RED') {
+      analytics.increment('scamsBlocked');
+      // Estimate value protected from balance changes
+      const outgoingValue = simulation.effectsSummary.balanceChanges
+        .filter(c => c.type === 'decrease' && c.owner === 'you')
+        .reduce((sum, c) => sum + (parseInt(c.amount) / 1_000_000_000), 0);
+      if (outgoingValue > 0) analytics.addValueProtected(outgoingValue);
+    }
 
     // Generate explanation
     const explainer = new GeminiExplainer();
