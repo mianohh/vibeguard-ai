@@ -47,6 +47,16 @@ VibeGuard: "🚨 SCAM DETECTED - You expect to receive assets,
 User: ✅ Does not sign
 ```
 
+## ✨ Features
+
+- 📊 **Live Impact Dashboard** - Real-time stats showing scans, value protected, and scams blocked
+- 🔍 **Static Analysis** - Parse Move calls, gas budget, and transfers without RPC
+- 🎯 **Intent Mismatch Detection** - Compare what you expect vs. what actually happens
+- 🤖 **AI Explanations** - Plain English analysis at 8th-grade reading level
+- 🛡️ **Multi-Layer Protection** - Combines static parsing, simulation, and AI analysis
+- 🌐 **Multi-Network** - Supports Mainnet, Testnet, and Devnet
+- 🔓 **Open API** - Free to use, no authentication required
+
 ## 🚀 Quick Start
 
 ### Installation
