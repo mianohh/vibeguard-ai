@@ -5,6 +5,7 @@ import { GeminiExplainer } from '@/lib/gemini-explainer';
 import { validateTransactionInput, validateNetwork, sanitizeUserIntent } from '@/lib/validation';
 import { parseTransactionBytes } from '@/lib/sui-parser';
 import { analytics } from '@/lib/analytics';
+import { checkReputation } from '@/lib/reputation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +47,54 @@ export async function POST(request: NextRequest) {
 
     // Static analysis (no RPC needed)
     const staticAnalysis = parseTransactionBytes(txBytes, networkValidation.network);
+
+    // Reputation check - short-circuit if malicious
+    const packageIds = staticAnalysis.moveCalls.map(call => call.packageId);
+    const reputation = checkReputation(packageIds);
+
+    if (reputation.status === 'MALICIOUS') {
+      analytics.increment('totalScans');
+      analytics.increment('scamsBlocked');
+      
+      return NextResponse.json({
+        simulation: {
+          rawDryRun: null,
+          effectsSummary: {
+            success: false,
+            gasUsed: 0,
+            balanceChanges: [],
+            transfers: [],
+            objectChanges: [],
+            permissionChanges: [],
+            uncertain: []
+          },
+          staticAnalysis
+        },
+        risk: {
+          riskLevel: 'RED',
+          reasons: [
+            '⚠️ CRITICAL: Interacts with a known malicious smart contract',
+            `Blacklisted package detected: ${reputation.matchedPackage}`
+          ],
+          confidence: 1.0
+        },
+        explanation: {
+          headline: 'Malicious Contract Detected',
+          plainEnglish: `This transaction attempts to interact with a known malicious smart contract (${reputation.matchedPackage}). This package has been flagged for scam activity. Do not sign this transaction under any circumstances.`,
+          bulletPoints: [
+            'Contract is on the malicious packages blacklist',
+            'Likely phishing or honeypot scam',
+            'Your assets are at extreme risk'
+          ],
+          recommendedAction: 'Do Not Sign',
+          whatToCheck: [
+            'Verify the source of this transaction request',
+            'Report this to the Sui community',
+            'Block the sender/dApp that provided this transaction'
+          ]
+        }
+      });
+    }
 
     // Run simulation
     let simulation;
