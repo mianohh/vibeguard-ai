@@ -32,6 +32,19 @@ export function SecurityAnalysis({ result }: SecurityAnalysisProps) {
         />
       </div>
 
+      {/* Contract Reputation Badge */}
+      {result.risk.reasons.some(r => r.includes('CRITICAL') || r.includes('Blacklisted')) && (
+        <div className="security-surface p-4 border-2 border-red-500/50 bg-red-900/20">
+          <div className="flex items-center space-x-3">
+            <span className="text-2xl">🚨</span>
+            <div>
+              <div className="text-red-400 font-bold text-sm">MALICIOUS CONTRACT DETECTED</div>
+              <div className="text-red-300 text-xs mt-1">This package is on the known scam blacklist</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Summary Section */}
       <div className="security-surface p-6">
         <h2 className="text-xl font-semibold text-slate-200 mb-4 tracking-tight">
