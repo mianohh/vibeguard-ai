@@ -1,17 +1,17 @@
-# @vibeguard/sui-security
+# vibeguard-sui-security
 
 TypeScript SDK for VibeGuard AI - Analyze Sui transactions before signing to protect against scams and honeypots.
 
 ## Installation
 
 ```bash
-npm install @vibeguard/sui-security
+npm install vibeguard-sui-security
 ```
 
 ## Quick Start
 
 ```typescript
-import { VibeGuard } from '@vibeguard/sui-security';
+import { VibeGuard } from 'vibeguard-sui-security';
 
 const guard = new VibeGuard();
 

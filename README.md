@@ -65,11 +65,11 @@ User: ✅ Does not sign
 ### For Developers: Use the SDK
 
 ```bash
-npm install @vibeguard/sui-security
+npm install vibeguard-sui-security
 ```
 
 ```typescript
-import { VibeGuard } from '@vibeguard/sui-security';
+import { VibeGuard } from 'vibeguard-sui-security';
 
 const guard = new VibeGuard();
 
@@ -134,7 +134,7 @@ node generate_test.js YOUR_TESTNET_ADDRESS
 Perfect for wallet developers and dApp integrations.
 
 ```bash
-npm install @vibeguard/sui-security
+npm install vibeguard-sui-security
 ```
 
 [View SDK Documentation](./packages/sdk/README.md)
