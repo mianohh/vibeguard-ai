@@ -36,3 +36,5 @@ next-env.d.ts
 # Development artifacts
 sui-debug
 *.tgz
+packages/sdk/node_modules/
+packages/sdk/node_modules/

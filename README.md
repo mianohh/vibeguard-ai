@@ -21,12 +21,13 @@ Blind signing is when you approve a blockchain transaction without understanding
 ## ⚡ How VibeGuard Works
 
 1. **Input Flexibility**: Paste base64 transaction bytes from your wallet (before signing)
-2. **Static Analysis**: Locally parses Move calls, gas budget, transfers, and chain ID
-3. **Intent Capture**: Describe what you think the transaction does
-4. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
-5. **Intent Mismatch Detection**: Compares expectation vs. reality
-6. **AI Analysis**: Explains risks in plain English (8th-grade reading level)
-7. **Risk Verdict**: Green (Safe) / Yellow (Caution) / Red (Danger)
+2. **Blacklist Check**: Instantly blocks known malicious contracts
+3. **Static Analysis**: Locally parses Move calls, gas budget, transfers, and chain ID
+4. **Intent Capture**: Describe what you think the transaction does
+5. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
+6. **Intent Mismatch Detection**: Compares expectation vs. reality
+7. **AI Analysis**: Explains risks in plain English (8th-grade reading level)
+8. **Risk Verdict**: Green (Safe) / Yellow (Caution) / Red (Danger)
 
 ## 🎯 Example: Scam Detection
 
@@ -49,17 +50,50 @@ User: ✅ Does not sign
 
 ## ✨ Features
 
+- 📦 **TypeScript SDK** - Drop-in npm package for easy integration
 - 📊 **Live Impact Dashboard** - Real-time stats showing scans, value protected, and scams blocked
+- 🚫 **Contract Blacklist** - Blocks known malicious contracts before simulation
 - 🔍 **Static Analysis** - Parse Move calls, gas budget, and transfers without RPC
 - 🎯 **Intent Mismatch Detection** - Compare what you expect vs. what actually happens
 - 🤖 **AI Explanations** - Plain English analysis at 8th-grade reading level
 - 🛡️ **Multi-Layer Protection** - Combines static parsing, simulation, and AI analysis
 - 🌐 **Multi-Network** - Supports Mainnet, Testnet, and Devnet
-- 🔓 **Open API** - Free to use, no authentication required
+- 🔓 **Freemium API** - Free tier for testing, paid tiers for production
 
 ## 🚀 Quick Start
 
-### Installation
+### For Developers: Use the SDK
+
+```bash
+npm install @vibeguard/sui-security
+```
+
+```typescript
+import { VibeGuard } from '@vibeguard/sui-security';
+
+const guard = new VibeGuard();
+
+const result = await guard.analyzeTransaction({
+  transactionBytes: 'AAACAA...', // Base64 from your wallet
+  network: 'testnet',
+  userAddress: '0x1234...',
+  userIntent: 'Claim airdrop'
+});
+
+if (result.risk.riskLevel === 'RED') {
+  console.log('DANGER:', result.explanation.plainEnglish);
+  // Block transaction
+} else {
+  console.log('Safe to proceed');
+}
+```
+
+**With API Key (Production):**
+```typescript
+const guard = new VibeGuard({ apiKey: 'your-api-key' });
+```
+
+### For Web App Development
 
 ```bash
 git clone https://github.com/mianohh/vibeguard-ai
@@ -94,14 +128,43 @@ node generate_test.js YOUR_TESTNET_ADDRESS
 #    Intent: "Claim free airdrop" → Should show RED with scam warning
 ```
 
+## 🔧 Integration Options
+
+### 1. TypeScript SDK (Recommended)
+Perfect for wallet developers and dApp integrations.
+
+```bash
+npm install @vibeguard/sui-security
+```
+
+[View SDK Documentation](./packages/sdk/README.md)
+
+### 2. Direct API Calls
+For any language or platform.
+
+```bash
+curl -X POST https://vibeguardai.vercel.app/api/explain \
+  -H "Content-Type: application/json" \
+  -d '{"transactionBytes": "...", "network": "testnet"}'
+```
+
+[View API Documentation](https://vibeguardai.vercel.app/api-docs)
+
+### 3. Web Interface
+For manual transaction analysis.
+
+[Try Live Demo](https://vibeguardai.vercel.app)
+
+---
+
 ## 📡 API Endpoints
 
-**For Developers:** Our API is completely open and free to use - no API key required! Just make HTTP requests directly.
+**For Developers:** Our public API is available for testing and hackathons without a key (rate limited). For production use and higher rate limits, please register for a Developer API Key.
 
 Full API documentation: [/api-docs](https://vibeguardai.vercel.app/api-docs)
 
 ### POST /api/explain
-Full analysis with AI explanation and scam detection. **No authentication needed.**
+Full analysis with AI explanation and scam detection. **Free tier available for testing.**
 
 ```json
 {
@@ -142,6 +205,7 @@ Full analysis with AI explanation and scam detection. **No authentication needed
 ## ⚖️ Risk Assessment Rules
 
 ### 🔴 RED (Danger)
+- **Blacklisted contract**: Known malicious package detected
 - Assets leave your wallet to another address
 - **Intent mismatch**: You expect to receive but assets are leaving
 - Transaction will fail if executed
@@ -172,7 +236,7 @@ Full analysis with AI explanation and scam detection. **No authentication needed
 - ✅ Static analysis works offline
 - ✅ Input validation & sanitization
 - ✅ Chain ID validation prevents replay attacks
-- ✅ Open API access (no authentication required)
+- ✅ Open API access (free tier for testing, paid for production)
 - ✅ Server-side AI processing
 - ✅ Open source & auditable
 
