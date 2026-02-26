@@ -8,16 +8,56 @@ export default function ApiDocs() {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-slate-100 mb-3">
-            📡 API Documentation
+            📡 Developer Documentation
           </h1>
           <p className="text-slate-400">
-            Integrate VibeGuard AI into your application
+            Integrate VibeGuard AI into your Sui wallet or dApp
           </p>
+        </div>
+
+        {/* TypeScript SDK */}
+        <div className="security-surface p-6 mb-8">
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">📦 TypeScript SDK (Recommended)</h2>
+          <p className="text-slate-300 mb-4">
+            The easiest way to integrate VibeGuard into your Sui wallet or dApp.
+          </p>
+          <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto mb-4">
+            <code className="text-sm text-slate-300">
+{`npm install vibeguard-sui-security`}
+            </code>
+          </pre>
+          <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
+            <code className="text-sm text-slate-300">
+{`import { VibeGuard } from 'vibeguard-sui-security';
+
+const guard = new VibeGuard();
+
+const result = await guard.analyzeTransaction({
+  transactionBytes: 'AAACAA...',
+  network: 'testnet',
+  userAddress: '0x1234...',
+  userIntent: 'Claim airdrop'
+});
+
+if (result.risk.riskLevel === 'RED') {
+  // Block transaction
+}`}
+            </code>
+          </pre>
+          <a 
+            href="https://www.npmjs.com/package/vibeguard-sui-security"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-4 text-blue-400 hover:text-blue-300 text-sm"
+          >
+            View on npm →
+          </a>
         </div>
 
         {/* Base URL */}
         <div className="security-surface p-6 mb-8">
-          <h2 className="text-xl font-semibold text-slate-200 mb-4">Base URL</h2>
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">🌐 Direct API Access</h2>
+          <p className="text-slate-300 mb-3">Base URL</p>
           <code className="text-blue-400 bg-slate-900 px-3 py-2 rounded">
             https://vibeguardai.vercel.app
           </code>
@@ -25,12 +65,12 @@ export default function ApiDocs() {
 
         {/* Authentication */}
         <div className="security-surface p-6 mb-8">
-          <h2 className="text-xl font-semibold text-slate-200 mb-4">Authentication</h2>
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">🔓 Freemium API</h2>
           <p className="text-slate-300 mb-4">
-            ✅ <strong>No API key required!</strong> Our API is completely open and free to use.
+            <strong>Free tier available for testing and hackathons</strong> - no API key required!
           </p>
           <p className="text-slate-400 text-sm">
-            Just make HTTP requests directly - no authentication needed.
+            For production use and higher rate limits, contact us for a Developer API Key.
           </p>
         </div>
 
@@ -62,14 +102,25 @@ export default function ApiDocs() {
           <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
             <code className="text-sm text-slate-300">
 {`{
+  "simulation": {
+    "effectsSummary": {...},
+    "staticAnalysis": {
+      "moveCalls": [...],
+      "gasBudget": "10000000",
+      "containsDirectTransfer": true
+    }
+  },
   "risk": {
     "riskLevel": "RED",
-    "reasons": ["⚠️ INTENT MISMATCH"],
+    "reasons": [
+      "Assets leave your wallet to another address",
+      "⚠️ INTENT MISMATCH: You expect to receive assets, but this sends assets away"
+    ],
     "confidence": 0.9
   },
   "explanation": {
     "headline": "Honeypot Scam Detected",
-    "plainEnglish": "This transaction will...",
+    "plainEnglish": "This transaction will send 100 SUI from your wallet...",
     "recommendedAction": "Do Not Sign"
   }
 }`}
@@ -124,18 +175,28 @@ console.log(data.explanation.recommendedAction);`}
 
         {/* Support */}
         <div className="security-surface p-6">
-          <h2 className="text-xl font-semibold text-slate-200 mb-4">Support</h2>
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">🆘 Need Help?</h2>
           <p className="text-slate-300 mb-4">
-            Need help integrating the API?
+            Questions about integration or found a bug?
           </p>
-          <a 
-            href="https://github.com/mianohh/vibeguard-ai/issues"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-          >
-            Open GitHub Issue
-          </a>
+          <div className="flex gap-4">
+            <a 
+              href="https://github.com/mianohh/vibeguard-ai/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              GitHub Issues
+            </a>
+            <a 
+              href="https://www.npmjs.com/package/vibeguard-sui-security"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
+            >
+              View on npm
+            </a>
+          </div>
         </div>
 
       </div>
