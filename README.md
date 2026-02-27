@@ -248,6 +248,32 @@ Full analysis with AI explanation and scam detection. **Free tier available for 
 - AI explanations may fall back to deterministic rules if API fails
 - Does not auto-block dangerous transactions (user decision required)
 
+## 🗺️ Roadmap
+
+### Phase 1: Core Security ✅ (Complete)
+- ✅ Static transaction analysis
+- ✅ Live simulation with Sui RPC (`dryRunTransactionBlock`)
+- ✅ Intent mismatch detection
+- ✅ AI-powered explanations
+- ✅ Contract blacklist/whitelist
+- ✅ Live impact dashboard
+- ✅ TypeScript SDK (published and working)
+
+### Phase 2: Move Integration 🚧 (In Progress)
+- 🔄 **On-Chain Reputation Registry** - Decentralized Move contract for blacklisting malicious packages
+- 🔄 **Move Bytecode Analyzer** - Deep inspection of smart contract logic
+- 🔄 **Function Signature Verification** - Validate Move function calls match expected behavior
+- 🔄 **Module Dependency Mapping** - Track which packages a contract imports
+- 🔄 **Reentrancy Detection** - Identify potential reentrancy vulnerabilities in Move code
+- 🔄 **Resource Flow Analysis** - Track how assets move through Move modules
+
+### Phase 3: Advanced Features 📅 (Planned)
+- 📅 Browser extension for one-click protection
+- 📅 Wallet SDK integration (Sui Wallet, Ethos, Suiet)
+- 📅 Historical scam pattern database
+- 📅 Multi-signature transaction support
+- 📅 Real-time threat intelligence feed
+
 ## 🤝 Contributing
 
 1. Fork the repository

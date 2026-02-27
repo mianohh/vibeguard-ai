@@ -72,9 +72,15 @@ export default function SecurityConsole() {
           <div className="mt-4">
             <a 
               href="/api-docs"
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors mr-4"
             >
               📡 API Documentation →
+            </a>
+            <a 
+              href="/roadmap"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+            >
+              🗺️ Roadmap →
             </a>
           </div>
         </div>
