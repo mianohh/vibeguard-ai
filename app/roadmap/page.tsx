@@ -36,68 +36,45 @@ export default function Roadmap() {
         <div className="security-surface p-6 mb-6 border-2 border-blue-500/30">
           <div className="flex items-center mb-4">
             <span className="text-2xl mr-3">🚧</span>
-            <h2 className="text-2xl font-bold text-blue-400">Phase 2: Move Integration</h2>
-            <span className="ml-auto text-sm text-blue-400 font-medium">In Progress</span>
+            <h2 className="text-2xl font-bold text-blue-400">Phase 2: Distribution & Validation</h2>
+            <span className="ml-auto text-sm text-blue-400 font-medium">Current Focus</span>
           </div>
           <ul className="space-y-3 text-slate-300">
             <li className="flex items-start">
               <span className="text-blue-400 mr-2">🔄</span>
               <div>
-                <div className="font-semibold">On-Chain Reputation Registry</div>
-                <div className="text-sm text-slate-400">Decentralized Move contract for blacklisting malicious packages</div>
+                <div className="font-semibold">Wallet Developer Outreach</div>
+                <div className="text-sm text-slate-400">Onboarding first cohort of Sui wallets</div>
               </div>
             </li>
             <li className="flex items-start">
               <span className="text-blue-400 mr-2">🔄</span>
               <div>
-                <div className="font-semibold">Move Bytecode Analyzer</div>
-                <div className="text-sm text-slate-400">Deep inspection of smart contract logic</div>
+                <div className="font-semibold">SDK Adoption Tracking</div>
+                <div className="text-sm text-slate-400">Measuring real-world usage and feedback</div>
               </div>
             </li>
             <li className="flex items-start">
               <span className="text-blue-400 mr-2">🔄</span>
               <div>
-                <div className="font-semibold">Function Signature Verification</div>
-                <div className="text-sm text-slate-400">Validate Move function calls match expected behavior</div>
+                <div className="font-semibold">Developer Partnerships</div>
+                <div className="text-sm text-slate-400">Direct integration with wallet teams</div>
               </div>
             </li>
             <li className="flex items-start">
               <span className="text-blue-400 mr-2">🔄</span>
               <div>
-                <div className="font-semibold">Module Dependency Mapping</div>
-                <div className="text-sm text-slate-400">Track which packages a contract imports</div>
+                <div className="font-semibold">Browser Extension PoC</div>
+                <div className="text-sm text-slate-400">Validating end-user UX</div>
               </div>
             </li>
             <li className="flex items-start">
               <span className="text-blue-400 mr-2">🔄</span>
               <div>
-                <div className="font-semibold">Reentrancy Detection</div>
-                <div className="text-sm text-slate-400">Identify potential reentrancy vulnerabilities in Move code</div>
+                <div className="font-semibold">Community Feedback Loop</div>
+                <div className="text-sm text-slate-400">Iterating based on actual user needs</div>
               </div>
             </li>
-            <li className="flex items-start">
-              <span className="text-blue-400 mr-2">🔄</span>
-              <div>
-                <div className="font-semibold">Resource Flow Analysis</div>
-                <div className="text-sm text-slate-400">Track how assets move through Move modules</div>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        {/* Phase 3 */}
-        <div className="security-surface p-6 mb-6">
-          <div className="flex items-center mb-4">
-            <span className="text-2xl mr-3">📅</span>
-            <h2 className="text-2xl font-bold text-slate-300">Phase 3: Advanced Features</h2>
-            <span className="ml-auto text-sm text-slate-400 font-medium">Planned</span>
-          </div>
-          <ul className="space-y-2 text-slate-300">
-            <li className="flex items-start"><span className="text-slate-500 mr-2">○</span> Browser extension for one-click protection</li>
-            <li className="flex items-start"><span className="text-slate-500 mr-2">○</span> Wallet SDK integration (Sui Wallet, Ethos, Suiet)</li>
-            <li className="flex items-start"><span className="text-slate-500 mr-2">○</span> Historical scam pattern database</li>
-            <li className="flex items-start"><span className="text-slate-500 mr-2">○</span> Multi-signature transaction support</li>
-            <li className="flex items-start"><span className="text-slate-500 mr-2">○</span> Real-time threat intelligence feed</li>
           </ul>
         </div>
 

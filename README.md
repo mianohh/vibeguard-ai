@@ -257,22 +257,14 @@ Full analysis with AI explanation and scam detection. **Free tier available for 
 - ✅ AI-powered explanations
 - ✅ Contract blacklist/whitelist
 - ✅ Live impact dashboard
-- ✅ TypeScript SDK (published and working)
+- ✅ TypeScript SDK (published to npm)
 
-### Phase 2: Move Integration 🚧 (In Progress)
-- 🔄 **On-Chain Reputation Registry** - Decentralized Move contract for blacklisting malicious packages
-- 🔄 **Move Bytecode Analyzer** - Deep inspection of smart contract logic
-- 🔄 **Function Signature Verification** - Validate Move function calls match expected behavior
-- 🔄 **Module Dependency Mapping** - Track which packages a contract imports
-- 🔄 **Reentrancy Detection** - Identify potential reentrancy vulnerabilities in Move code
-- 🔄 **Resource Flow Analysis** - Track how assets move through Move modules
-
-### Phase 3: Advanced Features 📅 (Planned)
-- 📅 Browser extension for one-click protection
-- 📅 Wallet SDK integration (Sui Wallet, Ethos, Suiet)
-- 📅 Historical scam pattern database
-- 📅 Multi-signature transaction support
-- 📅 Real-time threat intelligence feed
+### Phase 2: Distribution & Validation 🚧 (Current Focus)
+- 🔄 **Wallet Developer Outreach** - Onboarding first cohort of Sui wallets
+- 🔄 **SDK Adoption Tracking** - Measuring real-world usage and feedback
+- 🔄 **Developer Partnerships** - Direct integration with wallet teams
+- 🔄 **Browser Extension PoC** - Validating end-user UX
+- 🔄 **Community Feedback Loop** - Iterating based on actual user needs
 
 ## 🤝 Contributing
 
