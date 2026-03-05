@@ -34,11 +34,6 @@ export default function ZkLoginButton() {
   }, []);
 
   const handleLogin = async () => {
-    if (!GOOGLE_CLIENT_ID) {
-      alert('Google OAuth Client ID not configured. See ZKLOGIN_SETUP.md');
-      return;
-    }
-    
     // Generate random nonce for OAuth
     const nonce = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('zklogin_nonce', nonce);
@@ -102,7 +97,7 @@ export default function ZkLoginButton() {
           onClick={handleLogin}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium border border-blue-500/50 shadow-lg shadow-blue-900/20"
         >
-          {GOOGLE_CLIENT_ID ? '🔐 Login with Google (zkLogin)' : '⚠️ Configure Google OAuth'}
+          🔐 Login with Google (zkLogin)
         </button>
       ) : (
         <div className="flex items-center gap-3">
