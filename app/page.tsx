@@ -69,18 +69,35 @@ export default function SecurityConsole() {
           <p className="text-slate-500 mt-2 text-sm">
             Analyze real Sui transactions before you sign them
           </p>
-          <div className="mt-4">
+          
+          {/* Navigation Tabs */}
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <a 
+              href="/report"
+              className="px-6 py-3 bg-red-600/10 border border-red-500/30 rounded-lg hover:bg-red-600/20 transition-all duration-200 group"
+            >
+              <span className="text-red-400 group-hover:text-red-300 font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">🚨</span>
+                Report Malicious Contract
+              </span>
+            </a>
             <a 
               href="/api-docs"
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors mr-4"
+              className="px-6 py-3 bg-blue-600/10 border border-blue-500/30 rounded-lg hover:bg-blue-600/20 transition-all duration-200 group"
             >
-              📡 API Documentation →
+              <span className="text-blue-400 group-hover:text-blue-300 font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">📡</span>
+                API Documentation
+              </span>
             </a>
             <a 
               href="/roadmap"
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              className="px-6 py-3 bg-purple-600/10 border border-purple-500/30 rounded-lg hover:bg-purple-600/20 transition-all duration-200 group"
             >
-              🗺️ Roadmap →
+              <span className="text-purple-400 group-hover:text-purple-300 font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">🗺️</span>
+                Roadmap
+              </span>
             </a>
           </div>
         </div>

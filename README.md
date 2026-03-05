@@ -1,68 +1,56 @@
 # 🔐 VibeGuard AI
 
-**Eliminate blind signing on Sui blockchain**
+**Enterprise-Grade Transaction Simulation & Intent Verification for the Sui Ecosystem**
 
-VibeGuard AI is a security tool that analyzes Sui transactions before you sign them. It uses live blockchain simulation, intent-based scam detection, and AI explanations to protect you from honeypot attacks and phishing scams.
+VibeGuard AI is a decentralized security layer designed to eliminate blind signing. By combining live blockchain simulation, deterministic Move static analysis, and agentic AI, VibeGuard protects users from honeypot attacks, malicious state changes, and phishing exploits before a signature is ever broadcast.
 
-![Security Grade](https://img.shields.io/badge/Security-MVP%20Ready-green)
-![Network](https://img.shields.io/badge/Sui-Mainnet%20%7C%20Testnet%20%7C%20Devnet-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-![Scam Detection](https://img.shields.io/badge/Scam%20Detection-Intent%20Based-red)
+🔗 **[Live Platform](https://vibeguardai.vercel.app)** | 📡 **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | 🚨 **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)**
 
-## 🚨 The Problem: Blind Signing
+---
 
-Blind signing is when you approve a blockchain transaction without understanding what it will do. This leads to:
+## 🚨 Systemic Industry Risk: The Blind Signing Problem
 
-- **Asset Loss**: Unexpected token or NFT transfers
-- **Honeypot Scams**: Fake "airdrops" that drain your wallet
-- **Permission Exploits**: Unwanted access to your assets
-- **Irreversible Damage**: Blockchain transactions cannot be undone
+The current Web3 user experience forces users to sign cryptographic payloads they do not understand. This opacity creates a massive attack vector resulting in:
 
-## ⚡ How VibeGuard Works
+- **Catastrophic Asset Drain:** Unexpected token, NFT, or permission transfers.
+- **Honeypot Exploits:** Malicious contracts disguised as standard airdrops or mints.
+- **Ecosystem Churn:** Security breaches permanently damage user trust and halt network adoption.
 
-1. **Input Flexibility**: Paste base64 transaction bytes from your wallet (before signing)
-2. **Blacklist Check**: Instantly blocks known malicious contracts
-3. **Static Analysis**: Locally parses Move calls, gas budget, transfers, and chain ID
-4. **Intent Capture**: Describe what you think the transaction does
-5. **Live Simulation**: Uses Sui's `dryRunTransactionBlock` to see what actually happens
-6. **Intent Mismatch Detection**: Compares expectation vs. reality
-7. **AI Analysis**: Explains risks in plain English (8th-grade reading level)
-8. **Risk Verdict**: Green (Safe) / Yellow (Caution) / Red (Danger)
+---
 
-## 🎯 Example: Scam Detection
+## ⚡ Core Architecture & Protection Matrix
 
-### Without Intent (Limited Protection)
-```
-Transaction: Sends 100 SUI to unknown address
-VibeGuard: "⚠️ Assets leave your wallet"
-User: "Maybe that's just how airdrops work?" ❌ Signs anyway
-```
+VibeGuard AI operates as a middleware security pipeline, offering **Multi-Layered Protection**:
 
-### With Intent (Full Protection)
-```
-Transaction: Sends 100 SUI to unknown address
-User Intent: "Claim free airdrop"
-VibeGuard: "🚨 SCAM DETECTED - You expect to receive assets, 
-            but this transaction sends 100 SUI away. 
-            Real airdrops NEVER ask you to send assets first."
-User: ✅ Does not sign
-```
+1. **Deterministic Reputation Engine:** Instantly short-circuits execution if malicious `package_id`s are detected via our on-chain registry.
 
-## ✨ Features
+2. **Offline Static Analysis:** Parses Base64 transaction bytes client-side to extract Move calls, gas budgets, and targets without relying on RPC overhead.
 
-- 📦 **TypeScript SDK** - Drop-in npm package for easy integration
-- 📊 **Live Impact Dashboard** - Real-time stats showing scans, value protected, and scams blocked
-- 🚫 **Contract Blacklist** - Blocks known malicious contracts before simulation
-- 🔍 **Static Analysis** - Parse Move calls, gas budget, and transfers without RPC
-- 🎯 **Intent Mismatch Detection** - Compare what you expect vs. what actually happens
-- 🤖 **AI Explanations** - Plain English analysis at 8th-grade reading level
-- 🛡️ **Multi-Layer Protection** - Combines static parsing, simulation, and AI analysis
-- 🌐 **Multi-Network** - Supports Mainnet, Testnet, and Devnet
-- 🔓 **Freemium API** - Free tier for testing, paid tiers for production
+3. **Live State Simulation:** Leverages Sui's native `dryRunTransactionBlock` to execute the transaction against the live network state and map precise asset flows.
 
-## 🚀 Quick Start
+4. **Intent-Mismatch Detection:** Compares the simulated outcome against the user's stated intent (e.g., "Claim Airdrop"). If a user expects to receive assets, but the simulation shows assets leaving, the transaction is flagged as a honeypot.
 
-### For Developers: Use the SDK
+5. **Agentic AI Translation:** Translates complex Move object mutations into an 8th-grade reading level, plain-English risk report.
+
+---
+
+## 🌍 Decentralized Threat Intelligence (Move + zkLogin)
+
+Security must be accessible to everyone, not just power users. To protect underdeveloped communities and onboard the next billion users safely, VibeGuard integrates deep Sui primitives to remove technical barriers:
+
+- **Frictionless Reporting via zkLogin:** Users can report malicious contracts using standard OAuth (Google/Twitch). No seed phrases, no complex wallet setups.
+
+- **Gasless Submissions:** Threat reports are powered by Sponsored Transactions, removing financial barriers to community participation.
+
+- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract, creating an immutable, public good threat feed for the entire Sui ecosystem.
+
+---
+
+## 🚀 Developer Integration (DX)
+
+VibeGuard AI is built for drop-in integration by wallet providers and dApp developers.
+
+### 1. TypeScript SDK (Recommended for Wallets)
 
 ```bash
 npm install vibeguard-sui-security
@@ -71,232 +59,89 @@ npm install vibeguard-sui-security
 ```typescript
 import { VibeGuard } from 'vibeguard-sui-security';
 
-const guard = new VibeGuard();
+// Initialize with production API key
+const guard = new VibeGuard({ apiKey: process.env.VIBEGUARD_API_KEY });
 
 const result = await guard.analyzeTransaction({
-  transactionBytes: 'AAACAA...', // Base64 from your wallet
-  network: 'testnet',
-  userAddress: '0x1234...',
+  transactionBytes: 'AAACAA...', // Raw Base64 from wallet provider
+  network: 'mainnet',
+  userAddress: '0xYourUserAddress',
   userIntent: 'Claim airdrop'
 });
 
 if (result.risk.riskLevel === 'RED') {
-  console.log('DANGER:', result.explanation.plainEnglish);
-  // Block transaction
-} else {
-  console.log('Safe to proceed');
+  // Intercept and alert the user
+  console.error('🚨 INTENT MISMATCH DETECTED:', result.explanation.plainEnglish);
 }
 ```
 
-**With API Key (Production):**
-```typescript
-const guard = new VibeGuard({ apiKey: 'your-api-key' });
-```
-
-### For Web App Development
-
-```bash
-git clone https://github.com/mianohh/vibeguard-ai
-cd vibeguard-ai
-npm install
-```
-
-### Environment Setup
-
-```bash
-cp .env.example .env
-# Edit .env and add your Gemini API key from https://ai.google.dev/
-```
-
-### Run Development Server
-
-```bash
-npm run dev
-# Open http://localhost:3000
-```
-
-### Generate Test Transactions
-
-```bash
-# Get testnet SUI from https://faucet.testnet.sui.io/
-node generate_test.js YOUR_TESTNET_ADDRESS
-
-# Output:
-# ✅ SAFE transaction (self-transfer)
-#    Intent: "Send to myself" → Should show GREEN
-# 🚨 DANGER transaction (transfer to stranger)
-#    Intent: "Claim free airdrop" → Should show RED with scam warning
-```
-
-## 🔧 Integration Options
-
-### 1. TypeScript SDK (Recommended)
-Perfect for wallet developers and dApp integrations.
-
-```bash
-npm install vibeguard-sui-security
-```
-
-[View SDK Documentation](./packages/sdk/README.md)
-
-### 2. Direct API Calls
-For any language or platform.
+### 2. REST API Pipeline
 
 ```bash
 curl -X POST https://vibeguardai.vercel.app/api/explain \
   -H "Content-Type: application/json" \
-  -d '{"transactionBytes": "...", "network": "testnet"}'
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "transactionBytes": "AAACAA...",
+    "network": "mainnet",
+    "userAddress": "0x...",
+    "userIntent": "Claim airdrop"
+  }'
 ```
-
-[View API Documentation](https://vibeguardai.vercel.app/api-docs)
-
-### 3. Web Interface
-For manual transaction analysis.
-
-[Try Live Demo](https://vibeguardai.vercel.app)
 
 ---
 
-## 📡 API Endpoints
+## 🛠️ Technical Infrastructure
 
-**For Developers:** Our public API is available for testing and hackathons without a key (rate limited). For production use and higher rate limits, please register for a Developer API Key.
+**Frontend:** Next.js 14, TypeScript, Tailwind CSS  
+**Blockchain Data:** @mysten/sui.js, Sui RPC  
+**Smart Contracts:** Sui Move (`reputation_registry`)  
+**Authentication:** @mysten/zklogin, Google OAuth  
+**AI Processing:** Google Gemini API
 
-Full API documentation: [/api-docs](https://vibeguardai.vercel.app/api-docs)
+---
 
-### POST /api/explain
-Full analysis with AI explanation and scam detection. **Free tier available for testing.**
+## Security & Privacy Guarantees
 
-```json
-{
-  "transactionBytes": "AAACAA...",  // Base64 bytes BEFORE signing
-  "network": "testnet",
-  "userAddress": "0x..." // Required for intent mismatch detection
-  "userIntent": "Claim airdrop" // Optional but recommended
-}
-```
+✅ Zero private key exposure (analyzes unsigned bytes).  
+✅ Stateless architecture (no user transaction data is stored).  
+✅ Strict input sanitization and Chain ID validation to prevent replay attacks.
 
-**Response:**
-```json
-{
-  "simulation": {
-    "effectsSummary": {...},
-    "staticAnalysis": {
-      "moveCalls": [{"packageId": "0x2", "moduleName": "coin", "functionName": "transfer"}],
-      "gasBudget": "10000000",
-      "isHighGas": false,
-      "containsDirectTransfer": true,
-      "chainId": "4c78adac",
-      "networkMismatch": false
-    }
-  },
-  "risk": {
-    "riskLevel": "RED",
-    "reasons": ["⚠️ INTENT MISMATCH: You expect to receive assets, but this sends assets away"],
-    "confidence": 0.9
-  },
-  "explanation": {
-    "headline": "Honeypot Scam Detected",
-    "plainEnglish": "This transaction will send 100 SUI from your wallet...",
-    "recommendedAction": "Do Not Sign"
-  }
-}
-```
+---
 
-## ⚖️ Risk Assessment Rules
+## 🗺️ Product Roadmap
 
-### 🔴 RED (Danger)
-- **Blacklisted contract**: Known malicious package detected
-- Assets leave your wallet to another address
-- **Intent mismatch**: You expect to receive but assets are leaving
-- Transaction will fail if executed
+Our engineering roadmap is strictly dictated by active user feedback, partner integrations, and measured Product-Market Fit. We prioritize shipping usable frameworks over theoretical technical layers.
 
-### 🟡 YELLOW (Caution)
-- Interaction with smart contracts
-- Complex state changes
-- High gas usage
+### ✅ Phase 1: MVP Framework (Completed)
+- Offline static analysis & Base64 parsing.
+- Live RPC simulation integration.
+- AI-driven intent mismatch detection.
+- NPM SDK publication.
 
-### 🟢 GREEN (Safe)
-- Self-transfers (assets stay with you)
-- No assets leaving to other addresses
-- No permission changes
+### 🚧 Phase 2: Distribution & Validation (Current Focus)
+- **Integration Verification:** Deploying the Move `ReputationRegistry` and gasless zkLogin reporting.
+- **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers.
+- **SDK Adoption Tracking:** Measuring real-world API usage, TVP (Total Value Protected), and community feedback.
 
-## 🛠️ Tech Stack
+### 📅 Phase 3: Product-Led Iteration (Planned)
+- Feature expansion guided strictly by partner feedback and wallet integration requirements.
+- Exploring one-click browser extensions based on end-user UX testing.
 
-- **Next.js 14**: React framework with API routes
-- **@mysten/sui.js**: Official Sui SDK
-- **Google Gemini API**: AI explanations
-- **TypeScript**: Type safety
-- **Tailwind CSS**: UI styling
-
-## 🔒 Security & Privacy
-
-- ✅ No private keys required
-- ✅ No wallet connection needed
-- ✅ No data stored or logged
-- ✅ Static analysis works offline
-- ✅ Input validation & sanitization
-- ✅ Chain ID validation prevents replay attacks
-- ✅ Open API access (free tier for testing, paid for production)
-- ✅ Server-side AI processing
-- ✅ Open source & auditable
-
-## 📋 Known Limitations
-
-- Only works with base64 transaction bytes from your wallet BEFORE signing
-- Transaction hashes from Sui Explorer cannot be simulated (already executed)
-- Intent detection works best with keywords: claim, airdrop, free, mint, receive
-- AI explanations may fall back to deterministic rules if API fails
-- Does not auto-block dangerous transactions (user decision required)
-
-## 🗺️ Roadmap
-
-### Phase 1: Core Security ✅ (Complete)
-- ✅ Static transaction analysis
-- ✅ Live simulation with Sui RPC (`dryRunTransactionBlock`)
-- ✅ Intent mismatch detection
-- ✅ AI-powered explanations
-- ✅ Contract blacklist/whitelist
-- ✅ Live impact dashboard
-- ✅ TypeScript SDK (published to npm)
-
-### Phase 2: Distribution & Validation 🚧 (Current Focus)
-- 🔄 **Wallet Developer Outreach** - Onboarding first cohort of Sui wallets
-- 🔄 **SDK Adoption Tracking** - Measuring real-world usage and feedback
-- 🔄 **Developer Partnerships** - Direct integration with wallet teams
-- 🔄 **Browser Extension PoC** - Validating end-user UX
-- 🔄 **Community Feedback Loop** - Iterating based on actual user needs
+---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Test with real Sui transactions
-4. Commit: `git commit -m 'Add amazing feature'`
-5. Push: `git push origin feature/amazing-feature`
-6. Open a Pull Request
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-**Common Issues:**
-
-- **"Hash lookup failed"**: Use base64 bytes from wallet BEFORE signing, not hashes from explorer
-- **"Intent mismatch not detected"**: Include `userAddress` in API request and use keywords like "claim", "airdrop", "free", "mint"
-- **"AI errors"**: Check your `GEMINI_API_KEY` is valid
-
-## ⚠️ Disclaimer
-
-VibeGuard AI is a security tool, not a guarantee. Always verify transactions independently. The blockchain is immutable - once signed, transactions cannot be reversed.
-
-## 💡 Pro Tip
-
-**Always fill in the intent field!** This activates scam detection and significantly improves protection against honeypot attacks.
+We welcome contributions from security researchers and Sui developers. Please review our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on updating the threat registry or expanding SDK language support.
 
 ---
 
-**Built with ❤️ for the Sui community**
+## License
 
-🔗 [Live Demo](https://vibeguardai.vercel.app) | [📡 API Docs](https://vibeguardai.vercel.app/api-docs) | [Report Issues](https://github.com/mianohh/vibeguard-ai/issues)
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Built to secure the Sui ecosystem.** For enterprise API keys or partnership inquiries, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues) or reach out directly.
+
+🔗 [vibeguardai.vercel.app](https://vibeguardai.vercel.app)
