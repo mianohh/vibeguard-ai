@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '920125293845-8ocp43b7fg1er9o7dcscbg3ne93mh1iv.apps.googleusercontent.com';
 
 export default function ZkLoginButton() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
