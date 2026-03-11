@@ -26,8 +26,8 @@ export default function ReportPage() {
 
   useEffect(() => {
     const checkLogin = () => {
-      const address = sessionStorage.getItem('zklogin_address');
-      setIsLoggedIn(!!address);
+      const session = sessionStorage.getItem('zklogin_session');
+      setIsLoggedIn(!!session);
     };
     
     checkLogin();
@@ -95,8 +95,10 @@ export default function ReportPage() {
     setSubmitting(true);
     
     try {
-      const address = sessionStorage.getItem('zklogin_address');
-      const email = sessionStorage.getItem('zklogin_email');
+      const sessionData = sessionStorage.getItem('zklogin_session');
+      const session = sessionData ? JSON.parse(sessionData) : null;
+      const address = session?.address;
+      const email = session?.email;
       
       // Step 1: Prepare threat report data
       const threatReport: ThreatReport = {
