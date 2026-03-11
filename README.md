@@ -34,7 +34,60 @@ VibeGuard AI operates as a middleware security pipeline, offering **Multi-Layere
 
 ---
 
-## 🌍 Decentralized Threat Intelligence (Move + zkLogin)
+### 🎬 Live Demo
+
+> **[Watch VibeGuard in Action →](https://vibeguardai.vercel.app)**  
+> See real-time transaction analysis detecting honeypot scams before signature.
+
+<!-- TODO: Add demo GIF here showing:
+     1. User pastes transaction bytes
+     2. VibeGuard analyzes in real-time
+     3. RED alert appears with plain-English explanation
+     Example: ![VibeGuard Demo](./assets/demo.gif)
+-->
+
+---
+
+### 📊 Data Flow Architecture
+
+```
+┌─────────────────┐
+│   Wallet dApp   │
+│  (User Intent)  │
+└────────┬────────┘
+         │ Raw Transaction Bytes (Base64)
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│              VibeGuard Security Pipeline                │
+├─────────────────────────────────────────────────────────┤
+│  1. Reputation Check  →  Blacklist Registry (Move)     │
+│  2. Static Analysis   →  Parse Move Calls & Gas        │
+│  3. Live Simulation   →  Sui RPC dryRunTransaction     │
+│  4. Intent Matching   →  Compare Expected vs Actual    │
+│  5. AI Translation    →  Gemini Plain-English Report   │
+└────────┬────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│              Risk Verdict & Recommendation              │
+├─────────────────────────────────────────────────────────┤
+│  🟢 GREEN:    Safe to sign                             │
+│  🟡 YELLOW:   Review carefully                          │
+│  🔴 RED:      DO NOT SIGN - Intent mismatch detected   │
+└─────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  User Decision  │
+│  (Sign/Reject)  │
+└─────────────────┘
+```
+
+**Key Insight:** VibeGuard intercepts transactions *before* signing, providing a security layer that wallets can integrate with a single API call.
+
+---
+
+## 🌍 Decentralized Threat Intelligence (Move + zkLogin + Walrus)
 
 Security must be accessible to everyone, not just power users. To protect underdeveloped communities and onboard the next billion users safely, VibeGuard integrates deep Sui primitives to remove technical barriers:
 
@@ -42,7 +95,9 @@ Security must be accessible to everyone, not just power users. To protect underd
 
 - **Gasless Submissions:** Threat reports are powered by Sponsored Transactions, removing financial barriers to community participation.
 
-- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract, creating an immutable, public good threat feed for the entire Sui ecosystem.
+- **Walrus Decentralized Storage:** All threat reports are stored immutably on Walrus, ensuring censorship-resistant evidence preservation with cryptographic blob IDs.
+
+- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract with Walrus blob references, creating an immutable, public good threat feed for the entire Sui ecosystem.
 
 ---
 
@@ -96,6 +151,7 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 **Frontend:** Next.js 14, TypeScript, Tailwind CSS  
 **Blockchain Data:** @mysten/sui.js, Sui RPC  
 **Smart Contracts:** Sui Move (`reputation_registry`)  
+**Decentralized Storage:** Walrus Protocol  
 **Authentication:** @mysten/zklogin, Google OAuth  
 **AI Processing:** Google Gemini API
 
@@ -120,7 +176,8 @@ Our engineering roadmap is strictly dictated by active user feedback, partner in
 - NPM SDK publication.
 
 ### 🚧 Phase 2: Distribution & Validation (Current Focus)
-- **Integration Verification:** Deploying the Move `ReputationRegistry` and gasless zkLogin reporting.
+- **Walrus Integration:** Threat reports stored on Walrus decentralized storage with on-chain blob ID references.
+- **zkLogin Reporting:** Gasless, OAuth-based threat submission pipeline live on testnet.
 - **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers.
 - **SDK Adoption Tracking:** Measuring real-world API usage, TVP (Total Value Protected), and community feedback.
 
