@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ZkLoginButton from '../components/ZkLoginButton';
 import Toast from '../components/Toast';
+import { publishThreatReportToWalrus, type ThreatReport } from '@/lib/walrus';
 
 interface ToastState {
   show: boolean;
@@ -17,8 +18,10 @@ export default function ReportPage() {
   const [description, setDescription] = useState('');
   const [proofTxHash, setProofTxHash] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<string>('');
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<'verified' | 'failed' | null>(null);
+  const [verificationData, setVerificationData] = useState<any>(null);
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
 
   useEffect(() => {
@@ -53,6 +56,7 @@ export default function ReportPage() {
 
       if (result.risk?.riskLevel === 'RED' || result.risk?.riskLevel === 'CRITICAL') {
         setVerificationResult('verified');
+        setVerificationData(result); // Store for Walrus upload
         setToast({
           show: true,
           message: 'Threat Verified!',
@@ -94,36 +98,57 @@ export default function ReportPage() {
       const address = sessionStorage.getItem('zklogin_address');
       const email = sessionStorage.getItem('zklogin_email');
       
-      console.log('📝 Submitting report:');
-      console.log('  Package ID:', packageId);
-      console.log('  Reporter:', address);
-      console.log('  Email:', email);
-      console.log('  Description:', description);
-      console.log('  Verified:', verificationResult === 'verified');
-      
+      // Step 1: Prepare threat report data
+      const threatReport: ThreatReport = {
+        packageId,
+        transactionBytes: proofTxHash || undefined,
+        userIntent: 'Report malicious contract',
+        riskLevel: verificationData?.risk?.riskLevel || 'UNVERIFIED',
+        reasons: verificationData?.risk?.reasons || [description],
+        headline: verificationData?.explanation?.headline || 'Community-Reported Threat',
+        plainEnglish: verificationData?.explanation?.plainEnglish || description,
+        recommendedAction: verificationData?.explanation?.recommendedAction || 'Do Not Sign',
+        reportedAt: new Date().toISOString(),
+        reportedBy: address || 'anonymous'
+      };
+
+      // Step 2: Upload to Walrus decentralized storage
+      setLoadingStage('Uploading threat evidence to Walrus decentralized storage...');
+      const walrusBlobId = await publishThreatReportToWalrus(threatReport);
+
+      // Step 3: Submit to on-chain registry (TODO: Implement Move PTB)
+      setLoadingStage('Committing to Sui Move Registry...');
+      // TODO: Call report_malicious_contract(package_id, walrus_blob_id, severity)
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       setToast({
         show: true,
         message: 'Report Submitted Successfully!',
         type: 'success',
-        details: `Package ID: ${packageId.slice(0, 10)}...${packageId.slice(-6)}\nReporter: ${address?.slice(0, 6)}...${address?.slice(-4)}\nStatus: ${verificationResult === 'verified' ? 'Auto-Verified ✅' : 'Pending Review'}\n\nYour report will be recorded on-chain via the ReputationRegistry contract.\nThank you for helping protect the Sui community!`
+        details: JSON.stringify({
+          packageId,
+          address,
+          verificationResult,
+          walrusBlobId
+        })
       });
       
       setPackageId('');
       setDescription('');
       setProofTxHash('');
       setVerificationResult(null);
+      setVerificationData(null);
     } catch (error) {
       console.error('Failed to submit report:', error);
       setToast({
         show: true,
         message: 'Failed to Submit Report',
         type: 'error',
-        details: 'Please check your connection and try again.\nIf the problem persists, contact support.'
+        details: `Error: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check your connection and try again.\nIf the problem persists, contact support.`
       });
     } finally {
       setSubmitting(false);
+      setLoadingStage('');
     }
   };
 
@@ -236,10 +261,14 @@ export default function ReportPage() {
                 {!isLoggedIn ? 'Login to Submit Report' : submitting ? (
                   <div className="flex items-center justify-center space-x-3">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Submitting...</span>
+                    <span>{loadingStage || 'Submitting...'}</span>
                   </div>
                 ) : 'Submit Report'}
               </button>
+
+              <div className="text-center text-xs text-slate-500 mt-4">
+                Powered by <span className="text-blue-400 font-semibold">Sui zkLogin</span> & <span className="text-blue-400 font-semibold">Walrus Decentralized Storage</span>
+              </div>
             </form>
           </div>
         </div>
