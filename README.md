@@ -23,81 +23,39 @@ The current Web3 user experience forces users to sign cryptographic payloads the
 VibeGuard AI operates as a middleware security pipeline, offering **Multi-Layered Protection**:
 
 1. **Deterministic Reputation Engine:** Instantly short-circuits execution if malicious `package_id`s are detected via our on-chain registry.
-
 2. **Offline Static Analysis:** Parses Base64 transaction bytes client-side to extract Move calls, gas budgets, and targets without relying on RPC overhead.
-
 3. **Live State Simulation:** Leverages Sui's native `dryRunTransactionBlock` to execute the transaction against the live network state and map precise asset flows.
-
 4. **Intent-Mismatch Detection:** Compares the simulated outcome against the user's stated intent (e.g., "Claim Airdrop"). If a user expects to receive assets, but the simulation shows assets leaving, the transaction is flagged as a honeypot.
-
 5. **Agentic AI Translation:** Translates complex Move object mutations into an 8th-grade reading level, plain-English risk report.
 
 ---
 
-### 🎬 Live Demo
+## 🌍 Decentralized Threat Intelligence (zkLogin + Burner Wallets + Walrus)
 
-> **[Watch VibeGuard in Action →](https://vibeguardai.vercel.app)**  
-> See real-time transaction analysis detecting honeypot scams before signature.
+Security must be accessible to everyone, not just power users. To protect underdeveloped communities and onboard the next billion users safely, VibeGuard integrates deep Sui primitives to remove all technical barriers:
 
-<!-- TODO: Add demo GIF here showing:
-     1. User pastes transaction bytes
-     2. VibeGuard analyzes in real-time
-     3. RED alert appears with plain-English explanation
-     Example: ![VibeGuard Demo](./assets/demo.gif)
--->
-
----
-
-### 📊 Data Flow Architecture
-
-```
-┌─────────────────┐
-│   Wallet dApp   │
-│  (User Intent)  │
-└────────┬────────┘
-         │ Raw Transaction Bytes (Base64)
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│              VibeGuard Security Pipeline                │
-├─────────────────────────────────────────────────────────┤
-│  1. Reputation Check  →  Blacklist Registry (Move)     │
-│  2. Static Analysis   →  Parse Move Calls & Gas        │
-│  3. Live Simulation   →  Sui RPC dryRunTransaction     │
-│  4. Intent Matching   →  Compare Expected vs Actual    │
-│  5. AI Translation    →  Gemini Plain-English Report   │
-└────────┬────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│              Risk Verdict & Recommendation              │
-├─────────────────────────────────────────────────────────┤
-│  🟢 GREEN:    Safe to sign                             │
-│  🟡 YELLOW:   Review carefully                          │
-│  🔴 RED:      DO NOT SIGN - Intent mismatch detected   │
-└─────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  User Decision  │
-│  (Sign/Reject)  │
-└─────────────────┘
-```
-
-**Key Insight:** VibeGuard intercepts transactions *before* signing, providing a security layer that wallets can integrate with a single API call.
-
----
-
-## 🌍 Decentralized Threat Intelligence (Move + zkLogin + Walrus)
-
-Security must be accessible to everyone, not just power users. To protect underdeveloped communities and onboard the next billion users safely, VibeGuard integrates deep Sui primitives to remove technical barriers:
-
-- **Frictionless Reporting via zkLogin:** Users can report malicious contracts using standard OAuth (Google/Twitch). No seed phrases, no complex wallet setups.
-
-- **Gasless Submissions:** Threat reports are powered by Sponsored Transactions, removing financial barriers to community participation.
-
+- **Zero-Friction Authentication:** Users authenticate with Google OAuth via zkLogin, which deterministically generates consistent burner wallets for gasless transactions. No seed phrases, no wallet extensions, and no complex key management.
+- **Persistent Identity with Gasless Execution:** Each Google account generates the same deterministic burner wallet across sessions, enabling consistent identity tracking while maintaining gasless transaction execution through sponsored transactions.
 - **Walrus Decentralized Storage:** All threat reports are stored immutably on Walrus, ensuring censorship-resistant evidence preservation with cryptographic blob IDs.
+- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract with Walrus blob references. The contract emits `ThreatReported` events, creating an immutable, real-time threat feed for B2B wallet partners.
 
-- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract with Walrus blob references, creating an immutable, public good threat feed for the entire Sui ecosystem.
+**🔗 Live Smart Contract:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3)
+
+### Technical Implementation: zkLogin-Backed Burner Wallets
+
+Our authentication system combines the best of both worlds:
+
+1. **zkLogin Identity Layer:** Google OAuth + zkLogin proof generation creates a persistent Sui address tied to the user's Google account
+2. **Deterministic Burner Generation:** The zkLogin address serves as a seed to generate a consistent Ed25519 burner wallet using `SHA-256(zkLoginAddress + 'burner_seed')`
+3. **Sponsored Transaction Execution:** The burner wallet signs transactions while our backend sponsors gas costs, enabling truly gasless user experience
+4. **Identity Persistence:** Same Google account always generates the same burner wallet, enabling consistent threat reporting attribution
+
+This hybrid approach provides:
+- ✅ **Persistent Identity:** Consistent addresses across sessions
+- ✅ **Gasless Transactions:** No SUI tokens required
+- ✅ **Zero Complexity:** Just Google OAuth, no wallet management
+- ✅ **Decentralized Storage:** Immutable evidence on Walrus
+- ✅ **On-Chain Registry:** Real-time threat feed via Move events
 
 ---
 
@@ -149,19 +107,20 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 ## 🛠️ Technical Infrastructure
 
 **Frontend:** Next.js 14, TypeScript, Tailwind CSS  
-**Blockchain Data:** @mysten/sui.js, Sui RPC  
+**Authentication:** zkLogin + Google OAuth, Deterministic Burner Wallets  
+**Blockchain Data:** @mysten/sui, Sui RPC  
 **Smart Contracts:** Sui Move (`reputation_registry`)  
-**Decentralized Storage:** Walrus Protocol  
-**Authentication:** @mysten/zklogin, Google OAuth  
+**Decentralized Storage:** Walrus Protocol (`/v1/blobs`)  
+**Transaction Sponsorship:** Multi-Sig Sponsored Transactions  
 **AI Processing:** Google Gemini API
 
 ---
 
 ## Security & Privacy Guarantees
 
-✅ Zero private key exposure (analyzes unsigned bytes).  
-✅ Stateless architecture (no user transaction data is stored).  
-✅ Strict input sanitization and Chain ID validation to prevent replay attacks.
+✅ **Zero private key exposure:** Analyzes unsigned bytes only.  
+✅ **Stateless architecture:** No user transaction data is permanently stored off-chain.  
+✅ **Strict validation:** Input sanitization and Chain ID validation to prevent replay attacks.
 
 ---
 
@@ -175,21 +134,21 @@ Our engineering roadmap is strictly dictated by active user feedback, partner in
 - AI-driven intent mismatch detection.
 - NPM SDK publication.
 
-### 🚧 Phase 2: Distribution & Validation (Current Focus)
-- **Walrus Integration:** Threat reports stored on Walrus decentralized storage with on-chain blob ID references.
-- **zkLogin Reporting:** Gasless, OAuth-based threat submission pipeline live on testnet.
-- **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers.
-- **SDK Adoption Tracking:** Measuring real-world API usage, TVP (Total Value Protected), and community feedback.
+### ✅ Phase 2: Decentralized Threat Feed (Completed)
+- **zkLogin Authentication:** Google OAuth integration with deterministic burner wallet generation for persistent identity.
+- **Walrus Integration:** Threat reports stored on Walrus decentralized storage.
+- **On-Chain Registry:** Smart contract deployed to index malicious packages alongside Walrus Blob IDs.
+- **Gasless Reporting:** Sponsored transactions enable zero-cost threat submissions.
 
-### 📅 Phase 3: Product-Led Iteration (Planned)
-- Feature expansion guided strictly by partner feedback and wallet integration requirements.
-- Exploring one-click browser extensions based on end-user UX testing.
+### 🚧 Phase 3: Distribution & Validation (Current Focus)
+- **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers to subscribe to the `ThreatReported` events.
+- **SDK Adoption Tracking:** Measuring real-world API usage, TVP (Total Value Protected), and community feedback.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions from security researchers and Sui developers. Please review our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on updating the threat registry or expanding SDK language support.
+We welcome contributions from security researchers and Sui developers. For guidelines on updating the threat registry or expanding SDK language support, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues).
 
 ---
 
