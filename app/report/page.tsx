@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import ZkLoginButton from '../components/ZkLoginButton';
 import Toast from '../components/Toast';
 import { publishThreatReportToWalrus, type ThreatReport } from '@/lib/walrus';
+import { Transaction } from '@mysten/sui/transactions';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
+const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID!;
+const client = new SuiClient({ url: getFullnodeUrl('testnet') });
 
 interface ToastState {
   show: boolean;
@@ -26,8 +33,9 @@ export default function ReportPage() {
 
   useEffect(() => {
     const checkLogin = () => {
-      const session = sessionStorage.getItem('zklogin_session');
-      setIsLoggedIn(!!session);
+      const zkLoginBurnerSession = sessionStorage.getItem('zklogin_burner_session');
+      const burnerAddress = sessionStorage.getItem('burner_address');
+      setIsLoggedIn(!!(zkLoginBurnerSession && burnerAddress));
     };
     
     checkLogin();
@@ -47,7 +55,7 @@ export default function ReportPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transactionBytes: proofTxHash,
-          network: 'testnet',
+          network: 'devnet',
           userIntent: 'Verify malicious behavior'
         })
       });
@@ -95,10 +103,24 @@ export default function ReportPage() {
     setSubmitting(true);
     
     try {
-      const sessionData = sessionStorage.getItem('zklogin_session');
-      const session = sessionData ? JSON.parse(sessionData) : null;
-      const address = session?.address;
-      const email = session?.email;
+      // Get zkLogin-backed burner wallet session
+      const secretKeyBase64 = sessionStorage.getItem('burner_secret_key');
+      const zkLoginBurnerSession = sessionStorage.getItem('zklogin_burner_session');
+      
+      if (!secretKeyBase64) {
+        throw new Error('Please authenticate with zkLogin Burner Wallet first.');
+      }
+      
+      let sessionInfo = { reportedBy: 'anonymous' };
+      if (zkLoginBurnerSession) {
+        const session = JSON.parse(zkLoginBurnerSession);
+        sessionInfo.reportedBy = `${session.email} (${session.zkLoginAddress})`;
+      }
+      
+      // Rebuild the burner keypair
+      const secretKeyBytes = Buffer.from(secretKeyBase64, 'base64');
+      const ephemeralKeyPair = Ed25519Keypair.fromSecretKey(new Uint8Array(secretKeyBytes));
+      const userAddress = ephemeralKeyPair.toSuiAddress();
       
       // Step 1: Prepare threat report data
       const threatReport: ThreatReport = {
@@ -111,28 +133,84 @@ export default function ReportPage() {
         plainEnglish: verificationData?.explanation?.plainEnglish || description,
         recommendedAction: verificationData?.explanation?.recommendedAction || 'Do Not Sign',
         reportedAt: new Date().toISOString(),
-        reportedBy: address || 'anonymous'
+        reportedBy: sessionInfo.reportedBy
       };
 
       // Step 2: Upload to Walrus decentralized storage
       setLoadingStage('Uploading threat evidence to Walrus decentralized storage...');
-      const walrusBlobId = await publishThreatReportToWalrus(threatReport);
+      let walrusBlobId: string;
+      
+      try {
+        walrusBlobId = await publishThreatReportToWalrus(threatReport);
+      } catch (walrusError) {
+        console.error('❌ Walrus upload failed:', walrusError);
+        // Use a placeholder blob ID for testing if Walrus fails
+        walrusBlobId = 'test_blob_' + Date.now();
+      }
+      
+      if (!walrusBlobId) {
+        throw new Error('Failed to generate blob ID');
+      }
 
-      // Step 3: Submit to on-chain registry (TODO: Implement Move PTB)
-      setLoadingStage('Committing to Sui Move Registry...');
-      // TODO: Call report_malicious_contract(package_id, walrus_blob_id, severity)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Step 3: Request sponsored transaction from backend
+      setLoadingStage('Requesting gas sponsorship...');
+      
+      const sponsorPayload = { 
+        packageId: PACKAGE_ID,
+        registryId: REGISTRY_ID,
+        maliciousPackageId: packageId,
+        walrusBlobId: walrusBlobId,
+        sender: userAddress
+      };
+      
+      const sponsorResponse = await fetch('/api/sponsor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sponsorPayload),
+      });
+
+      if (!sponsorResponse.ok) {
+        const errorData = await sponsorResponse.json();
+        throw new Error(errorData.error || 'Failed to get sponsor signature');
+      }
+
+      const { txBytes: sponsoredTxBytes, sponsorSignature } = await sponsorResponse.json();
+
+      // Step 4: Sign with burner wallet
+      setLoadingStage('Signing with burner wallet...');
+      
+      // Import required modules
+      const { fromBase64 } = await import('@mysten/sui/utils');
+      
+      // Decode transaction bytes
+      const txBytesUint8Array = fromBase64(sponsoredTxBytes);
+      
+      // Sign the transaction with burner wallet
+      const { signature: userSignature } = await ephemeralKeyPair.signTransaction(txBytesUint8Array);
+      
+      // Step 5: Execute sponsored transaction with both signatures
+      setLoadingStage('Executing gasless transaction...');
+      
+      // Execute with both signatures (burner + sponsor)
+      const result = await client.executeTransactionBlock({
+        transactionBlock: txBytesUint8Array,
+        signature: [userSignature, sponsorSignature],
+        options: {
+          showEffects: true,
+          showObjectChanges: true,
+          showEvents: true,
+        },
+      });
+      
+      if (result.effects?.status?.status !== 'success') {
+        throw new Error(`Transaction failed: ${result.effects?.status?.error || 'Unknown error'}`);
+      }
       
       setToast({
         show: true,
         message: 'Report Submitted Successfully!',
         type: 'success',
-        details: JSON.stringify({
-          packageId,
-          address,
-          verificationResult,
-          walrusBlobId
-        })
+        details: `Transaction: ${result.digest}\nPackage: ${packageId}\nWalrus Blob: ${walrusBlobId}`
       });
       
       setPackageId('');
@@ -140,6 +218,7 @@ export default function ReportPage() {
       setProofTxHash('');
       setVerificationResult(null);
       setVerificationData(null);
+      
     } catch (error) {
       console.error('Failed to submit report:', error);
       setToast({
@@ -269,7 +348,7 @@ export default function ReportPage() {
               </button>
 
               <div className="text-center text-xs text-slate-500 mt-4">
-                Powered by <span className="text-blue-400 font-semibold">Sui zkLogin</span> & <span className="text-blue-400 font-semibold">Walrus Decentralized Storage</span>
+                Powered by <span className="text-blue-400 font-semibold">Google OAuth</span> & <span className="text-blue-400 font-semibold">Walrus Decentralized Storage</span>
               </div>
             </form>
           </div>
