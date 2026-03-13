@@ -2,131 +2,85 @@ module reputation_registry::registry {
     use sui::object::{Self, UID};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
+    use sui::event;
     use sui::table::{Self, Table};
     use std::string::String;
 
-    /// Admin capability for managing the registry
-    public struct AdminCap has key, store {
-        id: UID
-    }
-
-    /// Entry in the blacklist with Walrus storage reference
-    public struct BlacklistEntry has store, copy, drop {
-        package_id: address,
-        walrus_blob_id: String,  // Walrus decentralized storage reference
-        severity: u8,  // 1=Low, 2=Medium, 3=High, 4=Critical
-        added_at: u64,
-        reporter: address
-    }
-
-    /// Main registry storing all blacklisted packages
-    public struct ReputationRegistry has key {
-        id: UID,
-        blacklist: Table<address, BlacklistEntry>,
-        total_reports: u64
-    }
-
-    /// Initialize the registry (called once on deployment)
-    fun init(ctx: &mut TxContext) {
-        let admin_cap = AdminCap {
-            id: object::new(ctx)
-        };
-        
-        let registry = ReputationRegistry {
-            id: object::new(ctx),
-            blacklist: table::new(ctx),
-            total_reports: 0
-        };
-
-        transfer::transfer(admin_cap, tx_context::sender(ctx));
-        transfer::share_object(registry);
-    }
-
-    /// Report a malicious contract with Walrus-stored threat analysis
-    /// This function is called via zkLogin gasless transactions
-    public entry fun report_malicious_contract(
-        registry: &mut ReputationRegistry,
-        package_id: address,
+    /// =======================================================================
+    /// Events (The foundation for the Automated Detection Pipeline)
+    /// =======================================================================
+    
+    /// Emitted whenever a new honeypot or malicious contract is reported.
+    /// Off-chain indexers listen to this event to trigger real-time B2B Webhooks.
+    struct ThreatReported has copy, drop {
+        malicious_package_id: address,
         walrus_blob_id: String,
-        severity: u8,
+        reporter: address,
+    }
+
+    /// =======================================================================
+    /// Shared Objects (The foundation for Reputation Data Growth)
+    /// =======================================================================
+
+    /// The decentralized global registry of all reported threats.
+    struct ThreatRegistry has key {
+        id: UID,
+        /// Maps the malicious package address to the Walrus Blob ID containing the full AI report
+        threats: Table<address, String>,
+        total_threats_logged: u64,
+    }
+
+    /// =======================================================================
+    /// Initialization
+    /// =======================================================================
+
+    fun init(ctx: &mut TxContext) {
+        // Create and share the registry so anyone (via zkLogin) can interact with it
+        transfer::share_object(ThreatRegistry {
+            id: object::new(ctx),
+            threats: table::new(ctx),
+            total_threats_logged: 0,
+        });
+    }
+
+    /// =======================================================================
+    /// Public/Entry Functions
+    /// =======================================================================
+
+    /// Allows a user to gaslessly report a threat.
+    /// Called directly by the Next.js frontend after the Walrus upload succeeds.
+    public entry fun report_malicious_contract(
+        registry: &mut ThreatRegistry,
+        malicious_package_id: address,
+        walrus_blob_id: String,
         ctx: &mut TxContext
     ) {
-        // Check if already reported
-        if (table::contains(&registry.blacklist, package_id)) {
-            // Update existing entry with new evidence
-            let entry = table::borrow_mut(&mut registry.blacklist, package_id);
-            entry.walrus_blob_id = walrus_blob_id;
-            entry.severity = severity;
-        } else {
-            // Create new entry
-            let entry = BlacklistEntry {
-                package_id,
-                walrus_blob_id,
-                severity,
-                added_at: tx_context::epoch(ctx),
-                reporter: tx_context::sender(ctx)
-            };
-            table::add(&mut registry.blacklist, package_id, entry);
-            registry.total_reports = registry.total_reports + 1;
+        // If the threat hasn't been logged yet, add it to the on-chain table
+        if (!table::contains(&registry.threats, malicious_package_id)) {
+            table::add(&mut registry.threats, malicious_package_id, walrus_blob_id);
+            registry.total_threats_logged = registry.total_threats_logged + 1;
         };
+
+        // Always emit the event so off-chain indexers catch the signal instantly
+        event::emit(ThreatReported {
+            malicious_package_id,
+            walrus_blob_id,
+            reporter: tx_context::sender(ctx),
+        });
     }
 
-    /// Admin function to remove false positives
-    public entry fun remove_package(
-        _admin_cap: &AdminCap,
-        registry: &mut ReputationRegistry,
-        package_id: address
-    ) {
-        if (table::contains(&registry.blacklist, package_id)) {
-            table::remove(&mut registry.blacklist, package_id);
-            registry.total_reports = registry.total_reports - 1;
-        };
+    /// Query function to check if a package is reported
+    public fun is_threat_reported(registry: &ThreatRegistry, package_id: address): bool {
+        table::contains(&registry.threats, package_id)
     }
 
-    /// Check if a package is blacklisted
-    public fun is_blacklisted(
-        registry: &ReputationRegistry,
-        package_id: address
-    ): bool {
-        table::contains(&registry.blacklist, package_id)
+    /// Get the Walrus blob ID for a reported threat
+    public fun get_threat_blob_id(registry: &ThreatRegistry, package_id: address): String {
+        *table::borrow(&registry.threats, package_id)
     }
 
-    /// Get blacklist entry details
-    public fun get_entry(
-        registry: &ReputationRegistry,
-        package_id: address
-    ): &BlacklistEntry {
-        table::borrow(&registry.blacklist, package_id)
-    }
-
-    /// Get total number of reports
-    public fun get_total_reports(registry: &ReputationRegistry): u64 {
-        registry.total_reports
-    }
-
-    /// Accessor functions for BlacklistEntry
-    public fun entry_package_id(entry: &BlacklistEntry): address {
-        entry.package_id
-    }
-
-    public fun entry_walrus_blob_id(entry: &BlacklistEntry): String {
-        entry.walrus_blob_id
-    }
-
-    public fun entry_severity(entry: &BlacklistEntry): u8 {
-        entry.severity
-    }
-
-    public fun entry_added_at(entry: &BlacklistEntry): u64 {
-        entry.added_at
-    }
-
-    public fun entry_reporter(entry: &BlacklistEntry): address {
-        entry.reporter
-    }
-
-    #[test_only]
-    public fun init_for_testing(ctx: &mut TxContext) {
-        init(ctx);
+    /// Get total number of threats logged
+    public fun get_total_threats(registry: &ThreatRegistry): u64 {
+        registry.total_threats_logged
     }
 }

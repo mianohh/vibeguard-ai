@@ -1,10 +1,10 @@
 [package]
-name = "reputation_registry"
+name = "ReputationRegistry"
 version = "0.1.0"
-edition = "2024.beta"
+edition = "legacy"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.14.0" }
 
 [addresses]
 reputation_registry = "0x0"
