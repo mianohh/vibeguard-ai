@@ -156,8 +156,8 @@ export default function ReportPage() {
       setLoadingStage('Requesting gas sponsorship...');
       
       const sponsorPayload = { 
-        packageId: PACKAGE_ID,
-        registryId: REGISTRY_ID,
+        packageId: process.env.NEXT_PUBLIC_PACKAGE_ID || '0xc2dc3bf5d569f8664ea28fcdccc27f16522de343091d70dbc3343214e63b6122',
+        registryId: process.env.NEXT_PUBLIC_REGISTRY_ID || '0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3',
         maliciousPackageId: packageId,
         walrusBlobId: walrusBlobId,
         sender: userAddress

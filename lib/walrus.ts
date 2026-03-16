@@ -4,9 +4,9 @@
  */
 
 const WALRUS_PUBLISHER_NODES = [
-  'https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=1',
-  'https://walrus-testnet-publisher.natsai.xyz/v1/blobs?epochs=1',
-  'https://walrus-testnet-publisher.nodeinfra.com/v1/blobs?epochs=1',
+  'https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=5',
+  'https://walrus-testnet-publisher.natsai.xyz/v1/blobs?epochs=5',
+  'https://walrus-testnet-publisher.nodeinfra.com/v1/blobs?epochs=5',
 ];
 
 const WALRUS_AGGREGATOR_URL = 'https://aggregator.walrus-testnet.walrus.space';
@@ -119,7 +119,7 @@ export async function retrieveThreatReportFromWalrus(
   blobId: string
 ): Promise<ThreatReport> {
   try {
-    const response = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/${blobId}`);
+    const response = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/blobs/${blobId}`);
 
     if (!response.ok) {
       throw new Error(`Walrus retrieval failed: ${response.status}`);
@@ -142,7 +142,7 @@ export async function retrieveThreatReportFromWalrus(
  */
 export async function checkWalrusBlobExists(blobId: string): Promise<boolean> {
   try {
-    const response = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/${blobId}`, {
+    const response = await fetch(`${WALRUS_AGGREGATOR_URL}/v1/blobs/${blobId}`, {
       method: 'HEAD',
     });
     return response.ok;
