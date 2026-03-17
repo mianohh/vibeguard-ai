@@ -21,7 +21,7 @@ export default function AnalyticsDashboard() {
 
   const fetchAnalytics = async () => {
     try {
-      const res = await fetch('/api/analytics');
+      const res = await fetch(`/api/analytics?t=${Date.now()}`, { cache: 'no-store' });
       const analytics = await res.json();
       setData(analytics);
       setLoading(false);
