@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { EffectsSummary, RiskAnalysis, GeminiExplanation } from '@/types';
 
+const GEMINI_MODEL = 'gemini-2.0-flash';
+
 export class GeminiExplainer {
   private ai: GoogleGenAI;
 
@@ -17,7 +19,7 @@ export class GeminiExplainer {
       const prompt = this.buildPrompt(effects, risk, userIntent);
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
+        model: GEMINI_MODEL,
         contents: prompt,
       });
 
