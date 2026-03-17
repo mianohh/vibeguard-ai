@@ -16,7 +16,7 @@ export class RiskEngine {
 
     // YELLOW conditions (if not already RED)
     if (riskLevel !== 'RED') {
-      const yellowFlags = this.checkYellowFlags(effects);
+      const yellowFlags = this.checkYellowFlags(effects, userIntent);
       if (yellowFlags.length > 0) {
         reasons.push(...yellowFlags);
         riskLevel = 'YELLOW';
@@ -61,9 +61,18 @@ export class RiskEngine {
       return amount > 1000000; // > 0.001 SUI
     });
 
+    // If user explicitly stated send/transfer intent, outflow is expected — not RED
+    const isSendIntent = userIntent ? /send|transfer|pay|tip/i.test(userIntent) : false;
+
     // RED FLAG: User loses assets AND someone else gains assets (transfer to others)
-    if (userOutgoing.length > 0 && othersIncoming.length > 0 && significantOutgoing) {
+    if (userOutgoing.length > 0 && othersIncoming.length > 0 && significantOutgoing && !isSendIntent) {
       flags.push('Assets leave your wallet to another address');
+    }
+
+    // Send intent: flag as YELLOW-worthy (handled in yellow flags via return)
+    // We signal it via a non-RED reason added to the caller
+    if (isSendIntent && userOutgoing.length > 0 && othersIncoming.length > 0 && significantOutgoing) {
+      // Not a red flag — intentional send. Will fall through to YELLOW.
     }
 
     // Intent mismatch detection
@@ -87,8 +96,16 @@ export class RiskEngine {
     return flags;
   }
 
-  private checkYellowFlags(effects: EffectsSummary): string[] {
+  private checkYellowFlags(effects: EffectsSummary, userIntent?: string): string[] {
     const flags: string[] = [];
+    const isSendIntent = userIntent ? /send|transfer|pay|tip/i.test(userIntent) : false;
+
+    // Send intent with outgoing assets — expected but worth noting
+    const userOutgoing = effects.balanceChanges.filter(c => c.type === 'decrease' && c.owner === 'you');
+    const othersIncoming = effects.balanceChanges.filter(c => c.type === 'increase' && c.owner === 'another_address');
+    if (isSendIntent && userOutgoing.length > 0 && othersIncoming.length > 0) {
+      flags.push('Assets will leave your wallet — confirm recipient address is correct');
+    }
 
     // Complex state changes
     if (effects.objectChanges.length > 3) {
