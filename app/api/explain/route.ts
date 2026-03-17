@@ -50,11 +50,11 @@ export async function POST(request: NextRequest) {
 
     // Reputation check - short-circuit if malicious
     const packageIds = staticAnalysis.moveCalls.map(call => call.packageId);
-    const reputation = checkReputation(packageIds);
+    const reputation = await checkReputation(packageIds, networkValidation.network!);
 
     if (reputation.status === 'MALICIOUS') {
-      analytics.increment('totalScans');
-      analytics.increment('scamsBlocked');
+      await analytics.increment('totalScans');
+      await analytics.increment('scamsBlocked');
       
       return NextResponse.json({
         simulation: {
@@ -116,14 +116,13 @@ export async function POST(request: NextRequest) {
     const risk = riskEngine.analyze(simulation.effectsSummary, sanitizedIntent);
 
     // Track analytics
-    analytics.increment('totalScans');
+    await analytics.increment('totalScans');
     if (risk.riskLevel === 'RED') {
-      analytics.increment('scamsBlocked');
-      // Estimate value protected from balance changes
+      await analytics.increment('scamsBlocked');
       const outgoingValue = simulation.effectsSummary.balanceChanges
         .filter(c => c.type === 'decrease' && c.owner === 'you')
         .reduce((sum, c) => sum + (parseInt(c.amount) / 1_000_000_000), 0);
-      if (outgoingValue > 0) analytics.addValueProtected(outgoingValue);
+      if (outgoingValue > 0) await analytics.addValueProtected(outgoingValue);
     }
 
     // Generate explanation
