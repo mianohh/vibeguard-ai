@@ -1,19 +1,13 @@
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { SuiNetwork, SimulationResult, EffectsSummary } from '@/types';
 
 export class SuiSimulator {
   private clients: Map<SuiNetwork, SuiClient> = new Map();
 
   constructor() {
-    this.clients.set('mainnet', new SuiClient({ 
-      url: process.env.SUI_RPC_MAINNET || 'https://fullnode.mainnet.sui.io:443' 
-    }));
-    this.clients.set('testnet', new SuiClient({ 
-      url: process.env.SUI_RPC_TESTNET || 'https://fullnode.testnet.sui.io:443' 
-    }));
-    this.clients.set('devnet', new SuiClient({ 
-      url: process.env.SUI_RPC_DEVNET || 'https://fullnode.devnet.sui.io:443' 
-    }));
+    this.clients.set('mainnet', new SuiClient({ url: getFullnodeUrl('mainnet') }));
+    this.clients.set('testnet', new SuiClient({ url: getFullnodeUrl('testnet') }));
+    this.clients.set('devnet', new SuiClient({ url: getFullnodeUrl('devnet') }));
   }
 
   async simulate(transactionBytes: string, network: SuiNetwork, userAddress?: string): Promise<SimulationResult> {
