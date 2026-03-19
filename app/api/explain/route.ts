@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { after } from 'next/server';
 import { SuiSimulator } from '@/lib/simulator';
 import { RiskEngine } from '@/lib/risk-engine';
 import { GeminiExplainer } from '@/lib/gemini-explainer';
@@ -139,9 +140,11 @@ export async function POST(request: NextRequest) {
       const maliciousPackageId = externalPackageId ?? drainRecipient;
 
       if (maliciousPackageId) {
-        // Fire-and-forget — does not block the response to the user
-        autoReportThreat(maliciousPackageId, risk.reasons).catch(err =>
-          console.error('Auto-report failed silently:', err.message)
+        // Use `after` so Vercel keeps the function alive after response is sent
+        after(
+          autoReportThreat(maliciousPackageId, risk.reasons).catch(err =>
+            console.error('Auto-report failed silently:', err.message)
+          )
         );
       }
     }
