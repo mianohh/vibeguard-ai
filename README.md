@@ -1,8 +1,8 @@
 # 🔐 VibeGuard AI
 
-**Enterprise-Grade Transaction Simulation & Intent Verification for the Sui Ecosystem**
+**Real-Time Transaction Security & Decentralized Threat Intelligence for the Sui Ecosystem**
 
-VibeGuard AI is a decentralized security layer designed to eliminate blind signing. By combining live blockchain simulation, deterministic Move static analysis, and agentic AI, VibeGuard protects users from honeypot attacks, malicious state changes, and phishing exploits before a signature is ever broadcast.
+VibeGuard AI is a full-stack threat intelligence infrastructure designed to eliminate blind signing. By combining live blockchain simulation, deterministic Move static analysis, agentic AI, and an event-driven on-chain reputation registry, VibeGuard protects users from honeypot attacks and phishing exploits before a signature is ever broadcast. Furthermore, it automatically registers every detected threat on-chain, creating a real-time security feed for the entire ecosystem to consume.
 
 🔗 **[Live Platform](https://vibeguardai.vercel.app)** | 📡 **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | 🚨 **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)**
 
@@ -26,44 +26,86 @@ VibeGuard AI operates as a middleware security pipeline, offering **Multi-Layere
 2. **Offline Static Analysis:** Parses Base64 transaction bytes client-side to extract Move calls, gas budgets, and targets without relying on RPC overhead.
 3. **Live State Simulation:** Leverages Sui's native `dryRunTransactionBlock` to execute the transaction against the live network state and map precise asset flows.
 4. **Intent-Mismatch Detection:** Compares the simulated outcome against the user's stated intent (e.g., "Claim Airdrop"). If a user expects to receive assets, but the simulation shows assets leaving, the transaction is flagged as a honeypot.
-5. **Agentic AI Translation:** Translates complex Move object mutations into an 8th-grade reading level, plain-English risk report.
+5. **Agentic AI Translation:** Translates complex Move object mutations into plain-English risk reports via Google Gemini.
+6. **Automated Threat Registration:** When a `RED` risk transaction is detected, the pipeline silently and automatically registers the malicious package on-chain via a gasless Sponsored Transaction — no manual reporting required.
 
 ---
 
-## 🌍 Decentralized Threat Intelligence (zkLogin + Burner Wallets + Walrus)
+## ⚙️ Automated Detection Pipeline
 
-Security must be accessible to everyone, not just power users. To protect underdeveloped communities and onboard the next billion users safely, VibeGuard integrates deep Sui primitives to remove all technical barriers:
+Every transaction analyzed through VibeGuard that is classified as a `RED` risk triggers a silent, background reporting flow. The user receives their risk warning instantly, while the on-chain registration happens asynchronously without blocking the response.
 
-- **Zero-Friction Authentication:** Users authenticate with Google OAuth via zkLogin, which deterministically generates consistent burner wallets for gasless transactions. No seed phrases, no wallet extensions, and no complex key management.
-- **Persistent Identity with Gasless Execution:** Each Google account generates the same deterministic burner wallet across sessions, enabling consistent identity tracking while maintaining gasless transaction execution through sponsored transactions.
-- **Walrus Decentralized Storage:** All threat reports are stored immutably on Walrus, ensuring censorship-resistant evidence preservation with cryptographic blob IDs.
-- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract with Walrus blob references. The contract emits `ThreatReported` events, creating an immutable, real-time threat feed for B2B wallet partners.
+```text
+User submits transaction bytes
+        ↓
+Analysis detects RED risk (honeypot / intent mismatch)
+        ↓
+Auto-reporter fires asynchronously (non-blocking)
+        ↓
+1. Ephemeral system burner keypair generated (single-use)
+2. Evidence JSON uploaded to Walrus decentralized storage → blob_id
+3. Sponsored Transaction built (gas paid by VibeGuard sponsor wallet)
+4. Burner signs + executes on-chain
+        ↓
+ThreatReported event emitted on Sui Testnet
+ReputationRegistry updated with malicious package + Walrus blob_id
+```
 
-**🔗 Live Smart Contract:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3)
+**Live Proof — Recent Automated Registrations on Sui Testnet:**
 
-### Technical Implementation: zkLogin-Backed Burner Wallets
+| Tx Digest | Malicious Target | Reporter (Ephemeral Burner) |
+|---|---|---|
+| `EvP6hCLTg6Ku...` | `0x8d8bc4a2...` | `0xb8a203...` (single-use) |
+| `6XeD5yUzktgu...` | `0x0000...0bad` | `0x230c2d...` (single-use) |
+| `8GrYjmTe7Pyx...` | `0x0000...0bad` | `0x81804a...` (single-use) |
 
-Our authentication system combines the best of both worlds:
-
-1. **zkLogin Identity Layer:** Google OAuth + zkLogin proof generation creates a persistent Sui address tied to the user's Google account
-2. **Deterministic Burner Generation:** The zkLogin address serves as a seed to generate a consistent Ed25519 burner wallet using `SHA-256(zkLoginAddress + 'burner_seed')`
-3. **Sponsored Transaction Execution:** The burner wallet signs transactions while our backend sponsors gas costs, enabling truly gasless user experience
-4. **Identity Persistence:** Same Google account always generates the same burner wallet, enabling consistent threat reporting attribution
-
-This hybrid approach provides:
-- ✅ **Persistent Identity:** Consistent addresses across sessions
-- ✅ **Gasless Transactions:** No SUI tokens required
-- ✅ **Zero Complexity:** Just Google OAuth, no wallet management
-- ✅ **Decentralized Storage:** Immutable evidence on Walrus
-- ✅ **On-Chain Registry:** Real-time threat feed via Move events
+**🔗 Live Registry:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3)
 
 ---
 
-## 🚀 Developer Integration (DX)
+## 🌍 Decentralized Threat Intelligence
 
-VibeGuard AI is built for drop-in integration by wallet providers and dApp developers.
+Security must be accessible to everyone. VibeGuard integrates deep Sui primitives to remove technical barriers and establish a core security primitive for the ecosystem:
 
-### 1. TypeScript SDK (Recommended for Wallets)
+- **Walrus Decentralized Storage:** All threat reports (both automated and community-submitted) are stored immutably on Walrus with cryptographic Blob IDs, ensuring censorship-resistant evidence preservation.
+- **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract with Walrus blob references. The contract emits `ThreatReported` events, creating an immutable, indexable, real-time security signal feed that B2B wallet providers and dApps can subscribe to.
+- **Gasless Community Reporting:** Users can report malicious contracts manually with zero gas costs via Sponsored Transactions.
+- **Gasless Automated Reporting:** The detection pipeline utilizes Ephemeral Burner Wallets and Sponsored Transactions to register threats without maintaining persistent system keys or requiring human intervention.
+
+---
+
+## 🔄 Data Flow Architecture
+
+```text
+┌─────────────────┐
+│   Wallet / dApp │
+│  (User Intent)  │
+└────────┬────────┘
+         │ Raw Transaction Bytes (Base64)
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│              VibeGuard Security Pipeline                │
+├─────────────────────────────────────────────────────────┤
+│  1. Reputation Check  →  On-Chain Registry (Move)       │
+│  2. Static Analysis   →  Parse Move Calls & Gas         │
+│  3. Live Simulation   →  Sui RPC dryRunTransaction      │
+│  4. Intent Matching   →  Compare Expected vs Actual     │
+│  5. AI Translation    →  Gemini Plain-English Report    │
+└────────┬────────────────────────────────────────────────┘
+         │
+         ├──→ Risk Verdict returned to user instantly
+         │
+         └──→ [If RED] Auto-reporter fires in background:
+                  Walrus upload → Sponsor API → On-chain registration
+```
+
+---
+
+## 🚀 Developer Integration
+
+VibeGuard AI is built for drop-in integration by wallet providers and dApp developers looking to protect their users.
+
+### TypeScript SDK
 
 ```bash
 npm install vibeguard-sui-security
@@ -72,7 +114,6 @@ npm install vibeguard-sui-security
 ```typescript
 import { VibeGuard } from 'vibeguard-sui-security';
 
-// Initialize with production API key
 const guard = new VibeGuard({ apiKey: process.env.VIBEGUARD_API_KEY });
 
 const result = await guard.analyzeTransaction({
@@ -83,12 +124,11 @@ const result = await guard.analyzeTransaction({
 });
 
 if (result.risk.riskLevel === 'RED') {
-  // Intercept and alert the user
-  console.error('🚨 INTENT MISMATCH DETECTED:', result.explanation.plainEnglish);
+  console.error('🚨 HONEYPOT DETECTED:', result.explanation.plainEnglish);
 }
 ```
 
-### 2. REST API Pipeline
+### REST API
 
 ```bash
 curl -X POST https://vibeguardai.vercel.app/api/explain \
@@ -107,26 +147,32 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 ## 🛠️ Technical Infrastructure
 
 **Frontend:** Next.js 14, TypeScript, Tailwind CSS  
-**Authentication:** zkLogin + Google OAuth, Deterministic Burner Wallets  
 **Blockchain Data:** @mysten/sui, Sui RPC  
 **Smart Contracts:** Sui Move (`reputation_registry`)  
 **Decentralized Storage:** Walrus Protocol (`/v1/blobs`)  
-**Transaction Sponsorship:** Multi-Sig Sponsored Transactions  
+**Transaction Sponsorship:** Sponsored Transactions (gasless execution for users and the automated pipeline)  
+**Identity Abstraction:** Ephemeral Ed25519 Keypairs  
 **AI Processing:** Google Gemini API
+
+### Deployed Contracts (Testnet)
+
+| Contract | Address |
+|---|---|
+| Package | `0xc2dc3bf5d569f8664ea28fcdccc27f16522de343091d70dbc3343214e63b6122` |
+| ReputationRegistry | `0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3` |
 
 ---
 
-## Security & Privacy Guarantees
+## 🛡️ Security & Privacy Guarantees
 
-✅ **Zero private key exposure:** Analyzes unsigned bytes only.  
-✅ **Stateless architecture:** No user transaction data is permanently stored off-chain.  
-✅ **Strict validation:** Input sanitization and Chain ID validation to prevent replay attacks.
+✅ **Zero Private Key Exposure:** Analyzes unsigned bytes only.  
+✅ **Stateless Architecture:** No user transaction data is permanently stored off-chain.  
+✅ **Ephemeral Auto-Reporters:** Each automated threat registration uses a single-use keypair — no persistent system keys are held on the server.  
+✅ **Strict Validation:** Input sanitization and Chain ID validation prevent replay attacks.
 
 ---
 
 ## 🗺️ Product Roadmap
-
-Our engineering roadmap is strictly dictated by active user feedback, partner integrations, and measured Product-Market Fit. We prioritize shipping usable frameworks over theoretical technical layers.
 
 ### ✅ Phase 1: MVP Framework (Completed)
 - Offline static analysis & Base64 parsing.
@@ -135,14 +181,14 @@ Our engineering roadmap is strictly dictated by active user feedback, partner in
 - NPM SDK publication.
 
 ### ✅ Phase 2: Decentralized Threat Feed (Completed)
-- **zkLogin Authentication:** Google OAuth integration with deterministic burner wallet generation for persistent identity.
-- **Walrus Integration:** Threat reports stored on Walrus decentralized storage.
-- **On-Chain Registry:** Smart contract deployed to index malicious packages alongside Walrus Blob IDs.
-- **Gasless Reporting:** Sponsored transactions enable zero-cost threat submissions.
+- **Walrus Integration:** Threat reports stored on Walrus with on-chain Blob ID references.
+- **On-Chain Registry:** Move smart contract deployed, emitting `ThreatReported` events.
+- **Automated Detection Pipeline:** `RED` risk transactions are automatically registered on-chain via Ephemeral Burner Wallets and Sponsored Transactions — no manual reporting required.
 
 ### 🚧 Phase 3: Distribution & Validation (Current Focus)
-- **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers to subscribe to the `ThreatReported` events.
+- **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers to subscribe to `ThreatReported` events as an indexable security signal feed.
 - **SDK Adoption Tracking:** Measuring real-world API usage, TVP (Total Value Protected), and community feedback.
+- **Mainnet Deployment:** Migrating the `ReputationRegistry` contract and automated pipeline to Sui Mainnet.
 
 ---
 
@@ -152,9 +198,9 @@ We welcome contributions from security researchers and Sui developers. For guide
 
 ---
 
-## License
+## 📜 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
