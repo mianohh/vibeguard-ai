@@ -6,6 +6,7 @@ import { validateTransactionInput, validateNetwork, sanitizeUserIntent } from '@
 import { parseTransactionBytes } from '@/lib/sui-parser';
 import { analytics } from '@/lib/analytics';
 import { checkReputation } from '@/lib/reputation';
+import { autoReportThreat } from '@/lib/auto-reporter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,6 +124,26 @@ export async function POST(request: NextRequest) {
         .filter(c => c.type === 'decrease' && c.owner === 'you')
         .reduce((sum, c) => sum + (parseInt(c.amount) / 1_000_000_000), 0);
       if (outgoingValue > 0) await analytics.addValueProtected(outgoingValue);
+
+      // Auto-report: prefer external Move package ID, fall back to raw drain recipient from dryRun
+      const externalPackageId = staticAnalysis.moveCalls
+        .map(c => c.packageId)
+        .find(id => id && id !== '0x1' && id !== '0x2' && id !== '0x3');
+
+      const rawBalanceChanges = simulation.rawDryRun?.balanceChanges || [];
+      const drainRecipient = rawBalanceChanges
+        .filter((c: any) => parseInt(c.amount) > 0)
+        .map((c: any) => c.owner?.AddressOwner)
+        .find((addr: string) => addr && addr !== userAddress);
+
+      const maliciousPackageId = externalPackageId ?? drainRecipient;
+
+      if (maliciousPackageId) {
+        // Fire-and-forget — does not block the response to the user
+        autoReportThreat(maliciousPackageId, risk.reasons).catch(err =>
+          console.error('Auto-report failed silently:', err.message)
+        );
+      }
     }
 
     // Generate explanation
