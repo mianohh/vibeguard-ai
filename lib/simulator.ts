@@ -20,12 +20,29 @@ export class SuiSimulator {
       setTimeout(() => reject(new Error('Simulation timeout after 8 seconds')), 8000);
     });
 
+    // Try to resolve gas if userAddress is provided and tx has no gas payment
+    let resolvedBytes = transactionBytes;
+    if (userAddress) {
+      try {
+        const { Transaction } = await import('@mysten/sui/transactions');
+        const tx = Transaction.from(transactionBytes);
+        const txData = tx.getData();
+        if (!txData.gasData?.payment?.length) {
+          tx.setSenderIfNotSet(userAddress);
+          resolvedBytes = Buffer.from(await tx.build({ client })).toString('base64');
+        }
+      } catch {
+        // If resolution fails, fall back to original bytes
+        resolvedBytes = transactionBytes;
+      }
+    }
+
     let lastError: Error | null = null;
     
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const simulationPromise = client.dryRunTransactionBlock({
-          transactionBlock: transactionBytes,
+          transactionBlock: resolvedBytes,
         });
 
         const rawDryRun = await Promise.race([simulationPromise, timeoutPromise]);
