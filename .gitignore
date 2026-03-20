@@ -50,4 +50,4 @@ pids/
 *.pid.lock
 
 # Sui
-.sui/
+.sui/\n# SDK build artifacts\npackages/sdk/dist/
