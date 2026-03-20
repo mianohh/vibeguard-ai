@@ -1,14 +1,14 @@
-# 🔐 VibeGuard AI
+# VibeGuard AI
 
 **Real-Time Transaction Security & Decentralized Threat Intelligence for the Sui Ecosystem**
 
 VibeGuard AI is a full-stack threat intelligence infrastructure designed to eliminate blind signing. By combining live blockchain simulation, deterministic Move static analysis, agentic AI, and an event-driven on-chain reputation registry, VibeGuard protects users from honeypot attacks and phishing exploits before a signature is ever broadcast. Furthermore, it automatically registers every detected threat on-chain, creating a real-time security feed for the entire ecosystem to consume.
 
-🔗 **[Live Platform](https://vibeguardai.vercel.app)** | 📡 **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | 🚨 **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)**
+**[Live Platform](https://vibeguardai.vercel.app)** | **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)**
 
 ---
 
-## 🚨 Systemic Industry Risk: The Blind Signing Problem
+## The Blind Signing Problem
 
 The current Web3 user experience forces users to sign cryptographic payloads they do not understand. This opacity creates a massive attack vector resulting in:
 
@@ -18,9 +18,9 @@ The current Web3 user experience forces users to sign cryptographic payloads the
 
 ---
 
-## ⚡ Core Architecture & Protection Matrix
+## Full-Stack Architecture
 
-VibeGuard AI operates as a middleware security pipeline, offering **Multi-Layered Protection**:
+VibeGuard AI operates as a **Verified AI Consumer Product**, designed with a clear separation between trusted on-chain state, off-chain rich data, and low-friction user entry. It offers **Multi-Layered Protection**:
 
 1. **Deterministic Reputation Engine:** Instantly short-circuits execution if malicious `package_id`s are detected via our on-chain registry.
 2. **Offline Static Analysis:** Parses Base64 transaction bytes client-side to extract Move calls, gas budgets, and targets without relying on RPC overhead.
@@ -31,7 +31,7 @@ VibeGuard AI operates as a middleware security pipeline, offering **Multi-Layere
 
 ---
 
-## ⚙️ Automated Detection Pipeline
+## Automated Detection Pipeline
 
 Every transaction analyzed through VibeGuard that is classified as a `RED` risk triggers a silent, background reporting flow. The user receives their risk warning instantly, while the on-chain registration happens asynchronously without blocking the response.
 
@@ -59,11 +59,11 @@ ReputationRegistry updated with malicious package + Walrus blob_id
 | `6XeD5yUzktgu...` | `0x0000...0bad` | `0x230c2d...` (single-use) |
 | `8GrYjmTe7Pyx...` | `0x0000...0bad` | `0x81804a...` (single-use) |
 
-**🔗 Live Registry:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3)
+**Live Registry:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3)
 
 ---
 
-## 🌍 Decentralized Threat Intelligence
+## Decentralized Threat Intelligence
 
 Security must be accessible to everyone. VibeGuard integrates deep Sui primitives to remove technical barriers and establish a core security primitive for the ecosystem:
 
@@ -74,34 +74,26 @@ Security must be accessible to everyone. VibeGuard integrates deep Sui primitive
 
 ---
 
-## 🔄 Data Flow Architecture
+## Sui Stack Dependency Map
 
 ```text
-┌─────────────────┐
-│   Wallet / dApp │
-│  (User Intent)  │
-└────────┬────────┘
-         │ Raw Transaction Bytes (Base64)
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│              VibeGuard Security Pipeline                │
-├─────────────────────────────────────────────────────────┤
-│  1. Reputation Check  →  On-Chain Registry (Move)       │
-│  2. Static Analysis   →  Parse Move Calls & Gas         │
-│  3. Live Simulation   →  Sui RPC dryRunTransaction      │
-│  4. Intent Matching   →  Compare Expected vs Actual     │
-│  5. AI Translation    →  Gemini Plain-English Report    │
-└────────┬────────────────────────────────────────────────┘
-         │
-         ├──→ Risk Verdict returned to user instantly
-         │
-         └──→ [If RED] Auto-reporter fires in background:
-                  Walrus upload → Sponsor API → On-chain registration
+User
+  ↓
+[User Entry Layer] Ephemeral Burner Wallets & Sponsored Transactions (Low-friction onboarding)
+  ↓
+[Sui On-Chain Core] ReputationRegistry Move Contract (Trusted state, permissions, and event emissions)
+  ↙                          ↘
+[Off-Chain Data]         [Verified Compute]
+Walrus (Stores rich      Nautilus (🚧 Planned Phase 3:
+AI threat evidence       AWS Nitro Enclave for trustless
+JSON files)              heuristic threat scoring)
+  ↓
+Final Product Outcome: Gasless, instant threat protection and an immutable B2B security feed.
 ```
 
 ---
 
-## 🚀 Developer Integration
+## Developer Integration
 
 VibeGuard AI is built for drop-in integration by wallet providers and dApp developers looking to protect their users.
 
@@ -144,7 +136,7 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 
 ---
 
-## 🛠️ Technical Infrastructure
+## Technical Infrastructure
 
 **Frontend:** Next.js 14, TypeScript, Tailwind CSS  
 **Blockchain Data:** @mysten/sui, Sui RPC  
@@ -163,7 +155,7 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 
 ---
 
-## 🛡️ Security & Privacy Guarantees
+## Security Guarantees
 
 ✅ **Zero Private Key Exposure:** Analyzes unsigned bytes only.  
 ✅ **Stateless Architecture:** No user transaction data is permanently stored off-chain.  
@@ -172,9 +164,9 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 
 ---
 
-## 🗺️ Product Roadmap
+## Roadmap
 
-### ✅ Phase 1: MVP Framework (Completed)
+### ✅ Phase 1: MVP (Completed)
 - Offline static analysis & Base64 parsing.
 - Live RPC simulation integration.
 - AI-driven intent mismatch detection.
@@ -189,16 +181,17 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 - **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers to subscribe to `ThreatReported` events as an indexable security signal feed.
 - **SDK Adoption Tracking:** Measuring real-world API usage, TVP (Total Value Protected), and community feedback.
 - **Mainnet Deployment:** Migrating the `ReputationRegistry` contract and automated pipeline to Sui Mainnet.
+- **Nautilus Verified Compute Integration:** Migrating our off-chain AI threat-scoring logic from centralized Web2 APIs to a trustless AWS Nitro Enclave using Nautilus, ensuring all risk verdicts are cryptographically attested before on-chain registration.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from security researchers and Sui developers. For guidelines on updating the threat registry or expanding SDK language support, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues).
 
 ---
 
-## 📜 License
+## License
 
 MIT License — see the [LICENSE](LICENSE) file for details.
 
@@ -206,4 +199,4 @@ MIT License — see the [LICENSE](LICENSE) file for details.
 
 **Built to secure the Sui ecosystem.** For enterprise API keys or partnership inquiries, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues) or reach out directly.
 
-🔗 [vibeguardai.vercel.app](https://vibeguardai.vercel.app)
+[vibeguardai.vercel.app](https://vibeguardai.vercel.app)
