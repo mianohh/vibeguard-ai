@@ -58,12 +58,7 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
 
   const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(evidence);
 
-  // TODO (Phase 4 - Walrus Deep Integration): We have captured the Sui-linked blobObjectId
-  // and structured the product Metadata. In the next network upgrade, we will update the
-  // ReputationRegistry Move contract to accept blobObjectId as a dynamic field reference,
-  // completing the fully-linked on-chain/off-chain storage pattern per Module 2.
-
-  // 4. Request sponsored transaction (passes blobId to existing contract — no contract change needed)
+  // 4. Request sponsored transaction — blobObjectId committed on-chain via ReputationRegistry
   const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
