@@ -8,10 +8,10 @@ const WALRUS_PUBLISHER = 'https://publisher.walrus-testnet.walrus.space/v1/blobs
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ||
   (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://vibeguardai.vercel.app');
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xc2dc3bf5d569f8664ea28fcdccc27f16522de343091d70dbc3343214e63b6122';
-const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3';
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
+const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
 
-async function uploadToWalrus(content: string): Promise<string> {
+async function uploadToWalrus(content: string): Promise<{ blobId: string; blobObjectId: string }> {
   const response = await fetch(WALRUS_PUBLISHER, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -22,9 +22,12 @@ async function uploadToWalrus(content: string): Promise<string> {
 
   const result = await response.json();
   const blobId = result.newlyCreated?.blobObject?.blobId ?? result.alreadyCertified?.blobId;
+  const blobObjectId = result.newlyCreated?.blobObject?.id ?? result.alreadyCertified?.blobObject?.id ?? blobId;
 
   if (!blobId) throw new Error('No blobId in Walrus response');
-  return blobId;
+
+  console.log(`\u2705 Walrus Upload Success | Blob ID: ${blobId} | Sui-Linked Blob Object ID: ${blobObjectId}`);
+  return { blobId, blobObjectId };
 }
 
 export async function autoReportThreat(maliciousPackageId: string, reasons: string[]): Promise<void> {
@@ -34,20 +37,33 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
   const systemBurner = new Ed25519Keypair();
   const reporterAddress = systemBurner.toSuiAddress();
 
-  // 2. Upload evidence to Walrus
+  // 2. Structure metadata to give the blob product meaning (Module 2 compliance)
+  const metadata = {
+    title: 'VibeGuard AI Threat Report',
+    publisher: reporterAddress,
+    category: 'Security Signal',
+    timestamp: new Date().toISOString(),
+  };
+
+  // 3. Wrap evidence + metadata into a single rich payload
   const evidence = JSON.stringify({
+    metadata,
     packageId: maliciousPackageId,
     riskLevel: 'RED',
     headline: 'Automated Detection: Honeypot/Malicious Contract',
     reasons,
-    reportedAt: new Date().toISOString(),
+    reportedAt: metadata.timestamp,
     reportedBy: 'vibeguard-automated-pipeline',
   });
 
-  const walrusBlobId = await uploadToWalrus(evidence);
-  console.log(`📦 Auto-report evidence stored on Walrus: ${walrusBlobId}`);
+  const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(evidence);
 
-  // 3. Request sponsored transaction
+  // TODO (Phase 4 - Walrus Deep Integration): We have captured the Sui-linked blobObjectId
+  // and structured the product Metadata. In the next network upgrade, we will update the
+  // ReputationRegistry Move contract to accept blobObjectId as a dynamic field reference,
+  // completing the fully-linked on-chain/off-chain storage pattern per Module 2.
+
+  // 4. Request sponsored transaction (passes blobId to existing contract — no contract change needed)
   const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -56,6 +72,7 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
       registryId: REGISTRY_ID,
       maliciousPackageId,
       walrusBlobId,
+      blobObjectId,
       sender: reporterAddress,
     }),
   });

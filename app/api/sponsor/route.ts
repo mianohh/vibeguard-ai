@@ -13,8 +13,8 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    if (!body.packageId || !body.registryId || !body.maliciousPackageId || !body.walrusBlobId || !body.sender) {
-      return Response.json({ error: 'Missing required parameters: packageId, registryId, maliciousPackageId, walrusBlobId, or sender' }, { status: 400 });
+    if (!body.packageId || !body.registryId || !body.maliciousPackageId || !body.walrusBlobId || !body.blobObjectId || !body.sender) {
+      return Response.json({ error: 'Missing required parameters: packageId, registryId, maliciousPackageId, walrusBlobId, blobObjectId, or sender' }, { status: 400 });
     }
 
     const rawKey = fromBase64(process.env.SPONSOR_PRIVATE_KEY);
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         tx.object(body.registryId),
         tx.pure.address(body.maliciousPackageId),
         tx.pure.string(body.walrusBlobId),
+        tx.pure.address(body.blobObjectId),
       ],
     });
 

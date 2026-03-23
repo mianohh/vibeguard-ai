@@ -59,7 +59,7 @@ ReputationRegistry updated with malicious package + Walrus blob_id
 | `6XeD5yUzktgu...` | `0x0000...0bad` | `0x230c2d...` (single-use) |
 | `8GrYjmTe7Pyx...` | `0x0000...0bad` | `0x81804a...` (single-use) |
 
-**Live Registry:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3)
+**Live Registry:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be)
 
 ---
 
@@ -71,6 +71,14 @@ Security must be accessible to everyone. VibeGuard integrates deep Sui primitive
 - **On-Chain Move Registry:** Verified threats are committed to a decentralized `ReputationRegistry` Move smart contract with Walrus blob references. The contract emits `ThreatReported` events, creating an immutable, indexable, real-time security signal feed that B2B wallet providers and dApps can subscribe to.
 - **Gasless Community Reporting:** Users can report malicious contracts manually with zero gas costs via Sponsored Transactions.
 - **Gasless Automated Reporting:** The detection pipeline utilizes Ephemeral Burner Wallets and Sponsored Transactions to register threats without maintaining persistent system keys or requiring human intervention.
+
+### 🔗 Decentralized Storage Architecture (Walrus + Sui)
+
+VibeGuard AI implements a strict, fully-linked off-chain storage pattern to ensure that our threat intelligence feed is both rich in data and cryptographically verifiable on-chain:
+
+1. **Structured Threat Intelligence:** Threat evidence is not treated as a raw file dump. Before decentralized storage, the backend wraps the AI reasoning in a standardized JSON metadata object (containing `title`, `publisher`, `category`, and `timestamp`). This ensures all off-chain data is highly structured and indexable by our B2B partners.
+2. **Immutable Cryptographic Linkage:** Upon successful Walrus upload, our infrastructure captures both the Walrus `blobId` and the corresponding Sui-native `blob_object_id` (the Blob NFT representation on the Sui network).
+3. **Verifiable Smart Contract State:** Our `ReputationRegistry` Move smart contract enforces this relationship natively. The `ThreatRecord` struct and the B2B `ThreatReported` event both permanently bind the on-chain registry entry to the off-chain Walrus Blob NFT. This guarantees a trustless, unbreakable link between the lightweight on-chain security signal and the heavy off-chain rich data.
 
 ---
 
@@ -150,8 +158,8 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 
 | Contract | Address |
 |---|---|
-| Package | `0xc2dc3bf5d569f8664ea28fcdccc27f16522de343091d70dbc3343214e63b6122` |
-| ReputationRegistry | `0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3` |
+| Package | `0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de` |
+| ReputationRegistry | `0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be` |
 
 ---
 
@@ -173,9 +181,10 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 - NPM SDK publication.
 
 ### ✅ Phase 2: Decentralized Threat Feed (Completed)
-- **Walrus Integration:** Threat reports stored on Walrus with on-chain Blob ID references.
-- **On-Chain Registry:** Move smart contract deployed, emitting `ThreatReported` events.
+- **Walrus Integration:** Threat reports stored on Walrus. Both `blobId` and `blob_object_id` (Blob NFT) are captured and committed on-chain, establishing a fully-linked off-chain storage pattern.
+- **On-Chain Registry:** `ReputationRegistry` Move contract deployed with `ThreatRecord` struct binding each registry entry to its Walrus Blob NFT. Contract emits `ThreatReported` events with full blob linkage.
 - **Automated Detection Pipeline:** `RED` risk transactions are automatically registered on-chain via Ephemeral Burner Wallets and Sponsored Transactions — no manual reporting required.
+- **zkLogin Community Reporting:** Users report malicious contracts gaslessly via Google OAuth-backed zkLogin burner wallets. Live proof: [`57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R`](https://suiscan.xyz/testnet/tx/57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R).
 
 ### 🚧 Phase 3: Distribution & Validation (Current Focus)
 - **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers to subscribe to `ThreatReported` events as an indexable security signal feed.

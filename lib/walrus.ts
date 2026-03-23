@@ -24,6 +24,11 @@ export interface ThreatReport {
   reportedBy: string;
 }
 
+export interface WalrusBlobResult {
+  blobId: string;
+  blobObjectId: string;
+}
+
 export interface WalrusUploadResponse {
   newlyCreated?: {
     blobObject: {
@@ -45,6 +50,7 @@ export interface WalrusUploadResponse {
   };
   alreadyCertified?: {
     blobId: string;
+    blobObject?: { id: string };
     event: any;
     endEpoch: number;
   };
@@ -57,7 +63,7 @@ export interface WalrusUploadResponse {
  */
 export async function publishThreatReportToWalrus(
   reportData: ThreatReport
-): Promise<string> {
+): Promise<WalrusBlobResult> {
   const reportBlob = new Blob([JSON.stringify(reportData, null, 2)], {
     type: 'application/json',
   });
@@ -66,8 +72,6 @@ export async function publishThreatReportToWalrus(
 
   for (const publisherUrl of WALRUS_PUBLISHER_NODES) {
     try {
-      console.log(`🔄 Attempting Walrus upload to: ${publisherUrl}`);
-
       const response = await fetch(publisherUrl, {
         method: 'PUT',
         body: reportBlob,
@@ -81,30 +85,27 @@ export async function publishThreatReportToWalrus(
       const result: WalrusUploadResponse = await response.json();
 
       let blobId: string;
-      
+      let blobObjectId: string;
+
       if (result.newlyCreated) {
         blobId = result.newlyCreated.blobObject.blobId;
-        console.log('✅ Threat report stored on Walrus:', {
-          blobId,
-          size: result.newlyCreated.blobObject.size,
-          cost: result.newlyCreated.cost,
-          node: publisherUrl,
-        });
+        blobObjectId = result.newlyCreated.blobObject.id;
+        console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId);
       } else if (result.alreadyCertified) {
         blobId = result.alreadyCertified.blobId;
-        console.log('✅ Threat report already exists on Walrus:', blobId);
+        blobObjectId = result.alreadyCertified.blobObject?.id ?? blobId;
+        console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId);
       } else {
         throw new Error('Unexpected Walrus response format');
       }
 
-      return blobId;
+      return { blobId, blobObjectId };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error');
       console.warn(`⚠️ Failed to upload to ${publisherUrl}:`, lastError.message);
     }
   }
 
-  console.error('❌ All Walrus publisher nodes failed');
   throw new Error(
     `Failed to publish threat report to Walrus: ${lastError?.message || 'All nodes unavailable'}`
   );

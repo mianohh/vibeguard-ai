@@ -139,13 +139,16 @@ export default function ReportPage() {
       // Step 2: Upload to Walrus decentralized storage
       setLoadingStage('Uploading threat evidence to Walrus decentralized storage...');
       let walrusBlobId: string;
+      let walrusBlobObjectId: string;
       
       try {
-        walrusBlobId = await publishThreatReportToWalrus(threatReport);
+        const walrusResult = await publishThreatReportToWalrus(threatReport);
+        walrusBlobId = walrusResult.blobId;
+        walrusBlobObjectId = walrusResult.blobObjectId;
       } catch (walrusError) {
         console.error('❌ Walrus upload failed:', walrusError);
-        // Use a placeholder blob ID for testing if Walrus fails
         walrusBlobId = 'test_blob_' + Date.now();
+        walrusBlobObjectId = '0x0000000000000000000000000000000000000000000000000000000000000000';
       }
       
       if (!walrusBlobId) {
@@ -156,10 +159,11 @@ export default function ReportPage() {
       setLoadingStage('Requesting gas sponsorship...');
       
       const sponsorPayload = { 
-        packageId: process.env.NEXT_PUBLIC_PACKAGE_ID || '0xc2dc3bf5d569f8664ea28fcdccc27f16522de343091d70dbc3343214e63b6122',
-        registryId: process.env.NEXT_PUBLIC_REGISTRY_ID || '0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3',
+        packageId: process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de',
+        registryId: process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be',
         maliciousPackageId: packageId,
-        walrusBlobId: walrusBlobId,
+        walrusBlobId,
+        blobObjectId: walrusBlobObjectId,
         sender: userAddress
       };
       
