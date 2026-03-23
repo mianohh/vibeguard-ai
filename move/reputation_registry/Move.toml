@@ -7,4 +7,4 @@ edition = "legacy"
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.14.0" }
 
 [addresses]
-reputation_registry = "0x0"
+reputation_registry = "0xc2dc3bf5d569f8664ea28fcdccc27f16522de343091d70dbc3343214e63b6122"
