@@ -51,13 +51,6 @@ ThreatReported event emitted on Sui Testnet
 ReputationRegistry updated with malicious package + Walrus blob_id
 ```
 
-**Live Proof — Recent Automated Registrations on Sui Testnet:**
-
-| Tx Digest | Malicious Target | Reporter (Ephemeral Burner) |
-|---|---|---|
-| `EvP6hCLTg6Ku...` | `0x8d8bc4a2...` | `0xb8a203...` (single-use) |
-| `6XeD5yUzktgu...` | `0x0000...0bad` | `0x230c2d...` (single-use) |
-| `8GrYjmTe7Pyx...` | `0x0000...0bad` | `0x81804a...` (single-use) |
 
 **Live Registry:** [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be)
 
