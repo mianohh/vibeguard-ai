@@ -107,32 +107,57 @@ npm install vibeguard-sui-security
 ```typescript
 import { VibeGuard } from 'vibeguard-sui-security';
 
-const guard = new VibeGuard({ apiKey: process.env.VIBEGUARD_API_KEY });
+// No API key required — the API is fully open
+const guard = new VibeGuard();
 
 const result = await guard.analyzeTransaction({
   transactionBytes: 'AAACAA...', // Raw Base64 from wallet provider
   network: 'mainnet',
   userAddress: '0xYourUserAddress',
-  userIntent: 'Claim airdrop'
+  userIntent: 'Claim airdrop',
+  onThreatDetected: (result) => {
+    // Fires on RED results — threat is auto-reported on-chain by VibeGuard
+    console.error('🚨 HONEYPOT DETECTED:', result.explanation.headline);
+  }
 });
 
 if (result.risk.riskLevel === 'RED') {
-  console.error('🚨 HONEYPOT DETECTED:', result.explanation.plainEnglish);
+  // Block the transaction
 }
+```
+
+### Retrieve Threat Report
+
+Resolve a `ThreatReported` event's `blobId` to the full AI report stored on Walrus:
+
+```typescript
+const report = await guard.retrieveThreatReport(
+  'oNyrr0jEVATWSAGkJHnmoKVICnFosv1k4YNayZXcRgk', // blobId from ThreatReported event
+  '0x08108c7412210ef9816aea2de0899f2dcad6f521631f314ab1fa29bf353af9a4' // blobObjectId for liveness check
+);
+
+console.log(report.riskLevel);    // 'RED'
+console.log(report.reasons);      // [...]
+console.log(report.plainEnglish); // Full AI explanation
 ```
 
 ### REST API
 
 ```bash
+# No API key required
 curl -X POST https://vibeguardai.vercel.app/api/explain \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "transactionBytes": "AAACAA...",
     "network": "mainnet",
     "userAddress": "0x...",
     "userIntent": "Claim airdrop"
   }'
+```
+
+```bash
+# Retrieve threat report from Walrus (blobObjectId optional — enables liveness gate)
+curl https://vibeguardai.vercel.app/api/threat/<blobId>?blobObjectId=<blobObjectId>
 ```
 
 ---
