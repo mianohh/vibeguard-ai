@@ -36,12 +36,33 @@ const result = await guard.analyzeTransaction({
   transactionBytes: 'AAACAA...',
   network: 'testnet',
   userAddress: '0x1234...',
-  userIntent: 'Claim airdrop'
+  userIntent: 'Claim airdrop',
+  onThreatDetected: (result) => {
+    // Fires on RED results — threat is auto-reported on-chain by VibeGuard
+    console.error('🚨 THREAT DETECTED:', result.explanation.headline);
+  }
 });
 
 if (result.risk.riskLevel === 'RED') {
   // Block transaction
 }`}
+            </code>
+          </pre>
+          <h3 className="text-lg font-semibold text-slate-200 mb-3 mt-6">Retrieve Threat Report</h3>
+          <p className="text-slate-400 text-sm mb-3">
+            Fetch the full AI threat report from Walrus decentralized storage using a blob ID from a <code className="text-blue-400">ThreatReported</code> on-chain event.
+          </p>
+          <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
+            <code className="text-sm text-slate-300">
+{`// blobId from ThreatReported event, blobObjectId optional for liveness check
+const report = await guard.retrieveThreatReport(
+  'oNyrr0jEVATWSAGkJHnmoKVICnFosv1k4YNayZXcRgk',
+  '0x08108c74...'
+);
+
+console.log(report.riskLevel);    // 'RED'
+console.log(report.reasons);      // [...]
+console.log(report.plainEnglish); // Full AI explanation`}
             </code>
           </pre>
           <a 
@@ -65,12 +86,12 @@ if (result.risk.riskLevel === 'RED') {
 
         {/* Authentication */}
         <div className="security-surface p-6 mb-8">
-          <h2 className="text-xl font-semibold text-slate-200 mb-4">🔓 Freemium API</h2>
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">🔓 Authentication</h2>
           <p className="text-slate-300 mb-4">
-            <strong>Free tier available for testing and hackathons</strong> - no API key required!
+            The API is currently <strong className="text-green-400">fully open — no API key required.</strong> All endpoints are accessible without authentication.
           </p>
           <p className="text-slate-400 text-sm">
-            For production use and higher rate limits, contact us for a Developer API Key.
+            For enterprise access, rate limit increases, or partnership inquiries, open a <a href="https://github.com/mianohh/vibeguard-ai/issues" className="text-blue-400 hover:text-blue-300">GitHub Issue</a>.
           </p>
         </div>
 
@@ -123,6 +144,44 @@ if (result.risk.riskLevel === 'RED') {
     "plainEnglish": "This transaction will send 100 SUI from your wallet...",
     "recommendedAction": "Do Not Sign"
   }
+}`}
+            </code>
+          </pre>
+        </div>
+
+        {/* Threat Retrieval Endpoint */}
+        <div className="security-surface p-6 mb-8">
+          <h2 className="text-xl font-semibold text-slate-200 mb-4">
+            GET /api/threat/[blobId]
+          </h2>
+          <p className="text-slate-300 mb-4">
+            Retrieve a full threat report from Walrus decentralized storage. Accepts an optional <code className="text-blue-400">blobObjectId</code> query parameter to verify the Blob NFT is still live on Sui before fetching.
+          </p>
+          <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
+            <code className="text-sm text-slate-300">
+{`# Without liveness check
+GET /api/threat/:blobId
+
+# With Blob NFT liveness gate (returns 410 if expired)
+GET /api/threat/:blobId?blobObjectId=0x...`}
+            </code>
+          </pre>
+          <h3 className="text-lg font-semibold text-slate-200 mb-3 mt-6">Response</h3>
+          <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto">
+            <code className="text-sm text-slate-300">
+{`{
+  "metadata": {
+    "title": "VibeGuard AI Threat Report",
+    "publisher": "0x...",
+    "category": "Security Signal",
+    "timestamp": "2026-03-23T08:43:36.775Z"
+  },
+  "packageId": "0x...",
+  "riskLevel": "RED",
+  "headline": "Automated Detection: Honeypot/Malicious Contract",
+  "reasons": [...],
+  "reportedAt": "2026-03-23T08:43:36.775Z",
+  "reportedBy": "vibeguard-automated-pipeline"
 }`}
             </code>
           </pre>
