@@ -3,6 +3,10 @@
  * Publishes threat reports to Walrus and returns blob_id for on-chain storage
  */
 
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+
+const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+
 const WALRUS_PUBLISHER_NODES = [
   'https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=5',
   'https://walrus-testnet-publisher.natsai.xyz/v1/blobs?epochs=5',
@@ -133,6 +137,20 @@ export async function retrieveThreatReportFromWalrus(
     throw new Error(
       `Failed to retrieve threat report from Walrus: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
+  }
+}
+
+/**
+ * Check if a Walrus Blob NFT is live on Sui (object exists and is accessible)
+ * @param blobObjectId - The Sui object ID of the Blob NFT
+ * @returns True if the blob object exists on-chain
+ */
+export async function checkBlobLiveness(blobObjectId: string): Promise<boolean> {
+  try {
+    const object = await suiClient.getObject({ id: blobObjectId });
+    return object.data != null && !('error' in object);
+  } catch {
+    return false;
   }
 }
 
