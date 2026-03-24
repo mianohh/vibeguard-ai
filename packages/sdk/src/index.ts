@@ -2,11 +2,23 @@ export type Network = 'mainnet' | 'testnet' | 'devnet';
 
 export type RiskLevel = 'GREEN' | 'YELLOW' | 'RED';
 
+export interface ThreatReport {
+  packageId: string;
+  riskLevel: string;
+  reasons: string[];
+  headline: string;
+  plainEnglish: string;
+  recommendedAction: string;
+  reportedAt: string;
+  reportedBy: string;
+}
+
 export interface AnalysisOptions {
   transactionBytes: string;
   network: Network;
   userAddress?: string;
   userIntent?: string;
+  onThreatDetected?: (result: AnalysisResult) => void;
 }
 
 export interface AnalysisResult {
@@ -52,6 +64,8 @@ export class VibeGuard {
   }
 
   async analyzeTransaction(options: AnalysisOptions): Promise<AnalysisResult> {
+    const { onThreatDetected, ...payload } = options;
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -63,13 +77,34 @@ export class VibeGuard {
     const response = await fetch(`${this.baseUrl}/api/explain`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(options),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       throw new Error(`VibeGuard API error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json() as Promise<AnalysisResult>;
+    const result = await response.json() as AnalysisResult;
+
+    // RED results are auto-reported on-chain by the VibeGuard backend pipeline.
+    // Fire the optional callback so wallet providers can react immediately.
+    if (result.risk?.riskLevel === 'RED' && onThreatDetected) {
+      onThreatDetected(result);
+    }
+
+    return result;
+  }
+
+  async retrieveThreatReport(blobId: string, blobObjectId?: string): Promise<ThreatReport> {
+    const url = new URL(`${this.baseUrl}/api/threat/${blobId}`);
+    if (blobObjectId) url.searchParams.set('blobObjectId', blobObjectId);
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json() as Promise<ThreatReport>;
   }
 }
