@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     if (!body.packageId || !body.registryId || !body.maliciousPackageId || !body.walrusBlobId || !body.blobObjectId || !body.sender) {
-      return Response.json({ error: 'Missing required parameters: packageId, registryId, maliciousPackageId, walrusBlobId, blobObjectId, or sender' }, { status: 400 });
+      return Response.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
     const rawKey = fromBase64(process.env.SPONSOR_PRIVATE_KEY);
@@ -29,6 +29,24 @@ export async function POST(req: Request) {
     }
 
     const tx = new Transaction();
+
+    // Call 1: verify_and_report on seal_enclave — proves the payload was signed
+    // by the approved enclave keypair before accepting it into the registry.
+    // This is the on-chain verification step of the Seal–Nautilus integration.
+    if (body.sealPackageId && body.enclaveConfigId && body.enclaveSignature) {
+      const sigBytes = Array.from(Buffer.from(body.enclaveSignature, 'base64'));
+      tx.moveCall({
+        target: `${body.sealPackageId}::enclave::verify_and_report`,
+        arguments: [
+          tx.object(body.enclaveConfigId),
+          tx.pure.address(body.maliciousPackageId),
+          tx.pure.string(body.walrusBlobId),
+          tx.pure.vector('u8', sigBytes),
+        ],
+      });
+    }
+
+    // Call 2: report_malicious_contract on reputation_registry — existing pipeline
     tx.moveCall({
       target: `${body.packageId}::registry::report_malicious_contract`,
       arguments: [

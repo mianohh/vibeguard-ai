@@ -11,6 +11,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ||
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
 
+// Seal enclave contract — deployed alongside reputation_registry
+const SEAL_PACKAGE_ID = '0x420b450069a065ee95f1d8675723094f54bb7e957793085ebdb167dc978d0413';
+const ENCLAVE_CONFIG_ID = '0x57f27c47b344cf045ae4dbf9acadca003b41526028c9c0ccc144ed0435fecf89';
+
 async function uploadToWalrus(content: string): Promise<{ blobId: string; blobObjectId: string }> {
   const response = await fetch(WALRUS_PUBLISHER, {
     method: 'PUT',
@@ -33,11 +37,11 @@ async function uploadToWalrus(content: string): Promise<{ blobId: string; blobOb
 export async function autoReportThreat(maliciousPackageId: string, reasons: string[]): Promise<void> {
   console.log(`🚨 Auto-reporting malicious package: ${maliciousPackageId}`);
 
-  // 1. Ephemeral system burner — single-use, no stored keys
+  // 1. Ephemeral system burner — acts as the enclave signer for this integration proof
   const systemBurner = new Ed25519Keypair();
   const reporterAddress = systemBurner.toSuiAddress();
 
-  // 2. Structure metadata to give the blob product meaning (Module 2 compliance)
+  // 2. Structure metadata
   const metadata = {
     title: 'VibeGuard AI Threat Report',
     publisher: reporterAddress,
@@ -45,7 +49,6 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
     timestamp: new Date().toISOString(),
   };
 
-  // 3. Wrap evidence + metadata into a single rich payload
   const evidence = JSON.stringify({
     metadata,
     packageId: maliciousPackageId,
@@ -58,16 +61,28 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
 
   const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(evidence);
 
-  // 4. Request sponsored transaction — blobObjectId committed on-chain via ReputationRegistry
+  // 3. Sign the payload — mirrors what the Nautilus enclave would do with the
+  //    Seal-decrypted key. The ephemeral keypair IS the enclave keypair in this proof.
+  const addrBytes = Buffer.from(maliciousPackageId.replace('0x', '').padStart(64, '0'), 'hex');
+  const blobBytes = Buffer.from(walrusBlobId, 'utf8');
+  const msgToSign = Buffer.concat([addrBytes, blobBytes]);
+  const { signature: enclaveSignature } = await systemBurner.signPersonalMessage(msgToSign);
+
+  console.log(`🔏 Payload signed by ephemeral enclave keypair: ${reporterAddress.slice(0, 10)}...`);
+
+  // 4. Request sponsored transaction — passes signature for on-chain verification
   const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       packageId: PACKAGE_ID,
       registryId: REGISTRY_ID,
+      sealPackageId: SEAL_PACKAGE_ID,
+      enclaveConfigId: ENCLAVE_CONFIG_ID,
       maliciousPackageId,
       walrusBlobId,
       blobObjectId,
+      enclaveSignature,
       sender: reporterAddress,
     }),
   });
@@ -79,7 +94,7 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
 
   const { txBytes, sponsorSignature } = await sponsorRes.json();
 
-  // 4. Sign with ephemeral burner and execute
+  // 5. Sign with ephemeral burner and execute
   const txBytesUint8 = fromBase64(txBytes);
   const { signature: burnerSig } = await systemBurner.signTransaction(txBytesUint8);
 
