@@ -12,8 +12,8 @@ const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd
 const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
 
 // Seal enclave contract — deployed alongside reputation_registry
-const SEAL_PACKAGE_ID = '0x420b450069a065ee95f1d8675723094f54bb7e957793085ebdb167dc978d0413';
-const ENCLAVE_CONFIG_ID = '0x57f27c47b344cf045ae4dbf9acadca003b41526028c9c0ccc144ed0435fecf89';
+const SEAL_PACKAGE_ID = '0x3727d2478d4622e276e183912f6939517603d05bf93d4e3f3f628cbccd7a2ff6';
+const ENCLAVE_CONFIG_ID = '0x50c50306e4c1473dc73e3f0fcf5d2be527cedd096d5ee2ea60019e961b6c5128';
 
 async function uploadToWalrus(content: string): Promise<{ blobId: string; blobObjectId: string }> {
   const response = await fetch(WALRUS_PUBLISHER, {
@@ -61,16 +61,19 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
 
   const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(evidence);
 
-  // 3. Sign the payload — mirrors what the Nautilus enclave would do with the
-  //    Seal-decrypted key. The ephemeral keypair IS the enclave keypair in this proof.
+  // 3. Sign the payload — mirrors what the Nautilus enclave would do.
+  //    Includes timestamp_ms for freshness / replay resistance per Module 4.
+  const timestampMs = Date.now();
   const addrBytes = Buffer.from(maliciousPackageId.replace('0x', '').padStart(64, '0'), 'hex');
   const blobBytes = Buffer.from(walrusBlobId, 'utf8');
-  const msgToSign = Buffer.concat([addrBytes, blobBytes]);
+  const tsBytes = Buffer.allocUnsafe(8);
+  tsBytes.writeBigUInt64LE(BigInt(timestampMs));
+  const msgToSign = Buffer.concat([addrBytes, blobBytes, tsBytes]);
   const { signature: enclaveSignature } = await systemBurner.signPersonalMessage(msgToSign);
 
   console.log(`🔏 Payload signed by ephemeral enclave keypair: ${reporterAddress.slice(0, 10)}...`);
 
-  // 4. Request sponsored transaction — passes signature for on-chain verification
+  // 4. Request sponsored transaction
   const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -83,6 +86,7 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
       walrusBlobId,
       blobObjectId,
       enclaveSignature,
+      timestampMs,
       sender: reporterAddress,
     }),
   });

@@ -42,6 +42,8 @@ export async function POST(req: Request) {
           tx.pure.address(body.maliciousPackageId),
           tx.pure.string(body.walrusBlobId),
           tx.pure.vector('u8', sigBytes),
+          tx.pure.u64(body.timestampMs ?? Date.now()),
+          tx.object('0x6'), // Sui Clock shared object
         ],
       });
     }

@@ -215,8 +215,8 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 |---|---|
 | ReputationRegistry Package | [`0xa706a721...b494de`](https://suiscan.xyz/testnet/object/0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de) |
 | ReputationRegistry Object | [`0xf172e861...495be`](https://suiscan.xyz/testnet/object/0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be) |
-| SealEnclave Package | [`0x420b4500...0413`](https://suiscan.xyz/testnet/object/0x420b450069a065ee95f1d8675723094f54bb7e957793085ebdb167dc978d0413) |
-| EnclaveConfig Object | [`0x57f27c47...cf89`](https://suiscan.xyz/testnet/object/0x57f27c47b344cf045ae4dbf9acadca003b41526028c9c0ccc144ed0435fecf89) |
+| SealEnclave Package | [`0x3727d247...2ff6`](https://suiscan.xyz/testnet/object/0x3727d2478d4622e276e183912f6939517603d05bf93d4e3f3f628cbccd7a2ff6) |
+| EnclaveConfig Object | [`0x50c50306...5128`](https://suiscan.xyz/testnet/object/0x50c50306e4c1473dc73e3f0fcf5d2be527cedd096d5ee2ea60019e961b6c5128) |
 
 ---
 

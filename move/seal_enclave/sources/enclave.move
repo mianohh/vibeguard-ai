@@ -13,6 +13,7 @@ module seal_enclave::enclave {
     use sui::transfer;
     use sui::event;
     use sui::ed25519;
+    use sui::clock::{Self, Clock};
     use std::string::String;
     use std::vector;
 
@@ -21,6 +22,10 @@ module seal_enclave::enclave {
     // =========================================================================
 
     const EInvalidSignature: u64 = 1;
+    const EStaleReport: u64 = 2;
+
+    // Max age of a signed report: 5 minutes in milliseconds
+    const MAX_REPORT_AGE_MS: u64 = 300_000;
 
     // =========================================================================
     // Events
@@ -41,6 +46,7 @@ module seal_enclave::enclave {
         malicious_package_id: address,
         walrus_blob_id: String,
         enclave_signer: address,
+        timestamp_ms: u64,
         verified: bool,
     }
 
@@ -111,22 +117,35 @@ module seal_enclave::enclave {
     }
 
     /// Step 5 of the Seal–Nautilus flow: verify and accept a threat report.
-    /// If an enclave is registered, verifies the Ed25519 signature proving the
-    /// report came from the approved execution environment.
-    /// If no enclave is registered yet, records the report and emits the event
-    /// to support the MVP integration proof flow.
+    /// Includes freshness check — reports older than 5 minutes are rejected,
+    /// providing replay resistance per the Nautilus verified compute pattern.
     public entry fun verify_and_report(
         config: &EnclaveConfig,
         malicious_package_id: address,
         walrus_blob_id: String,
         enclave_signature: vector<u8>,
+        timestamp_ms: u64,
+        clock: &Clock,
         ctx: &mut TxContext
     ) {
+        // Freshness check — reject stale reports to prevent replay attacks
+        let now = clock::timestamp_ms(clock);
+        assert!(now <= timestamp_ms + MAX_REPORT_AGE_MS, EStaleReport);
+
         if (config.is_registered) {
-            // Reconstruct the signed message: address bytes + blob id bytes
+            // Reconstruct the signed message: address bytes + blob id bytes + timestamp bytes
             let msg = sui::address::to_bytes(malicious_package_id);
             let blob_bytes = std::string::bytes(&walrus_blob_id);
             vector::append(&mut msg, *blob_bytes);
+
+            // Append timestamp as 8 little-endian bytes
+            let ts = timestamp_ms;
+            let i = 0u8;
+            while (i < 8) {
+                vector::push_back(&mut msg, ((ts & 0xff) as u8));
+                ts = ts >> 8;
+                i = i + 1;
+            };
 
             let valid = ed25519::ed25519_verify(
                 &enclave_signature,
@@ -135,14 +154,12 @@ module seal_enclave::enclave {
             );
             assert!(valid, EInvalidSignature);
         };
-        // If not registered: accept the report and emit event.
-        // This supports the MVP proof flow where the ephemeral burner
-        // acts as the enclave signer before a real Nitro enclave is deployed.
 
         event::emit(ThreatVerified {
             malicious_package_id,
             walrus_blob_id,
             enclave_signer: tx_context::sender(ctx),
+            timestamp_ms,
             verified: config.is_registered,
         });
     }

@@ -39,7 +39,7 @@ const SEAL_POLICY_ID = '0x00';
 
 // The on-chain EnclaveConfig object ID (set after register_enclave() is called)
 // Replace with actual object ID after deploying seal_enclave package
-const ENCLAVE_CONFIG_OBJECT_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x57f27c47b344cf045ae4dbf9acadca003b41526028c9c0ccc144ed0435fecf89';
+const ENCLAVE_CONFIG_OBJECT_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x50c50306e4c1473dc73e3f0fcf5d2be527cedd096d5ee2ea60019e961b6c5128';
 
 async function main() {
   const geminiApiKey = process.env.GEMINI_API_KEY;
