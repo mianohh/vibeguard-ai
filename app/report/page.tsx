@@ -238,7 +238,9 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="min-h-screen relative">
+      <div className="ocean-background" />
+      
       {toast.show && (
         <Toast
           message={toast.message}
@@ -248,26 +250,36 @@ export default function ReportPage() {
         />
       )}
       
-      <div className="container mx-auto px-6 py-12 max-w-4xl">
-        <div className="security-surface p-8">
+      <div className="relative z-10 container mx-auto px-6 py-12 max-w-4xl">
+        <div className="glass-card p-8 liquid-expand">
           <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-100 mb-2 tracking-tight">
-                🚨 Report Malicious Contract
-              </h1>
-              <p className="text-slate-400">
+              <div className="flex items-center gap-3 mb-2">
+                <svg className="w-8 h-8 text-status-danger" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <h1 className="text-3xl font-bold text-white tracking-tight">
+                  Report Malicious Contract
+                </h1>
+              </div>
+              <p className="text-gray-400">
                 Help protect the Sui community by reporting suspicious contracts
               </p>
             </div>
             <ZkLoginButton />
           </div>
 
-          <div className="border-t border-slate-700 pt-8">
-            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-6 mb-6">
-              <h3 className="font-semibold text-blue-300 mb-2">
-                ⚡ Automated Verification with VibeGuard AI
-              </h3>
-              <p className="text-blue-200/80 text-sm">
+          <div className="border-t border-ocean-surface pt-8">
+            <div className="glass-card bg-sui-blue/10 border-sui-cyan/30 p-6 mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-5 h-5 text-sui-cyan" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                </svg>
+                <h3 className="font-semibold text-sui-cyan">
+                  Automated Verification with VibeGuard AI
+                </h3>
+              </div>
+              <p className="text-sui-aqua/80 text-sm">
                 Provide a transaction hash to automatically verify malicious behavior using our AI analysis pipeline. Verified reports are auto-approved and added to the blacklist immediately.
               </p>
             </div>
@@ -282,7 +294,7 @@ export default function ReportPage() {
                   placeholder="0x..."
                   value={packageId}
                   onChange={(e) => setPackageId(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 monospace-input focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 disabled:bg-slate-800/30 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-ocean-mid/50 border border-ocean-surface rounded-lg text-gray-200 placeholder-gray-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan transition-all duration-200 disabled:bg-ocean-surface/30 disabled:cursor-not-allowed"
                   disabled={!isLoggedIn}
                 />
               </div>
@@ -296,7 +308,7 @@ export default function ReportPage() {
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 resize-none disabled:bg-slate-800/30 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-ocean-mid/50 border border-ocean-surface rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan transition-all duration-200 resize-none disabled:bg-ocean-surface/30 disabled:cursor-not-allowed"
                   disabled={!isLoggedIn}
                 />
               </div>
@@ -311,26 +323,32 @@ export default function ReportPage() {
                     placeholder="0x... or transaction digest"
                     value={proofTxHash}
                     onChange={(e) => setProofTxHash(e.target.value)}
-                    className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 monospace-input focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 disabled:bg-slate-800/30 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-ocean-mid/50 border border-ocean-surface rounded-lg text-gray-200 placeholder-gray-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan transition-all duration-200 disabled:bg-ocean-surface/30 disabled:cursor-not-allowed"
                     disabled={!isLoggedIn}
                   />
                   <button
                     type="button"
                     onClick={handleVerify}
                     disabled={!isLoggedIn || !proofTxHash.trim() || verifying}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold rounded-lg border border-green-500/50 transition-all duration-200"
+                    className="px-6 py-3 bg-status-safe hover:bg-status-safe/80 disabled:bg-ocean-surface disabled:text-gray-500 disabled:cursor-not-allowed text-ocean-deepest font-semibold rounded-lg border border-status-safe/50 transition-all duration-200 shadow-verified"
                   >
                     {verifying ? 'Verifying...' : 'Verify'}
                   </button>
                 </div>
                 {verificationResult === 'verified' && (
-                  <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
-                    <span>✅</span> Threat verified - report will be auto-approved
+                  <p className="text-xs text-status-safe mt-2 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Threat verified - report will be auto-approved
                   </p>
                 )}
                 {verificationResult === 'failed' && (
-                  <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
-                    <span>⚠️</span> Verification failed - will be submitted as unverified
+                  <p className="text-xs text-status-warning mt-2 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Verification failed - will be submitted as unverified
                   </p>
                 )}
                 <p className="text-xs text-slate-500 mt-2 leading-relaxed">
@@ -341,18 +359,20 @@ export default function ReportPage() {
               <button
                 type="submit"
                 disabled={!isLoggedIn || submitting}
-                className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-base rounded-lg border border-blue-500/50 transition-all duration-200 shadow-lg shadow-blue-900/20"
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {!isLoggedIn ? 'Login to Submit Report' : submitting ? (
-                  <div className="flex items-center justify-center space-x-3">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>{loadingStage || 'Submitting...'}</span>
-                  </div>
-                ) : 'Submit Report'}
+                <span className="relative z-10">
+                  {!isLoggedIn ? 'Login to Submit Report' : submitting ? (
+                    <div className="flex items-center justify-center space-x-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>{loadingStage || 'Submitting...'}</span>
+                    </div>
+                  ) : 'Submit Report'}
+                </span>
               </button>
 
-              <div className="text-center text-xs text-slate-500 mt-4">
-                Powered by <span className="text-blue-400 font-semibold">Google OAuth</span> & <span className="text-blue-400 font-semibold">Walrus Decentralized Storage</span>
+              <div className="text-center text-xs text-gray-500 mt-4">
+                Powered by <span className="text-sui-cyan font-semibold">Google OAuth</span> & <span className="text-sui-cyan font-semibold">Walrus Decentralized Storage</span>
               </div>
             </form>
           </div>

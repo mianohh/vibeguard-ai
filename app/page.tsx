@@ -55,18 +55,23 @@ export default function SecurityConsole() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="container mx-auto px-6 py-12 max-w-4xl">
+    <div className="min-h-screen relative">
+      <div className="ocean-background" />
+      
+      <div className="relative z-10 container mx-auto px-6 py-12 max-w-4xl">
         
-        {/* Header - Minimal & Authoritative */}
+        {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-slate-100 mb-3 tracking-tight">
-            🔐 VibeGuard AI
-          </h1>
-          <p className="text-xl text-slate-400 font-medium">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="sui-symbol w-12 h-12" />
+            <h1 className="text-5xl font-display font-bold">
+              <span className="gradient-text">VibeGuard AI</span>
+            </h1>
+          </div>
+          <p className="text-xl text-gray-300 font-medium">
             Eliminate blind signing on Sui
           </p>
-          <p className="text-slate-500 mt-2 text-sm">
+          <p className="text-gray-400 mt-2 text-sm">
             Analyze real Sui transactions before you sign them
           </p>
           
@@ -74,29 +79,35 @@ export default function SecurityConsole() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a 
               href="/report"
-              className="px-6 py-3 bg-red-600/10 border border-red-500/30 rounded-lg hover:bg-red-600/20 transition-all duration-200 group"
+              className="glass-card px-6 py-3 hover:border-status-danger transition-all duration-200 group"
             >
-              <span className="text-red-400 group-hover:text-red-300 font-semibold text-sm flex items-center gap-2">
-                <span className="text-lg">🚨</span>
+              <span className="text-status-danger group-hover:text-red-300 font-semibold text-sm flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
                 Report Malicious Contract
               </span>
             </a>
             <a 
-              href="/api-docs"
-              className="px-6 py-3 bg-blue-600/10 border border-blue-500/30 rounded-lg hover:bg-blue-600/20 transition-all duration-200 group"
+              href="/ecosystem"
+              className="glass-card px-6 py-3 hover:border-status-safe transition-all duration-200 group"
             >
-              <span className="text-blue-400 group-hover:text-blue-300 font-semibold text-sm flex items-center gap-2">
-                <span className="text-lg">📡</span>
-                API Documentation
+              <span className="text-status-safe group-hover:text-green-300 font-semibold text-sm flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
+                </svg>
+                Ecosystem Primitives
               </span>
             </a>
             <a 
-              href="/roadmap"
-              className="px-6 py-3 bg-purple-600/10 border border-purple-500/30 rounded-lg hover:bg-purple-600/20 transition-all duration-200 group"
+              href="/api-docs"
+              className="glass-card px-6 py-3 hover:border-sui-cyan transition-all duration-200 group"
             >
-              <span className="text-purple-400 group-hover:text-purple-300 font-semibold text-sm flex items-center gap-2">
-                <span className="text-lg">🗺️</span>
-                Roadmap
+              <span className="text-sui-cyan group-hover:text-sui-aqua font-semibold text-sm flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+                API Documentation
               </span>
             </a>
           </div>
@@ -106,7 +117,7 @@ export default function SecurityConsole() {
         <AnalyticsDashboard />
 
         {/* Input Console */}
-        <div className="security-surface p-8 mb-12">
+        <div className="glass-card p-8 mb-12 liquid-expand">
           <div className="space-y-8">
             
             {/* Transaction Input */}
@@ -120,10 +131,10 @@ export default function SecurityConsole() {
                 placeholder="Paste Transaction Hash (0x...) or Base64 Bytes"
                 className="
                   w-full h-32 px-4 py-4 
-                  bg-slate-900/50 border border-slate-700 rounded-lg 
-                  text-slate-200 placeholder-slate-500
-                  monospace-input
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+                  bg-ocean-mid/50 border border-ocean-surface rounded-lg 
+                  text-gray-200 placeholder-gray-500
+                  font-mono text-sm
+                  focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan
                   transition-all duration-200
                   resize-none
                 "
@@ -146,10 +157,10 @@ export default function SecurityConsole() {
                 placeholder="0x... (optional but improves risk detection accuracy)"
                 className="
                   w-full px-4 py-3 
-                  bg-slate-900/50 border border-slate-700 rounded-lg 
-                  text-slate-200 placeholder-slate-500
-                  monospace-input
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+                  bg-ocean-mid/50 border border-ocean-surface rounded-lg 
+                  text-gray-200 placeholder-gray-500
+                  font-mono text-sm
+                  focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan
                   transition-all duration-200
                 "
                 disabled={loading}
@@ -171,9 +182,9 @@ export default function SecurityConsole() {
                 placeholder="e.g., 'Claim airdrop', 'Mint NFT', 'Swap tokens', 'Send 10 SUI to friend'"
                 className="
                   w-full px-4 py-3 
-                  bg-slate-900/50 border border-slate-700 rounded-lg 
-                  text-slate-200 placeholder-slate-500
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+                  bg-ocean-mid/50 border border-ocean-surface rounded-lg 
+                  text-gray-200 placeholder-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan
                   transition-all duration-200
                 "
                 disabled={loading}
@@ -188,7 +199,7 @@ export default function SecurityConsole() {
               <label className="block text-sm font-semibold text-slate-300 mb-3 tracking-wide">
                 NETWORK
               </label>
-              <div className="flex space-x-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700 w-fit">
+              <div className="flex space-x-1 bg-ocean-mid/50 p-1 rounded-lg border border-ocean-surface w-fit">
                 {(['testnet', 'mainnet', 'devnet'] as SuiNetwork[]).map((net) => (
                   <button
                     key={net}
@@ -197,8 +208,8 @@ export default function SecurityConsole() {
                     className={`
                       px-4 py-2 text-sm font-medium rounded-md transition-all duration-200
                       ${network === net 
-                        ? 'bg-blue-600 text-white shadow-sm' 
-                        : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/50'
+                        ? 'bg-sui-blue text-ocean-deepest shadow-sui-glow' 
+                        : 'text-gray-400 hover:text-gray-300 hover:bg-ocean-surface/50'
                       }
                     `}
                   >
@@ -212,28 +223,22 @@ export default function SecurityConsole() {
             <button
               onClick={handleAnalyze}
               disabled={loading || !transactionBytes.trim()}
-              className="
-                w-full px-8 py-4 
-                bg-blue-600 hover:bg-blue-700 
-                disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed
-                text-white font-semibold text-base
-                rounded-lg border border-blue-500/50
-                transition-all duration-200
-                shadow-lg shadow-blue-900/20
-              "
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-3">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>
-                    {transactionBytes.trim().startsWith('0x') 
-                      ? 'Fetching Transaction Data...' 
-                      : 'Analyzing Transaction...'}
-                  </span>
-                </div>
-              ) : (
-                'Analyze Transaction'
-              )}
+              <span className="relative z-10">
+                {loading ? (
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>
+                      {transactionBytes.trim().startsWith('0x') 
+                        ? 'Fetching Transaction Data...' 
+                        : 'Analyzing Transaction...'}
+                    </span>
+                  </div>
+                ) : (
+                  'Analyze Transaction'
+                )}
+              </span>
             </button>
           </div>
         </div>
