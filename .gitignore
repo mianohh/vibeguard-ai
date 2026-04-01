@@ -50,4 +50,12 @@ pids/
 *.pid.lock
 
 # Sui
-.sui/\n# SDK build artifacts\npackages/sdk/dist/
+.sui/
+
+# SDK build artifacts
+packages/sdk/dist/
+
+# Nautilus local sim — private key and local proof artifacts, never commit
+scripts/enclave-keypair.json
+scripts/nautilus-e2e-proof.json
+scripts/enclave-registration-proof.json
