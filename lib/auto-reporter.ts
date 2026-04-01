@@ -1,6 +1,8 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { fromBase64 } from '@mysten/sui/utils';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
 
@@ -34,11 +36,27 @@ async function uploadToWalrus(content: string): Promise<{ blobId: string; blobOb
   return { blobId, blobObjectId };
 }
 
+// Load the registered enclave keypair — public key is stored in EnclaveConfig on-chain.
+// In production: loaded from ENCLAVE_PRIVATE_KEY env var (set in Vercel).
+// Locally: falls back to scripts/enclave-keypair.json if env var not set.
+function loadEnclaveKeypair(): Ed25519Keypair {
+  if (process.env.ENCLAVE_PRIVATE_KEY) {
+    const raw = Buffer.from(process.env.ENCLAVE_PRIVATE_KEY, 'base64');
+    return Ed25519Keypair.fromSecretKey(raw);
+  }
+  const keypairFile = path.resolve(process.cwd(), 'scripts/enclave-keypair.json');
+  if (fs.existsSync(keypairFile)) {
+    const saved = JSON.parse(fs.readFileSync(keypairFile, 'utf8'));
+    return Ed25519Keypair.fromSecretKey(Buffer.from(saved.privateKeyBase64, 'base64'));
+  }
+  throw new Error('ENCLAVE_PRIVATE_KEY env var not set and enclave-keypair.json not found');
+}
+
 export async function autoReportThreat(maliciousPackageId: string, reasons: string[]): Promise<void> {
   console.log(`🚨 Auto-reporting malicious package: ${maliciousPackageId}`);
 
-  // 1. Ephemeral system burner — acts as the enclave signer for this integration proof
-  const systemBurner = new Ed25519Keypair();
+  // 1. Load registered enclave keypair — public key matches EnclaveConfig on-chain
+  const systemBurner = loadEnclaveKeypair();
   const reporterAddress = systemBurner.toSuiAddress();
 
   // 2. Structure metadata
@@ -69,7 +87,9 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
   const tsBytes = Buffer.allocUnsafe(8);
   tsBytes.writeBigUInt64LE(BigInt(timestampMs));
   const msgToSign = Buffer.concat([addrBytes, blobBytes, tsBytes]);
-  const { signature: enclaveSignature } = await systemBurner.signPersonalMessage(msgToSign);
+  // Use .sign() for raw Ed25519 — Move's ed25519_verify expects raw 64-byte sig, no prefix
+  const rawSig = await systemBurner.sign(msgToSign);
+  const enclaveSignature = Buffer.from(rawSig).toString('base64');
 
   console.log(`🔏 Payload signed by ephemeral enclave keypair: ${reporterAddress.slice(0, 10)}...`);
 
