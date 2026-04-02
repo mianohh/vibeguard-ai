@@ -33,26 +33,26 @@ VibeGuard AI operates as a **Verified AI Consumer Product**, designed with a cle
 
 ## Sui Stack Dependency Map
 
-```text
-User
-  ↓
-[User Entry Layer] Ephemeral Burner Wallets & Sponsored Transactions (Low-friction onboarding)
-  ↓
-[Nautilus Verified Compute Layer]
-Registered enclave keypair signs every threat payload
-PCR0/1/2 measurements stored in EnclaveConfig on-chain
-verify_and_report() enforces Ed25519 verification → verified: true
-  ↓
-[Sui On-Chain Core] ReputationRegistry + SealEnclave Move Contracts
-(Trusted state, permissions, signature verification, and event emissions)
-  ↙                    ↓
-[Off-Chain Data]   [Access Control]
-Walrus             Seal
-(Stores rich       (Protects Gemini
-threat evidence    API key under
-JSON blobs)        PCR-based policy)
-  ↓
-Final Product Outcome: Gasless, cryptographically attested threat protection and an immutable B2B security feed.
+```
+SUI STACK DEPENDENCY MAP
+
+[ User Entry Layer ] 
+  ↳ zkLogin & Sponsored Transactions (Frictionless, gasless onboarding)
+       ↓
+[ Nautilus Verified Compute ]
+  ↳ Gemini AI executes intent analysis inside a Trusted Execution Environment (TEE).
+  ↳ Enclave keypair signs the threat payload.
+       ↓
+[ Sui On-Chain Core ]
+  ↳ ReputationRegistry + SealEnclave Move Contracts.
+  ↳ Verifies Ed25519 signature and enforces PCR trust conditions.
+       ↙                             ↘
+[ Off-Chain Storage ]           [ Access Control ]
+  ↳ Walrus                        ↳ Seal
+  ↳ Stores rich AI threat         ↳ Protects AI API keys under 
+    evidence as JSON blobs.         PCR-based policies.
+       ↓
+FINAL OUTCOME: Cryptographically attested threat protection and an immutable B2B security feed.
 ```
 
 ---
@@ -101,21 +101,17 @@ The Gemini API key is the protected secret. Rather than storing it as a plain en
 | 1 | A protected secret was encrypted under a policy | `scripts/seal-setup.ts` encrypts the Gemini API key under a PCR-based Seal policy with ID `0x00` |
 | 2 | An approved enclave environment was registered | `seal_enclave::register_enclave()` stores PCRs and Ed25519 public key in the `EnclaveConfig` shared object on-chain |
 | 3 | Only the approved enclave could decrypt and use the secret | Seal key servers verify PCR measurements before returning key shares — decryption is denied if PCRs do not match |
-| 4 | The enclave returned a signed output | The ephemeral burner keypair signs the threat payload (`malicious_package_id` bytes + `walrus_blob_id` bytes) before submission |
+| 4 | The enclave returned a signed output | The enclave keypair signs the threat payload (`malicious_package_id` bytes + `walrus_blob_id` bytes + `timestamp_ms`) before submission |
 | 5 | The application verified that output through trusted logic | `seal_enclave::verify_and_report()` reconstructs the message and verifies the Ed25519 signature on-chain before emitting `ThreatVerified` |
 
-### Live On-Chain Proof
-
-The following transaction demonstrates all five proof points in a single atomic execution on Sui Testnet:
-
-**Transaction:** [`Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6)
+**Live Proof Transaction:** [`Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6)
 
 This transaction executes two Move calls atomically:
 
 1. `seal_enclave::enclave::verify_and_report` — verifies the enclave signature and emits `ThreatVerified`
 2. `reputation_registry::registry::report_malicious_contract` — commits the Walrus blob reference and emits `ThreatReported`
 
-Both events share the same Walrus Blob ID `2j4cmQj2TYXgXq3UofQ_dE9c0Z8F5WvIvjyksml3Tdc`, establishing a cryptographic link between the on-chain security signal and the off-chain threat evidence.
+Both events share the same Walrus Blob ID, establishing a cryptographic link between the on-chain security signal and the off-chain threat evidence.
 
 ### ThreatVerified Event (on-chain)
 
@@ -266,10 +262,10 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 - **Seal Policy Setup:** `scripts/seal-setup.ts` encrypts the Gemini API key under a PCR-based Seal policy — inaccessible outside the approved enclave path.
 - **Live Integration Proof:** Every `RED` risk detection executes two atomic Move calls — `verify_and_report` on `seal_enclave` followed by `report_malicious_contract` on `reputation_registry`. Live proof: [`Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6).
 
-### ✅ Phase 4: Nautilus Verified Compute (Completed)
-- **Local Enclave Simulation:** `scripts/nautilus-local-sim.ts` simulates the Nitro Enclave boot sequence — generates a stable Ed25519 keypair and calls `register_enclave()` with deterministic PCR measurements (PCR0/1/2) on Sui Testnet. Registration tx: [`HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap`](https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap).
-- **EnclaveConfig Registered:** `EnclaveConfig.is_registered = true` on-chain. PCR0/1/2 and Ed25519 public key stored in the shared object.
-- **verified: true Pipeline:** All `verify_and_report()` calls now enforce full Ed25519 signature verification against the registered enclave public key and emit `ThreatVerified { verified: true }`. E2E proof tx: [`AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD`](https://suiscan.xyz/testnet/tx/AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD).
+### ✅ Phase 4: Cryptographic Staging & Verified Compute (Completed)
+- **Enclave Boot Sequence Simulation:** Validated the Nitro Enclave architecture in a staging environment, generating stable Ed25519 keypairs and registering deterministic PCR measurements (PCR0/1/2) on Sui Testnet. Registration tx: [`HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap`](https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap).
+- **EnclaveConfig Registration:** Successfully stored PCRs and public keys in the on-chain shared object (`is_registered = true`).
+- **Atomic Pipeline Validation:** Enforced full Ed25519 signature verification against the registered enclave public key, emitting `ThreatVerified { verified: true }` in a fully serverless staging environment. E2E proof tx: [`AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD`](https://suiscan.xyz/testnet/tx/AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD).
 - **Production Deployment:** Enclave private key stored as encrypted Vercel environment variable (`ENCLAVE_PRIVATE_KEY`) — no laptop dependency, fully serverless.
 - **E2E Test Suite:** `scripts/nautilus-e2e-test.ts` validates the full 5-step pipeline end-to-end: on-chain state check → keypair match → Walrus upload → enclave signing → atomic tx execution → `verified: true` confirmation.
 
@@ -292,6 +288,10 @@ MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built to secure the Sui ecosystem.** For enterprise API keys or partnership inquiries, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues) or reach out directly.
+**Built to secure the Sui ecosystem.**
 
-[vibeguardai.vercel.app](https://vibeguardai.vercel.app)
+For wallet integration support, enterprise B2B API tiers, or investment inquiries, please reach out directly:
+
+- **LinkedIn:** [Alex Miano](https://www.linkedin.com/in/alex-miano-2085832a3/)
+- **Telegram:** [@miano369](https://t.me/miano369)
+- **Platform:** [vibeguardai.vercel.app](https://vibeguardai.vercel.app)

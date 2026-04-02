@@ -8,9 +8,7 @@ export default function EcosystemPage() {
       <div className="relative z-10 container mx-auto px-6 py-12 max-w-5xl">
         <div className="glass-card p-8 liquid-expand">
           <div className="flex items-center gap-3 mb-4">
-            <svg className="w-10 h-10 text-sui-cyan" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
-            </svg>
+            <div className="sui-symbol w-10 h-10" />
             <h1 className="text-4xl font-bold text-white tracking-tight">
               Ecosystem Primitives & Cross-Stack Integration
             </h1>
@@ -47,7 +45,10 @@ export default function EcosystemPage() {
             
             <div className="grid md:grid-cols-2 gap-6">
               <div className="glass-card bg-sui-blue/10 border-sui-cyan/30 p-6">
-                <h3 className="font-semibold text-sui-cyan mb-3">Core Stack</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="sui-symbol w-6 h-6" />
+                <h3 className="font-semibold text-sui-cyan">Core Stack</h3>
+              </div>
                 <ul className="space-y-2 text-sm text-gray-300">
                   <li>▸ Sui: Trusted state</li>
                   <li>▸ Walrus: Decentralized storage</li>
@@ -57,7 +58,10 @@ export default function EcosystemPage() {
               </div>
 
               <div className="glass-card bg-status-safe/10 border-status-safe/30 p-6">
-                <h3 className="font-semibold text-status-safe mb-3">Ecosystem Primitives</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="sui-symbol w-6 h-6" />
+                <h3 className="font-semibold text-status-safe">Ecosystem Primitives</h3>
+              </div>
                 <ul className="space-y-2 text-sm text-gray-300">
                   <li>✓ zkLogin: OAuth wallet</li>
                   <li>✓ Sponsored Tx: Gasless execution</li>
@@ -70,7 +74,10 @@ export default function EcosystemPage() {
 
           {/* zkLogin */}
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-4">zkLogin Integration</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="sui-symbol w-8 h-8" />
+              <h2 className="text-2xl font-bold text-white">zkLogin Integration</h2>
+            </div>
             
             <div className="glass-card bg-ocean-mid/30 p-6 mb-4">
               <h3 className="font-semibold text-gray-200 mb-3">Why zkLogin?</h3>
@@ -97,7 +104,10 @@ export default function EcosystemPage() {
 
           {/* Why Not Enoki */}
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-4">Why Native zkLogin (Not Enoki)?</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="sui-symbol w-8 h-8" />
+              <h2 className="text-2xl font-bold text-white">Why Native zkLogin (Not Enoki)?</h2>
+            </div>
             
             <div className="glass-card bg-ocean-mid/30 p-6">
               <p className="text-sm text-gray-300 mb-4">
@@ -119,7 +129,10 @@ export default function EcosystemPage() {
 
           {/* Why No DeepBook */}
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-4">Why No DeepBookV3?</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="sui-symbol w-8 h-8" />
+              <h2 className="text-2xl font-bold text-white">Why No DeepBookV3?</h2>
+            </div>
             
             <div className="glass-card bg-status-danger/10 border-status-danger/30 p-6">
               <p className="text-sm text-gray-300">
@@ -132,7 +145,10 @@ export default function EcosystemPage() {
 
           {/* Product Pattern */}
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-4">Product Pattern: Verified-Compute</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="sui-symbol w-8 h-8" />
+              <h2 className="text-2xl font-bold text-white">Product Pattern: Verified-Compute</h2>
+            </div>
             
             <div className="glass-card bg-purple-500/10 border-purple-400/30 p-6">
               <p className="text-sm text-gray-300 mb-3">
@@ -150,7 +166,10 @@ export default function EcosystemPage() {
 
           {/* Live Proofs */}
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">Live Proof Transactions</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="sui-symbol w-8 h-8" />
+              <h2 className="text-2xl font-bold text-white">Live Proof Transactions</h2>
+            </div>
             
             <div className="space-y-3">
               <div className="glass-card bg-ocean-mid/30 p-4">
