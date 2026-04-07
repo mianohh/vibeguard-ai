@@ -107,4 +107,39 @@ export class VibeGuard {
 
     return response.json() as Promise<ThreatReport>;
   }
+
+  async queryThreats(options: {
+    category?: string;
+    severity?: string;
+    limit?: number;
+    offset?: number;
+  } = {}) {
+    const params = new URLSearchParams();
+    if (options.category) params.set('category', options.category);
+    if (options.severity) params.set('severity', options.severity);
+    if (options.limit) params.set('limit', options.limit.toString());
+    if (options.offset) params.set('offset', options.offset.toString());
+
+    const response = await fetch(`${this.baseUrl}/api/threats?${params}`);
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async getThreatStats() {
+    const response = await fetch(`${this.baseUrl}/api/threats?stats=true`);
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  subscribeToThreats(callback: (event: any) => void) {
+    const eventSource = new EventSource(`${this.baseUrl}/api/events`);
+    eventSource.onmessage = (event) => {
+      callback(JSON.parse(event.data));
+    };
+    return () => eventSource.close();
+  }
 }
