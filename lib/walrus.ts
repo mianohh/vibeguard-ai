@@ -26,6 +26,7 @@ export interface ThreatReport {
   recommendedAction: string;
   reportedAt: string;
   reportedBy: string;
+  endEpoch?: number;
   metadata?: {
     title: string;
     publisher: string;

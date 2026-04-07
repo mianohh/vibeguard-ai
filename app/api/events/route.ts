@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 
 export async function GET(request: NextRequest) {
