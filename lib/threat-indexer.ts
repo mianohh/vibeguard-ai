@@ -20,6 +20,8 @@ export interface IndexedThreat {
   timestamp: number;
   txDigest: string;
   reasons?: string[];
+  endEpoch?: number;
+  blobStatus?: 'active' | 'expiring' | 'expired';
 }
 
 export interface ThreatQueryOptions {
@@ -68,12 +70,14 @@ export async function indexThreats(fromCursor?: string | null): Promise<number> 
     let category: IndexedThreat['category'];
     let severity: IndexedThreat['severity'];
     let reasons: string[] | undefined;
+    let endEpoch: number | undefined;
 
     try {
       const report = await retrieveThreatReportFromWalrus(walrus_blob_id);
       category = report.metadata?.category;
       severity = report.metadata?.severity;
       reasons = report.reasons;
+      endEpoch = report.endEpoch;
     } catch (error) {
       // Blob may be expired or unavailable - index without metadata
       console.warn(`⚠️ Skipping metadata for ${walrus_blob_id} (blob unavailable)`);
@@ -89,6 +93,8 @@ export async function indexThreats(fromCursor?: string | null): Promise<number> 
       timestamp: Number(event.timestampMs),
       txDigest: event.id.txDigest,
       reasons,
+      endEpoch,
+      blobStatus: endEpoch ? 'active' : undefined,
     };
 
     threatCache.set(malicious_package_id, indexed_threat);
