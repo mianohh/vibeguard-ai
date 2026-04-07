@@ -52,6 +52,23 @@ function loadEnclaveKeypair(): Ed25519Keypair {
   throw new Error('ENCLAVE_PRIVATE_KEY env var not set and enclave-keypair.json not found');
 }
 
+function determineCategory(reasons: string[]): 'Honeypot' | 'Phishing' | 'Rug Pull' | 'Intent Mismatch' | 'Unknown' {
+  const reasonsText = reasons.join(' ').toLowerCase();
+  if (reasonsText.includes('honeypot')) return 'Honeypot';
+  if (reasonsText.includes('intent mismatch') || reasonsText.includes('unexpected')) return 'Intent Mismatch';
+  if (reasonsText.includes('phishing') || reasonsText.includes('fake')) return 'Phishing';
+  if (reasonsText.includes('rug pull') || reasonsText.includes('drain')) return 'Rug Pull';
+  return 'Unknown';
+}
+
+function determineSeverity(reasons: string[]): 'Critical' | 'High' | 'Medium' | 'Low' {
+  const reasonsText = reasons.join(' ').toLowerCase();
+  if (reasonsText.includes('drain') || reasonsText.includes('steal') || reasonsText.includes('honeypot')) return 'Critical';
+  if (reasonsText.includes('unexpected transfer') || reasonsText.includes('malicious')) return 'High';
+  if (reasonsText.includes('suspicious')) return 'Medium';
+  return 'High'; // Default to High for RED risk
+}
+
 export async function autoReportThreat(maliciousPackageId: string, reasons: string[]): Promise<void> {
   console.log(`🚨 Auto-reporting malicious package: ${maliciousPackageId}`);
 
@@ -59,21 +76,29 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
   const systemBurner = loadEnclaveKeypair();
   const reporterAddress = systemBurner.toSuiAddress();
 
-  // 2. Structure metadata
+  // 2. Determine category and severity from reasons
+  const category = determineCategory(reasons);
+  const severity = determineSeverity(reasons);
+  const timestamp = new Date().toISOString();
+
+  // 3. Structure metadata
   const metadata = {
     title: 'VibeGuard AI Threat Report',
     publisher: reporterAddress,
-    category: 'Security Signal',
-    timestamp: new Date().toISOString(),
+    category,
+    tags: reasons.map(r => r.toLowerCase().replace(/\s+/g, '-')),
+    severity,
+    timestamp,
   };
 
   const evidence = JSON.stringify({
-    metadata,
+    // Optional metadata for enhanced features (backward compatible)
+    ...(metadata && { metadata }),
     packageId: maliciousPackageId,
     riskLevel: 'RED',
     headline: 'Automated Detection: Honeypot/Malicious Contract',
     reasons,
-    reportedAt: metadata.timestamp,
+    reportedAt: timestamp,
     reportedBy: 'vibeguard-automated-pipeline',
   });
 

@@ -26,11 +26,20 @@ export interface ThreatReport {
   recommendedAction: string;
   reportedAt: string;
   reportedBy: string;
+  metadata?: {
+    title: string;
+    publisher: string;
+    category: 'Honeypot' | 'Phishing' | 'Rug Pull' | 'Intent Mismatch' | 'Unknown';
+    tags?: string[];
+    severity: 'Critical' | 'High' | 'Medium' | 'Low';
+    timestamp: string;
+  };
 }
 
 export interface WalrusBlobResult {
   blobId: string;
   blobObjectId: string;
+  endEpoch?: number; // Blob expiration epoch
 }
 
 export interface WalrusUploadResponse {
@@ -94,11 +103,15 @@ export async function publishThreatReportToWalrus(
       if (result.newlyCreated) {
         blobId = result.newlyCreated.blobObject.blobId;
         blobObjectId = result.newlyCreated.blobObject.id;
-        console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId);
+        const endEpoch = result.newlyCreated.blobObject.storage.endEpoch;
+        console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId, '| Expires at epoch:', endEpoch);
+        return { blobId, blobObjectId, endEpoch };
       } else if (result.alreadyCertified) {
         blobId = result.alreadyCertified.blobId;
         blobObjectId = result.alreadyCertified.blobObject?.id ?? blobId;
-        console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId);
+        const endEpoch = result.alreadyCertified.endEpoch;
+        console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId, '| Expires at epoch:', endEpoch);
+        return { blobId, blobObjectId, endEpoch };
       } else {
         throw new Error('Unexpected Walrus response format');
       }
