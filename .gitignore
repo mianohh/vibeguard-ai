@@ -59,3 +59,10 @@ packages/sdk/dist/
 scripts/enclave-keypair.json
 scripts/nautilus-e2e-proof.json
 scripts/enclave-registration-proof.json
+
+# Rust build artifacts
+src/nautilus-server/target/
+**/target/
+
+# Rust build artifacts
+**/target/
