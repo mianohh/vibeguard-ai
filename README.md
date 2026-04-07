@@ -276,6 +276,153 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 
 ---
 
+## Integration Verification: Template F — Full Product-Ready Integration
+
+### Core User Flow
+
+**User Action:** "Analyze Transaction Before Signing"
+
+```
+USER SUBMITS TRANSACTION BYTES
+        ↓
+[OFFLINE ANALYSIS] Parse Base64 → Extract Move calls
+        ↓
+[REPUTATION CHECK] Query on-chain registry for known threats
+        ↓
+[LIVE SIMULATION] dryRunTransactionBlock → Map asset flows
+        ↓
+[AI ANALYSIS] Gemini (Seal-protected) → Intent mismatch detection
+        ↓
+[RISK CLASSIFICATION] GREEN / YELLOW / RED
+        ↓
+IF RED → [AUTO-REPORT PIPELINE]
+        ↓
+[NAUTILUS SIGNING] Enclave keypair signs threat payload
+        ↓
+[WALRUS UPLOAD] Evidence JSON → Immutable blob storage
+        ↓
+[ATOMIC TX] verify_and_report + report_malicious_contract
+        ↓
+[ON-CHAIN REGISTRY] ThreatVerified + ThreatReported events
+        ↓
+[B2B FEED] Wallets/dApps subscribe to threat events
+```
+
+### Why Each Layer Exists
+
+#### 1. Sui (Trusted State)
+**What:** Malicious package registry + Enclave verification state  
+**Why:** Decentralized consensus on threat data  
+**Creates Need For:** Rich evidence storage (on-chain too expensive)
+
+**On-Chain Objects:**
+- `ReputationRegistry` — Stores package IDs + Walrus blob references
+- `EnclaveConfig` — Stores PCR measurements + enclave public key
+- Events: `ThreatReported`, `ThreatVerified`
+
+#### 2. Walrus (Off-Chain Storage)
+**What:** Immutable threat evidence JSON blobs  
+**Why:** Full reports too expensive to store on-chain  
+**Creates Need For:** Trusted analysis source (who generates reports?)
+
+**Storage Pattern:**
+- Upload evidence → Get `blobId` + `blob_object_id`
+- Commit both references on-chain
+- B2B consumers fetch full evidence from Walrus
+
+**Live Example:** Blob `EKezFTkg5V4G_QMcM2GWGb-L97piNQ693-pjFszv5B4` linked in transaction [`Ht5iycN1...J3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6)
+
+#### 3. Nautilus (Verified Compute)
+**What:** AI threat analysis in AWS Nitro Enclave (TEE)  
+**Why:** B2B consumers need cryptographic proof of analysis integrity  
+**Creates Need For:** Protected AI API key (enclave needs Gemini)
+
+**Verification Flow:**
+1. Analysis runs in enclave
+2. Enclave signs output with registered keypair
+3. On-chain contract verifies Ed25519 signature
+4. Emits `ThreatVerified { verified: true }`
+
+**Live Proof:** Registration tx [`HGomNmBW...fPap`](https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap)
+
+#### 4. Seal (Access Control)
+**What:** Gemini API key encrypted under PCR-based policy  
+**Why:** Prevent unauthorized API usage and cost attacks  
+**Creates Need For:** User-friendly reporting (system is complex)
+
+**Protection Mechanism:**
+- API key encrypted with Seal policy
+- Only enclave with matching PCRs can decrypt
+- Key never exposed outside approved execution path
+
+#### 5. zkLogin + Sponsored Transactions (Primitives)
+**What:** OAuth-based wallet + gasless execution  
+**Why:** Users shouldn't manage keys or pay gas to report threats  
+**Completes The Loop:** Frictionless community reporting
+
+**Live Proof:** Community report [`57hge1tQ...uh7R`](https://suiscan.xyz/testnet/tx/57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R) — 0 SUI user cost
+
+### What Breaks If You Remove Each Layer
+
+| Remove | Consequence |
+|--------|-------------|
+| **Sui** | No consensus on threat state → B2B consumers can't trust the feed |
+| **Walrus** | Evidence stored on centralized server → Single point of failure |
+| **Nautilus** | No proof of analysis integrity → Malicious reports poison registry |
+| **Seal** | API key exposed → Unauthorized usage, cost attacks |
+| **zkLogin** | Users need private keys → Friction kills community reporting |
+| **Sponsored TX** | Users pay gas → Economic barrier to reporting |
+
+### Proof of Coherent Product Flow
+
+This is **NOT** a list of technologies — it's a **security architecture** where:
+
+1. **Each layer solves a problem the previous creates:**
+   - Sui provides consensus → Needs rich storage
+   - Walrus provides storage → Needs trusted source
+   - Nautilus provides trust → Needs protected secrets
+   - Seal provides protection → Needs user access
+   - zkLogin + Sponsored TX provide access → Completes the loop
+
+2. **Removing any layer breaks the guarantee:**
+   - Every layer is load-bearing, not decorative
+   - The flow produces verifiable, consumable output
+   - B2B wallets can subscribe to real-time threat feed
+
+3. **Real product with live proof:**
+   - Platform: https://vibeguardai.vercel.app
+   - All transactions publicly verifiable on Sui Testnet
+   - Full codebase: https://github.com/mianohh/vibeguard-ai
+
+### B2B Integration Example
+
+```typescript
+// Wallet provider subscribes to threat feed
+import { SuiClient } from '@mysten/sui/client';
+
+const client = new SuiClient({ url: 'https://fullnode.testnet.sui.io' });
+
+// Subscribe to ThreatReported events
+client.subscribeEvent({
+  filter: {
+    MoveEventType: `${PACKAGE_ID}::registry::ThreatReported`
+  },
+  onMessage: async (event) => {
+    const { malicious_package_id, walrus_blob_id } = event.parsedJson;
+    
+    // Fetch full evidence from Walrus
+    const evidence = await fetch(
+      `https://aggregator.walrus-testnet.walrus.space/v1/${walrus_blob_id}`
+    );
+    
+    // Block transactions to this package
+    blacklist.add(malicious_package_id);
+  }
+});
+```
+
+---
+
 ## Contributing
 
 We welcome contributions from security researchers and Sui developers. For guidelines on updating the threat registry or expanding SDK language support, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues).
