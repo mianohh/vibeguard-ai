@@ -33,7 +33,7 @@ export interface ThreatQueryOptions {
 
 // In-memory cache (for MVP - replace with Vercel KV/Postgres for production)
 const threatCache = new Map<string, IndexedThreat>();
-let lastIndexedCursor: string | null = null;
+let lastIndexedCursor: string | null | undefined = null;
 
 /**
  * Index ThreatReported events from the blockchain
@@ -41,13 +41,13 @@ let lastIndexedCursor: string | null = null;
  * @returns Number of new threats indexed
  */
 export async function indexThreats(fromCursor?: string | null): Promise<number> {
-  const cursor = fromCursor || lastIndexedCursor;
+  const cursor = fromCursor || lastIndexedCursor || undefined;
   
   const events = await suiClient.queryEvents({
     query: {
       MoveEventType: `${PACKAGE_ID}::registry::ThreatReported`,
     },
-    cursor,
+    cursor: cursor as any,
     limit: 50,
   });
 
@@ -96,7 +96,7 @@ export async function indexThreats(fromCursor?: string | null): Promise<number> 
   }
 
   if (events.hasNextPage) {
-    lastIndexedCursor = events.nextCursor;
+    lastIndexedCursor = events.nextCursor as any;
   }
 
   console.log(`✅ Indexed ${indexed} new threats (total: ${threatCache.size})`);
