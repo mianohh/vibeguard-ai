@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { initializeIndexer } from '@/lib/threat-indexer';
 
 export const metadata: Metadata = {
   title: 'VibeGuard AI - Eliminate Blind Signing on Sui',
   description: 'Pre-transaction security layer for the Sui blockchain',
 };
+
+// Initialize threat indexer on app startup
+if (typeof window === 'undefined') {
+  initializeIndexer().catch(console.error);
+}
 
 export default function RootLayout({
   children,
