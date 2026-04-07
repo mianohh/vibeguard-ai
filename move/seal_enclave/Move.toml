@@ -7,4 +7,4 @@ edition = "legacy"
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet-v1.14.0" }
 
 [addresses]
-seal_enclave = "0x3727d2478d4622e276e183912f6939517603d05bf93d4e3f3f628cbccd7a2ff6"
+seal_enclave = "0x0"
