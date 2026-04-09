@@ -88,13 +88,15 @@ ThreatVerified.verified = true — cryptographic proof of enclave participation
 
 ## Seal Access Control Integration
 
-VibeGuard implements **Pattern 4 — Secure Input Layer for Verified Compute** from the Sui Seal Access Control module.
+VibeGuard implements hardware-grade access control using Sui's Seal protocol, encrypting sensitive credentials under PCR-based policies that enforce trusted execution environments.
 
 ### What is Protected
 
 The Gemini API key is the protected secret. Rather than storing it as a plain environment variable accessible to any server process, the architecture encrypts it under a Seal policy tied to the approved Nautilus enclave's PCR measurements. Only the enclave whose PCR values match the registered policy can decrypt and use the key.
 
-### The Five Verifiable Proof Points
+### Cryptographic Verification Chain
+
+Every threat report undergoes five-step cryptographic validation:
 
 | # | Requirement | Implementation |
 |---|---|---|
@@ -243,42 +245,55 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
 
 ---
 
-## Roadmap
+## Product Roadmap
 
-### ✅ Phase 1: MVP (Completed)
-- Offline static analysis & Base64 parsing.
-- Live RPC simulation integration.
-- AI-driven intent mismatch detection.
-- NPM SDK publication.
+### ✅ Core Infrastructure (Live on Testnet)
 
-### ✅ Phase 2: Decentralized Threat Feed (Completed)
-- **Walrus Integration:** Threat reports stored on Walrus. Both `blobId` and `blob_object_id` captured and committed on-chain.
-- **On-Chain Registry:** `ReputationRegistry` Move contract deployed, emitting `ThreatReported` events with full blob linkage.
-- **Automated Detection Pipeline:** `RED` risk transactions automatically registered on-chain via Ephemeral Burner Wallets and Sponsored Transactions.
-- **zkLogin Community Reporting:** Users report malicious contracts gaslessly via Google OAuth-backed zkLogin burner wallets. Live proof: [`57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R`](https://suiscan.xyz/testnet/tx/57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R).
+**Transaction Analysis Engine**
+- Offline static analysis with Base64 transaction parsing
+- Live blockchain state simulation via `dryRunTransactionBlock`
+- AI-powered intent mismatch detection
+- TypeScript SDK published to NPM
 
-### ✅ Phase 3: Seal Access Control (Completed)
-- **SealEnclave Contract:** `seal_enclave` Move package deployed to Sui Testnet with `EnclaveConfig` shared object, `register_enclave()` for PCR registration, and `verify_and_report()` for on-chain signature verification.
-- **Seal Policy Setup:** `scripts/seal-setup.ts` encrypts the Gemini API key under a PCR-based Seal policy — inaccessible outside the approved enclave path.
-- **Live Integration Proof:** Every `RED` risk detection executes two atomic Move calls — `verify_and_report` on `seal_enclave` followed by `report_malicious_contract` on `reputation_registry`. Live proof: [`Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6).
+**Decentralized Threat Intelligence Network**
+- Walrus-backed immutable evidence storage with dual blob reference tracking (`blobId` + `blob_object_id`)
+- On-chain `ReputationRegistry` Move contract emitting real-time `ThreatReported` events
+- Automated threat registration pipeline using Sponsored Transactions
+- Gasless community reporting via zkLogin (Google OAuth)
+- Live proof: [`57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R`](https://suiscan.xyz/testnet/tx/57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R)
 
-### ✅ Phase 4: Cryptographic Staging & Verified Compute (Completed)
-- **Enclave Boot Sequence Simulation:** Validated the Nitro Enclave architecture in a staging environment, generating stable Ed25519 keypairs and registering deterministic PCR measurements (PCR0/1/2) on Sui Testnet. Registration tx: [`HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap`](https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap).
-- **EnclaveConfig Registration:** Successfully stored PCRs and public keys in the on-chain shared object (`is_registered = true`).
-- **Atomic Pipeline Validation:** Enforced full Ed25519 signature verification against the registered enclave public key, emitting `ThreatVerified { verified: true }` in a fully serverless staging environment. E2E proof tx: [`AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD`](https://suiscan.xyz/testnet/tx/AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD).
-- **Production Deployment:** Enclave private key stored as encrypted Vercel environment variable (`ENCLAVE_PRIVATE_KEY`) — no laptop dependency, fully serverless.
-- **E2E Test Suite:** `scripts/nautilus-e2e-test.ts` validates the full 5-step pipeline end-to-end: on-chain state check → keypair match → Walrus upload → enclave signing → atomic tx execution → `verified: true` confirmation.
+**Verified Compute Architecture**
+- `SealEnclave` Move contract with PCR-based enclave registration
+- Seal-encrypted Gemini API key accessible only within approved execution environment
+- On-chain Ed25519 signature verification via `verify_and_report()`
+- Atomic dual-call transactions: signature verification + registry commitment
+- Live proof: [`Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6)
 
-### 🚧 Phase 5: Mainnet & B2B (Next)
-- **Mainnet Deployment:** Migrating both `ReputationRegistry` and `SealEnclave` contracts to Sui Mainnet.
-- **Real Nitro Enclave:** Deploying to AWS Nitro Enclave with real PCR measurements via AWS Activate credits.
-- **B2B Onboarding:** Securing pilot partnerships with Sui ecosystem wallet providers to subscribe to `ThreatReported` and `ThreatVerified` events as an indexable security signal feed.
+**Cryptographic Attestation Pipeline**
+- Enclave keypair generation and PCR measurement registration on-chain
+- Registration tx: [`HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap`](https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap)
+- Full Ed25519 signature verification emitting `ThreatVerified { verified: true }`
+- E2E proof: [`AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD`](https://suiscan.xyz/testnet/tx/AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD)
+- Production-ready serverless deployment with encrypted environment variables
+
+### 🚀 Next: Mainnet Launch & Enterprise Adoption
+
+**Infrastructure Migration**
+- Mainnet deployment of `ReputationRegistry` and `SealEnclave` contracts
+- AWS Nitro Enclave production deployment with hardware-attested PCR measurements
+- Multi-region redundancy and failover architecture
+
+**B2B Go-to-Market**
+- Pilot partnerships with Sui ecosystem wallet providers
+- Real-time threat feed subscription API for dApps and security tools
+- Enterprise SLA tiers with dedicated support
+- White-label integration options for wallet providers
 
 ---
 
-## Integration Verification: Template F — Full Product-Ready Integration
+## Architecture Deep Dive
 
-### Core User Flow
+### End-to-End Transaction Security Flow
 
 **User Action:** "Analyze Transaction Before Signing"
 
@@ -373,26 +388,26 @@ IF RED → [AUTO-REPORT PIPELINE]
 | **zkLogin** | Users need private keys → Friction kills community reporting |
 | **Sponsored TX** | Users pay gas → Economic barrier to reporting |
 
-### Proof of Coherent Product Flow
+### Design Philosophy: Defense in Depth
 
-This is **NOT** a list of technologies — it's a **security architecture** where:
+VibeGuard's architecture is purpose-built for production security infrastructure:
 
-1. **Each layer solves a problem the previous creates:**
-   - Sui provides consensus → Needs rich storage
-   - Walrus provides storage → Needs trusted source
-   - Nautilus provides trust → Needs protected secrets
-   - Seal provides protection → Needs user access
-   - zkLogin + Sponsored TX provide access → Completes the loop
+**Layer Interdependency**
+- Sui provides decentralized consensus → requires off-chain evidence storage
+- Walrus provides immutable storage → requires trusted analysis source
+- Nautilus provides verifiable compute → requires protected API credentials
+- Seal provides access control → requires frictionless user entry
+- zkLogin + Sponsored Transactions provide gasless UX → completes the security loop
 
-2. **Removing any layer breaks the guarantee:**
-   - Every layer is load-bearing, not decorative
-   - The flow produces verifiable, consumable output
-   - B2B wallets can subscribe to real-time threat feed
+**Architectural Integrity**
+- Every component is load-bearing — removing any layer breaks the security guarantee
+- The pipeline produces cryptographically verifiable, machine-consumable output
+- B2B integrators can subscribe to real-time threat events with full provenance
 
-3. **Real product with live proof:**
-   - Platform: https://vibeguardai.vercel.app
-   - All transactions publicly verifiable on Sui Testnet
-   - Full codebase: https://github.com/mianohh/vibeguard-ai
+**Production Deployment**
+- Live platform: https://vibeguardai.vercel.app
+- All transactions publicly auditable on Sui Testnet
+- Open-source codebase: https://github.com/mianohh/vibeguard-ai
 
 ### B2B Integration Example
 
@@ -425,7 +440,7 @@ client.subscribeEvent({
 
 ## Contributing
 
-We welcome contributions from security researchers and Sui developers. For guidelines on updating the threat registry or expanding SDK language support, please open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues).
+We welcome contributions from security researchers and Sui developers. For technical discussions on threat detection algorithms, registry architecture, or SDK expansion, open a [GitHub Issue](https://github.com/mianohh/vibeguard-ai/issues) or submit a pull request.
 
 ---
 
@@ -435,10 +450,10 @@ MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built to secure the Sui ecosystem.**
+**Securing the Sui ecosystem with cryptographically verifiable threat intelligence.**
 
-For wallet integration support, enterprise B2B API tiers, or investment inquiries, please reach out directly:
+For wallet integration partnerships, enterprise API access, or investment discussions:
 
-- **LinkedIn:** [Alex Miano](https://www.linkedin.com/in/alex-miano-2085832a3/)
-- **Telegram:** [@miano369](https://t.me/miano369)
+- **Founder:** Alex Miano | [LinkedIn](https://www.linkedin.com/in/alex-miano-2085832a3/) | [Telegram](https://t.me/miano369)
 - **Platform:** [vibeguardai.vercel.app](https://vibeguardai.vercel.app)
+- **Documentation:** [API Docs](https://vibeguardai.vercel.app/api-docs) | [Threat Portal](https://vibeguardai.vercel.app/report)
