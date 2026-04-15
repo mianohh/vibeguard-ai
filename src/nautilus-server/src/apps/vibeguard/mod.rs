@@ -7,7 +7,7 @@ use tracing::{error, info};
 use crate::EnclaveState;
 
 pub mod admin;
-mod gemini;
+mod threat_agent;
 
 #[derive(Deserialize)]
 pub struct ProcessDataRequest {
@@ -44,12 +44,12 @@ pub struct ThreatAnalysisResult {
 
 /// POST /process_data
 /// 
-/// Main enclave endpoint - performs threat analysis using Gemini API
+/// Main enclave endpoint - performs threat analysis using LocalThreatAgent
 /// and returns a signed response.
 /// 
 /// Flow:
-/// 1. Decrypt Gemini API key using cached Seal keys
-/// 2. Call Gemini API for threat analysis
+/// 1. Load agent configuration (from Seal in production, default in testing)
+/// 2. Run LocalThreatAgent analysis (deterministic, pattern-based)
 /// 3. Sign response with enclave ephemeral keypair
 /// 4. Return { response, signature }
 pub async fn process_data(
@@ -58,15 +58,14 @@ pub async fn process_data(
 ) -> Result<Json<ProcessDataResponse>, (StatusCode, String)> {
     info!("🔍 /process_data called");
 
-    // 1. Get Gemini API key (from Seal in production, from env in testing)
-    let api_key = get_gemini_api_key()
+    // 1. Get agent configuration (from Seal in production, default in testing)
+    let config = get_agent_config()
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // 2. Call Gemini API for threat analysis
-    let analysis = gemini::analyze_transaction(&request.payload, &api_key)
-        .await
+    // 2. Run LocalThreatAgent analysis
+    let analysis = threat_agent::analyze_transaction(&request.payload, &config)
         .map_err(|e| {
-            error!("Gemini API error: {}", e);
+            error!("Threat analysis error: {}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, format!("Analysis failed: {}", e))
         })?;
 
@@ -105,17 +104,16 @@ fn construct_signature_message(result: &ThreatAnalysisResult) -> Vec<u8> {
     serde_json::to_vec(result).expect("Failed to serialize result")
 }
 
-/// Get Gemini API key
+/// Get agent configuration
 /// 
 /// In production: decrypted from Seal using cached keys
-/// In testing: loaded from environment variable
-fn get_gemini_api_key() -> Result<String, String> {
-    // Check if Seal keys are cached (production path)
-    if let Some(key) = admin::get_cached_gemini_key() {
-        return Ok(key);
+/// In testing: uses default configuration
+fn get_agent_config() -> Result<threat_agent::AgentConfig, String> {
+    // Check if Seal config is cached (production path)
+    if let Some(config) = admin::get_cached_agent_config() {
+        return Ok(config);
     }
 
-    // Fallback to environment variable (testing path)
-    std::env::var("GEMINI_API_KEY")
-        .map_err(|_| "API key not initialized. Set GEMINI_API_KEY env var or complete Seal key load.".to_string())
+    // Fallback to default configuration (testing path)
+    Ok(threat_agent::AgentConfig::default())
 }

@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tracing::info;
 
-// Global state for cached Seal keys and Gemini API key
+use super::threat_agent::AgentConfig;
+
+// Global state for cached Seal keys and agent configuration
 static SEAL_KEYS: Mutex<Option<Vec<u8>>> = Mutex::new(None);
-static GEMINI_API_KEY: Mutex<Option<String>> = Mutex::new(None);
+static AGENT_CONFIG: Mutex<Option<AgentConfig>> = Mutex::new(None);
 
 #[derive(Deserialize)]
 pub struct InitSealKeyLoadRequest {
@@ -32,8 +34,8 @@ pub struct StatusResponse {
 }
 
 #[derive(Deserialize)]
-pub struct ProvisionApiKeyRequest {
-    /// Base64-encoded encrypted Gemini API key object
+pub struct ProvisionConfigRequest {
+    /// Base64-encoded encrypted agent configuration object
     pub encrypted_object: String,
 }
 
@@ -93,18 +95,18 @@ pub async fn complete_seal_key_load(
     ))
 }
 
-/// POST /admin/provision_gemini_api_key
+/// POST /admin/provision_agent_config
 /// 
-/// Decrypt and provision the Gemini API key.
+/// Decrypt and provision the LocalThreatAgent configuration.
 /// 
 /// Flow:
 /// 1. Decrypt encrypted_object using cached Seal keys
-/// 2. Store decrypted API key in memory
-/// 3. /process_data can now use the key
-pub async fn provision_gemini_api_key(
-    Json(_request): Json<ProvisionApiKeyRequest>,
+/// 2. Store decrypted configuration in memory
+/// 3. /process_data can now use the config
+pub async fn provision_agent_config(
+    Json(_request): Json<ProvisionConfigRequest>,
 ) -> Result<Json<StatusResponse>, (StatusCode, String)> {
-    info!("🔑 /admin/provision_gemini_api_key called");
+    info!("🔑 /admin/provision_agent_config called");
 
     // TODO: Implement full Seal integration
     // For now, return stub response
@@ -112,15 +114,16 @@ pub async fn provision_gemini_api_key(
     // In production:
     // 1. Decode encrypted_object from base64
     // 2. Decrypt using cached Seal keys
-    // 3. Store in GEMINI_API_KEY
+    // 3. Deserialize to AgentConfig
+    // 4. Store in AGENT_CONFIG
     
     Err((
         StatusCode::NOT_IMPLEMENTED,
-        "Seal key provisioning not yet implemented. Use GEMINI_API_KEY env var for testing.".to_string(),
+        "Seal config provisioning not yet implemented. Using default AgentConfig for testing.".to_string(),
     ))
 }
 
-/// Get cached Gemini API key (if provisioned via Seal)
-pub fn get_cached_gemini_key() -> Option<String> {
-    GEMINI_API_KEY.lock().unwrap().clone()
+/// Get cached agent configuration (if provisioned via Seal)
+pub fn get_cached_agent_config() -> Option<AgentConfig> {
+    AGENT_CONFIG.lock().unwrap().clone()
 }
