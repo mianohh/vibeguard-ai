@@ -27,7 +27,6 @@ const result = await guard.analyzeTransaction({
   userAddress: '0xYourUserAddress',
   userIntent: 'Claim airdrop',
   onThreatDetected: (result) => {
-    // Fires on RED results — threat is auto-reported on-chain by VibeGuard
     console.error('🚨 HONEYPOT DETECTED:', result.explanation.headline);
   }
 });
@@ -45,22 +44,53 @@ if (result.risk.riskLevel === 'RED') {
 | `YELLOW` | Proceed with caution |
 | `RED` | High risk — block and warn user |
 
+### Query Threat Intelligence
+
+```typescript
+// Get all indexed threats
+const { threats } = await guard.queryThreats();
+
+// Filter by category and severity
+const honeypots = await guard.queryThreats({
+  category: 'Honeypot',
+  severity: 'Critical',
+  limit: 10,
+});
+
+// Get aggregated stats
+const { stats } = await guard.getThreatStats();
+console.log(stats.total);       // 5
+console.log(stats.byCategory);  // { 'Intent Mismatch': 1, 'Unknown': 4 }
+console.log(stats.bySeverity);  // { 'High': 1, 'Unknown': 4 }
+```
+
+### Subscribe to Real-Time Threats (SSE)
+
+```typescript
+// Returns unsubscribe function
+const unsubscribe = guard.subscribeToThreats((threat) => {
+  console.log('🚨 New threat:', threat.malicious_package_id);
+  blacklist.add(threat.malicious_package_id);
+});
+
+// Stop listening
+unsubscribe();
+```
+
 ### Retrieve a Threat Report
 
 Resolve a `ThreatReported` event's `blobId` to the full AI report stored on Walrus decentralized storage:
 
 ```typescript
 const report = await guard.retrieveThreatReport(
-  'oNyrr0jEVATWSAGkJHnmoKVICnFosv1k4YNayZXcRgk', // blobId from ThreatReported event
-  '0x08108c7412210ef9816aea2de0899f2dcad6f521631f314ab1fa29bf353af9a4' // blobObjectId (optional — enables liveness check)
+  't1iVCt4JxkS-dCM_Zfp4jy78yYNOLffxRsJLdoWCicU', // blobId from ThreatReported event
+  '0x08108c7412210ef9816aea2de0899f2dcad6f521631f314ab1fa29bf353af9a4' // blobObjectId (optional)
 );
 
 console.log(report.riskLevel);    // 'RED'
 console.log(report.reasons);      // ['Intent mismatch detected', ...]
 console.log(report.plainEnglish); // Full AI explanation
 ```
-
-Passing `blobObjectId` enables a liveness gate — if the Walrus Blob NFT no longer exists on Sui, the call throws with a `410 Gone` error.
 
 ## API Reference
 
@@ -80,6 +110,51 @@ Passing `blobObjectId` enables a liveness gate — if the Walrus Blob NFT no lon
 | `userIntent` | `string` | Recommended (e.g. `'Claim airdrop'`) |
 | `onThreatDetected` | `(result: AnalysisResult) => void` | Optional callback on RED |
 
+### `queryThreats(options?): Promise<{ threats, count }>`
+
+| Option | Type | Description |
+|---|---|---|
+| `category` | `string` | Filter: `Honeypot`, `Phishing`, `Rug Pull`, `Intent Mismatch`, `Unknown` |
+| `severity` | `string` | Filter: `Critical`, `High`, `Medium`, `Low` |
+| `limit` | `number` | Max results (default 50) |
+| `offset` | `number` | Pagination offset |
+
+### `getThreatStats(): Promise<{ stats }>`
+
+Returns aggregated threat counts by category and severity.
+
+### `subscribeToThreats(callback): () => void`
+
+Subscribes to real-time `ThreatReported` events via SSE. Returns an unsubscribe function.
+
+### `registerWebhook(url, events, apiKey): Promise<{ webhook }>`
+
+| Param | Type | Description |
+|---|---|---|
+| `url` | `string` | Your endpoint to receive threat notifications |
+| `events` | `string[]` | e.g. `['ThreatReported', 'ThreatVerified']` |
+| `apiKey` | `string` | Your API key for authentication |
+
+### `getWebhooks(): Promise<{ webhooks }>`
+
+Returns all registered webhooks.
+
+### `reindexThreats(): Promise<{ indexed, stats }>`
+
+Force re-index all `ThreatReported` events from the blockchain.
+
+### `getIndexerStats(): Promise<{ total, byCategory, bySeverity }>`
+
+Returns current indexer cache stats.
+
+### `getAnalytics(): Promise<{ totalScans, scamsBlocked, threats }>`
+
+Returns platform-wide analytics including threat stats.
+
+### `getBlobHealth(): Promise<{ total, healthy, expiring, expired }>`
+
+Checks Walrus blob expiration status for all indexed threats.
+
 ### `retrieveThreatReport(blobId, blobObjectId?): Promise<ThreatReport>`
 
 | Param | Type | Description |
@@ -89,7 +164,7 @@ Passing `blobObjectId` enables a liveness gate — if the Walrus Blob NFT no lon
 
 ## REST API
 
-The underlying REST API is also fully open:
+The underlying REST API is fully open:
 
 ```bash
 # Analyze a transaction
@@ -102,8 +177,17 @@ curl -X POST https://vibeguardai.vercel.app/api/explain \
     "userIntent": "Claim airdrop"
   }'
 
-# Retrieve a threat report from Walrus
-curl "https://vibeguardai.vercel.app/api/threat/<blobId>?blobObjectId=<blobObjectId>"
+# Query indexed threats
+curl "https://vibeguardai.vercel.app/api/threats"
+curl "https://vibeguardai.vercel.app/api/threats?category=Honeypot&severity=High"
+curl "https://vibeguardai.vercel.app/api/threats?stats=true"
+curl "https://vibeguardai.vercel.app/api/threats?packageId=0x..."
+
+# Real-time threat stream (SSE)
+curl "https://vibeguardai.vercel.app/api/events"
+
+# Retrieve threat evidence from Walrus
+curl "https://vibeguardai.vercel.app/api/threat/<blobId>"
 ```
 
 Full API docs: [vibeguardai.vercel.app/api-docs](https://vibeguardai.vercel.app/api-docs)
@@ -115,6 +199,7 @@ Every `RED` detection automatically registers the malicious package on the VibeG
 - [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be)
 - [Live Platform](https://vibeguardai.vercel.app)
 - [Threat Intelligence Portal](https://vibeguardai.vercel.app/report)
+- [B2B Dashboard](https://vibeguardai.vercel.app/dashboard)
 
 ## License
 

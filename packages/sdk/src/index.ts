@@ -142,4 +142,58 @@ export class VibeGuard {
     };
     return () => eventSource.close();
   }
+
+  async registerWebhook(url: string, events: string[], apiKey: string) {
+    const response = await fetch(`${this.baseUrl}/api/webhooks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, events, apiKey }),
+    });
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async getWebhooks() {
+    const response = await fetch(`${this.baseUrl}/api/webhooks`);
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async reindexThreats() {
+    const response = await fetch(`${this.baseUrl}/api/indexer`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async getIndexerStats() {
+    const response = await fetch(`${this.baseUrl}/api/indexer`);
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async getAnalytics() {
+    const response = await fetch(`${this.baseUrl}/api/analytics`);
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async getBlobHealth() {
+    const response = await fetch(`${this.baseUrl}/api/blob-health`);
+    if (!response.ok) {
+      throw new Error(`VibeGuard API error: ${response.status}`);
+    }
+    return response.json();
+  }
 }

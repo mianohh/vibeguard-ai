@@ -1,6 +1,6 @@
 {
   "name": "vibeguard-sui-security",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "TypeScript SDK for VibeGuard AI transaction security analysis",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
