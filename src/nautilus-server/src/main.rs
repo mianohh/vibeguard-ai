@@ -62,7 +62,7 @@ async fn main() {
     let admin_app = Router::new()
         .route("/admin/init_seal_key_load", post(vibeguard::admin::init_seal_key_load))
         .route("/admin/complete_seal_key_load", post(vibeguard::admin::complete_seal_key_load))
-        .route("/admin/provision_gemini_api_key", post(vibeguard::admin::provision_gemini_api_key));
+        .route("/admin/provision_agent_config", post(vibeguard::admin::provision_agent_config));
 
     info!("✅ Server ready");
     info!("   Public endpoints: http://0.0.0.0:3000");

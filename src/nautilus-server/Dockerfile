@@ -2,8 +2,9 @@
 #
 # This Dockerfile ensures that anyone can build the enclave binary
 # and verify that it produces the same PCR measurements.
+# LocalThreatAgent runs entirely inside the enclave with zero external API dependencies.
 
-FROM rust:1.83-slim as builder
+FROM rust:latest AS builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,8 +15,11 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+# Copy Cargo files first for better caching
+COPY Cargo.toml Cargo.lock ./
+
 # Copy source code
-COPY src/nautilus-server /app
+COPY src ./src
 
 # Build in release mode for reproducibility
 RUN cargo build --release
@@ -34,9 +38,9 @@ WORKDIR /app
 
 # Copy binary and run script
 COPY --from=builder /app/target/release/nautilus-server /app/
-COPY --from=builder /app/run.sh /app/
+COPY run.sh /app/
 
-RUN chmod +x /app/run.sh
+RUN chmod +x /app/run.sh /app/nautilus-server
 
 # Expose ports
 EXPOSE 3000 3001

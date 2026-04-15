@@ -9,10 +9,11 @@ set -e
 echo "🔒 Configuring enclave traffic rules..."
 
 # Allowed external domains
-# Add any domains the enclave needs to access
+# LocalThreatAgent runs entirely inside enclave - no external API calls needed
+# Only Seal key servers are required for configuration decryption
 ALLOWED_DOMAINS=(
-    "generativelanguage.googleapis.com"  # Gemini API
-    "seal-testnet.walrus.space"          # Seal key servers (if needed)
+    "seal-testnet.walrus.space"          # Seal key servers
+    "aggregator.walrus-testnet.walrus.space"  # Walrus (for evidence storage)
 )
 
 echo "✅ Allowed domains:"
