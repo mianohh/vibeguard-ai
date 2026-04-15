@@ -7,11 +7,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:nautilus": "bash scripts/test-nautilus-local.sh",
+    "test:nautilus:e2e": "ts-node scripts/test-nautilus-e2e.ts",
+    "test:local-agent": "ts-node scripts/test-local-agent.ts",
+    "test:atomic": "npx tsx scripts/test-atomic-direct.ts",
+    "seal:setup": "ts-node scripts/seal-setup.ts",
+    "simulate:enclave": "bash scripts/simulate-nitro-enclave.sh",
+    "register:pcrs": "bash scripts/register-pcrs.sh"
   },
   "dependencies": {
     "@google/genai": "^0.2.0",
+    "@mysten/seal": "^0.1.0",
     "@mysten/sui": "^1.45.2",
+    "@noble/ed25519": "^2.3.0",
     "lucide-react": "^1.7.0",
     "next": "^14.0.0",
     "react": "^18.0.0",
@@ -24,7 +33,9 @@
     "@types/react-dom": "^18.0.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
-    "tailwindcss": "^3.3.0"
+    "tailwindcss": "^3.3.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   },
   "keywords": [
     "sui",

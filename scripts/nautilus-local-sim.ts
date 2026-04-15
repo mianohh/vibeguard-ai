@@ -38,8 +38,8 @@ if (fs.existsSync(envPath)) {
 // Config
 // ============================================================================
 
-const SEAL_PACKAGE_ID = '0x3727d2478d4622e276e183912f6939517603d05bf93d4e3f3f628cbccd7a2ff6';
-const ENCLAVE_CONFIG_ID = '0x50c50306e4c1473dc73e3f0fcf5d2be527cedd096d5ee2ea60019e961b6c5128';
+const SEAL_PACKAGE_ID = process.env.SEAL_ENCLAVE_PACKAGE_ID || '0x75f9626ccc7e848c58823924644e5d5167d7231e381fe49734200d81b2419fdc';
+const ENCLAVE_CONFIG_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502';
 
 // Deterministic mock PCRs — match seal-setup.ts so Seal policy stays consistent
 const PCR0 = Array(48).fill(0xaa); // enclave image measurement

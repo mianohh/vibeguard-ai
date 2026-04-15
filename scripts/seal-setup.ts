@@ -5,15 +5,15 @@
  *
  * This script:
  *   1. Defines a Seal policy tied to the approved Nautilus enclave PCRs
- *   2. Encrypts the Gemini API key under that policy with ID 0x00
+ *   2. Encrypts the LocalThreatAgent configuration under that policy with ID 0x00
  *   3. Outputs the encrypted blob — safe to store in version control or on Walrus
  *
- * The encrypted key can ONLY be decrypted by an enclave whose PCR measurements
- * match the policy defined here. Not even the developer can decrypt it outside
- * the approved execution environment.
+ * The encrypted configuration can ONLY be decrypted by an enclave whose PCR measurements
+ * match the policy defined here. This protects proprietary threat-scoring rules and
+ * heuristic weights from unauthorized extraction.
  *
  * Usage:
- *   GEMINI_API_KEY=your_key npx ts-node scripts/seal-setup.ts
+ *   AGENT_CONFIG='{"weights":{...}}' npx ts-node scripts/seal-setup.ts
  *
  * Prerequisites:
  *   npm install @mysten/seal @mysten/sui
@@ -39,15 +39,15 @@ const SEAL_POLICY_ID = '0x00';
 
 // The on-chain EnclaveConfig object ID (set after register_enclave() is called)
 // Replace with actual object ID after deploying seal_enclave package
-const ENCLAVE_CONFIG_OBJECT_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x50c50306e4c1473dc73e3f0fcf5d2be527cedd096d5ee2ea60019e961b6c5128';
+const ENCLAVE_CONFIG_OBJECT_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502';
 
 async function main() {
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-  if (!geminiApiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is required');
+  const agentConfig = process.env.AGENT_CONFIG;
+  if (!agentConfig) {
+    throw new Error('AGENT_CONFIG environment variable is required');
   }
 
-  console.log('VibeGuard Seal Setup — Encrypting Gemini API key under PCR policy');
+  console.log('VibeGuard Seal Setup — Encrypting LocalThreatAgent configuration under PCR policy');
   console.log('PCR0:', MOCK_PCR0.slice(0, 16) + '...');
   console.log('PCR1:', MOCK_PCR1.slice(0, 16) + '...');
   console.log('PCR2:', MOCK_PCR2.slice(0, 16) + '...');
@@ -71,10 +71,10 @@ async function main() {
     id: SEAL_POLICY_ID,
   };
 
-  console.log('Encrypting Gemini API key under Seal policy...');
+  console.log('Encrypting LocalThreatAgent configuration under Seal policy...');
 
-  // Encrypt the API key — output is safe to store publicly
-  const secretBytes = new TextEncoder().encode(geminiApiKey);
+  // Encrypt the agent config — output is safe to store publicly
+  const secretBytes = new TextEncoder().encode(agentConfig);
   const { encryptedObject, key } = await sealClient.encrypt({
     threshold: 2,
     packageId: sealPolicy.packageId,
@@ -83,7 +83,7 @@ async function main() {
   });
 
   const output = {
-    description: 'VibeGuard Gemini API key encrypted under Seal PCR policy',
+    description: 'VibeGuard LocalThreatAgent configuration encrypted under Seal PCR policy',
     sealPolicyId: SEAL_POLICY_ID,
     enclaveConfigObjectId: ENCLAVE_CONFIG_OBJECT_ID,
     pcrs: {
@@ -93,12 +93,12 @@ async function main() {
     },
     encryptedObject: Buffer.from(encryptedObject).toString('base64'),
     createdAt: new Date().toISOString(),
-    note: 'Only the Nautilus enclave with matching PCR measurements can decrypt this.',
+    note: 'Only the Nautilus enclave with matching PCR measurements can decrypt this proprietary configuration.',
   };
 
-  fs.writeFileSync('scripts/encrypted-gemini-key.json', JSON.stringify(output, null, 2));
+  fs.writeFileSync('scripts/encrypted-agent-config.json', JSON.stringify(output, null, 2));
 
-  console.log('Encrypted key written to scripts/encrypted-gemini-key.json');
+  console.log('Encrypted configuration written to scripts/encrypted-agent-config.json');
   console.log('This file is safe to commit — it cannot be decrypted outside the approved enclave.');
 }
 
