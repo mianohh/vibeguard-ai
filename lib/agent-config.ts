@@ -70,10 +70,10 @@ export const DEFAULT_AGENT_CONFIG: ThreatAgentConfig = {
     },
   },
   
-  signatures: [
-    // Proprietary threat fingerprints would go here
-    // These are pattern hashes derived from known attacks
-  ],
+  signatures: {
+    knownHoneypotPatterns: [],
+    knownPhishingPatterns: [],
+  },
 };
 
 /**

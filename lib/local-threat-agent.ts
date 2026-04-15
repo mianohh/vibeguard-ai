@@ -86,7 +86,7 @@ export class LocalThreatAgent {
         type: 'PERMISSION_CHANGE',
         severity: 'MEDIUM',
         indicators: effects.permissionChanges.map(p => 
-          `Granting ${p.permission} to ${p.grantedTo}`
+          `${p.type === 'granted' ? 'Granting' : 'Revoking'} ${p.permission} to ${p.target}`
         )
       };
     }
