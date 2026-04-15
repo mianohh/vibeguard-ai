@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryThreats, getThreatStats, indexThreats, getThreatByPackageId } from '@/lib/threat-indexer';
+import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/threats - Query indexed threat intelligence
- * Query params:
- *   - category: Filter by category (Honeypot, Phishing, Rug Pull, Intent Mismatch, Unknown)
- *   - severity: Filter by severity (Critical, High, Medium, Low)
- *   - limit: Max results (default 50)
- *   - offset: Pagination offset (default 0)
- *   - packageId: Get specific threat by package ID
- *   - stats: Return aggregated statistics (true/false)
- *   - refresh: Re-index from blockchain before query (true/false)
- */
 export async function GET(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+  const rl = rateLimit(ip, 100, 60000);
+
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { success: false, error: 'Rate limit exceeded' },
+      { status: 429, headers: getRateLimitHeaders(rl) }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
 

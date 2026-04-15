@@ -7,8 +7,19 @@ import { parseTransactionBytes } from '@/lib/sui-parser';
 import { analytics } from '@/lib/analytics';
 import { checkReputation } from '@/lib/reputation';
 import { autoReportThreat } from '@/lib/auto-reporter';
+import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+  const rl = rateLimit(ip, 30, 60000);
+
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Max 30 requests per minute.' },
+      { status: 429, headers: getRateLimitHeaders(rl) }
+    );
+  }
+
   try {
     const { transactionBytes, network, userAddress, userIntent } = await request.json();
 
