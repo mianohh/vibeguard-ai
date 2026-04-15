@@ -5,7 +5,7 @@
 ///   2. Only the approved enclave can produce accepted threat reports (Ed25519 signature verified).
 ///   3. Verified outputs are committed to trusted product logic (ThreatVerified event emitted).
 ///
-/// The Gemini API key is encrypted off-chain under a Seal policy tied to these PCRs.
+/// The LocalThreatAgent configuration is encrypted off-chain under a Seal policy tied to these PCRs.
 /// Only the enclave whose PCR measurements match this registration can decrypt and use it.
 module seal_enclave::enclave {
     use sui::object::{Self, UID};
@@ -40,7 +40,7 @@ module seal_enclave::enclave {
     }
 
     /// Emitted when a threat report is verified as coming from the approved enclave.
-    /// This is the cryptographic proof that the Seal-protected Gemini API key
+    /// This is the cryptographic proof that the Seal-protected LocalThreatAgent configuration
     /// was used inside the trusted execution environment.
     struct ThreatVerified has copy, drop {
         malicious_package_id: address,
@@ -56,7 +56,7 @@ module seal_enclave::enclave {
 
     /// Stores the approved enclave's PCR measurements and Ed25519 public key.
     /// PCRs are the cryptographic measurements of the enclave's code and config.
-    /// Only an enclave matching these PCRs can decrypt the Seal-protected API key.
+    /// Only an enclave matching these PCRs can decrypt the Seal-protected agent configuration.
     struct EnclaveConfig has key {
         id: UID,
         /// PCR0: measurement of the enclave image (code + data)
