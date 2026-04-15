@@ -102,7 +102,7 @@ Because VibeGuard AI relies on a sovereign **LocalThreatAgent** rather than cent
 | 4 | Enclave returns a signed output | Enclave keypair signs the deterministic threat payload before submission |
 | 5 | Application verifies output on-chain | `seal_enclave::verify_and_report()` verifies the Ed25519 signature before emitting `ThreatVerified` |
 
-**Live Proof**: [Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6)
+**Live Proof**: [DK1QdKDfegJtJPp3cKQGYtPkq6xpxDAFGeWW5kTUBS5H](https://suiscan.xyz/testnet/tx/DK1QdKDfegJtJPp3cKQGYtPkq6xpxDAFGeWW5kTUBS5H)
 
 ---
 
@@ -196,10 +196,8 @@ curl -X POST https://vibeguardai.vercel.app/api/webhooks \
 
 | Event | Transaction |
 |-------|-------------|
-| **Enclave Registration** | [`HGomNmBW...fPap`](https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap) |
-| **Nautilus E2E (ThreatVerified: true)** | [`AxxRAbkn...s1DD`](https://suiscan.xyz/testnet/tx/AxxRAbkn2vVKSusxPSv1ECkbjHZgrErVEWh15hxVs1DD) |
-| **Seal Proof (ThreatVerified + ThreatReported)** | [`Ht5iycN1...J3u6`](https://suiscan.xyz/testnet/tx/Ht5iycN1votME8r39f4gMxrTptTeaHGi3SVizLvUJ3u6) |
-| **Community Report (gasless)** | [`57hge1tQ...uh7R`](https://suiscan.xyz/testnet/tx/57hge1tQPnmrwLyFb6NhQosznWNdBqGbC3qAHw3Auh7R) |
+| **SealEnclave Deployment** | [`FQ5Fewaw...hj2i`](https://suiscan.xyz/testnet/tx/FQ5FewaWaFANuwqYF3ZMs3T2wrkv6DtGomZeVSd8hj2i) |
+| **Atomic Verification (ThreatVerified + ThreatReported)** | [`DK1QdKDf...BS5H`](https://suiscan.xyz/testnet/tx/DK1QdKDfegJtJPp3cKQGYtPkq6xpxDAFGeWW5kTUBS5H) |
 
 ---
 
