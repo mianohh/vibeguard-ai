@@ -170,6 +170,126 @@ console.log(report.plainEnglish); // Full AI explanation`}
           </pre>
         </div>
 
+        {/* B2B Threat Intelligence Endpoints */}
+        <div className="glass-card p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-6 h-6 text-sui-cyan" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+            </svg>
+            <h2 className="text-xl font-semibold text-gray-200">B2B Threat Intelligence API</h2>
+          </div>
+          <p className="text-gray-300 mb-6">
+            Query the indexed threat registry. Powered by real-time event indexing from the on-chain <code className="text-sui-cyan">ReputationRegistry</code>.
+          </p>
+
+          <h3 className="text-lg font-semibold text-gray-200 mb-2">GET /api/threats</h3>
+          <p className="text-gray-400 text-sm mb-3">Query indexed threats with optional filters.</p>
+          <pre className="bg-ocean-deepest p-4 rounded-lg overflow-x-auto mb-6">
+            <code className="text-sm text-gray-300">
+{`# All threats
+GET /api/threats
+
+# Filter by category
+GET /api/threats?category=Honeypot
+GET /api/threats?category=Intent+Mismatch
+
+# Filter by severity
+GET /api/threats?severity=Critical
+GET /api/threats?severity=High
+
+# Pagination
+GET /api/threats?limit=10&offset=0
+
+# Lookup specific package
+GET /api/threats?packageId=0x...
+
+# Aggregated stats
+GET /api/threats?stats=true
+
+# Force re-index from chain
+GET /api/threats?refresh=true`}
+            </code>
+          </pre>
+
+          <h3 className="text-lg font-semibold text-gray-200 mb-2">GET /api/threats?stats=true</h3>
+          <p className="text-gray-400 text-sm mb-3">Returns aggregated threat statistics.</p>
+          <pre className="bg-ocean-deepest p-4 rounded-lg overflow-x-auto mb-6">
+            <code className="text-sm text-gray-300">
+{`{
+  "success": true,
+  "stats": {
+    "total": 5,
+    "byCategory": {
+      "Intent Mismatch": 1,
+      "Unknown": 4
+    },
+    "bySeverity": {
+      "High": 1,
+      "Unknown": 4
+    }
+  }
+}`}
+            </code>
+          </pre>
+
+          <h3 className="text-lg font-semibold text-gray-200 mb-2">GET /api/events</h3>
+          <p className="text-gray-400 text-sm mb-3">Server-Sent Events stream. Subscribe to real-time <code className="text-sui-cyan">ThreatReported</code> events as they are emitted on-chain.</p>
+          <pre className="bg-ocean-deepest p-4 rounded-lg overflow-x-auto mb-6">
+            <code className="text-sm text-gray-300">
+{`// Browser / Node.js
+const stream = new EventSource('https://vibeguardai.vercel.app/api/events');
+
+stream.onmessage = (event) => {
+  const threat = JSON.parse(event.data);
+  console.log('New threat:', threat.malicious_package_id);
+  blacklist.add(threat.malicious_package_id);
+};`}
+            </code>
+          </pre>
+
+          <h3 className="text-lg font-semibold text-gray-200 mb-2">POST /api/webhooks</h3>
+          <p className="text-gray-400 text-sm mb-3">Register a webhook URL to receive push notifications when new threats are detected.</p>
+          <pre className="bg-ocean-deepest p-4 rounded-lg overflow-x-auto mb-6">
+            <code className="text-sm text-gray-300">
+{`curl -X POST https://vibeguardai.vercel.app/api/webhooks \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "url": "https://your-app.com/webhook",
+    "events": ["ThreatReported", "ThreatVerified"],
+    "apiKey": "your_key"
+  }'
+
+// Payload delivered to your URL:
+{
+  "event": "ThreatReported",
+  "data": {
+    "malicious_package_id": "0x...",
+    "walrus_blob_id": "..."
+  },
+  "timestamp": 1775909610023
+}`}
+            </code>
+          </pre>
+
+          <h3 className="text-lg font-semibold text-gray-200 mb-2">POST /api/indexer</h3>
+          <p className="text-gray-400 text-sm mb-3">Force re-index all <code className="text-sui-cyan">ThreatReported</code> events from the blockchain.</p>
+          <pre className="bg-ocean-deepest p-4 rounded-lg overflow-x-auto">
+            <code className="text-sm text-gray-300">
+{`curl -X POST https://vibeguardai.vercel.app/api/indexer
+
+// Response:
+{
+  "success": true,
+  "indexed": 5,
+  "stats": {
+    "total": 5,
+    "byCategory": { "Intent Mismatch": 1, "Unknown": 4 }
+  }
+}`}
+            </code>
+          </pre>
+        </div>
+
         {/* Threat Retrieval Endpoint */}
         <div className="glass-card p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-200 mb-4">
