@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SuiSimulator } from '@/lib/simulator';
 import { RiskEngine } from '@/lib/risk-engine';
-import { GeminiExplainer } from '@/lib/gemini-explainer';
+import { LocalThreatAgent } from '@/lib/local-threat-agent';
 import { validateTransactionInput, validateNetwork, sanitizeUserIntent } from '@/lib/validation';
 import { parseTransactionBytes } from '@/lib/sui-parser';
 import { analytics } from '@/lib/analytics';
@@ -156,9 +156,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate explanation
-    const explainer = new GeminiExplainer();
-    const explanation = await explainer.explain(simulation.effectsSummary, risk, sanitizedIntent);
+    // Generate explanation using local threat agent
+    const localAgent = new LocalThreatAgent();
+    const explanation = await localAgent.analyze(simulation.effectsSummary, risk, sanitizedIntent);
 
     return NextResponse.json({
       simulation: {

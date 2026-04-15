@@ -13,9 +13,9 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ||
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
 
-// Seal enclave contract — deployed alongside reputation_registry
-const SEAL_PACKAGE_ID = '0x3727d2478d4622e276e183912f6939517603d05bf93d4e3f3f628cbccd7a2ff6';
-const ENCLAVE_CONFIG_ID = '0x50c50306e4c1473dc73e3f0fcf5d2be527cedd096d5ee2ea60019e961b6c5128';
+// SealEnclave contract — fresh deployment with LocalThreatAgent references
+const SEAL_PACKAGE_ID = process.env.SEAL_ENCLAVE_PACKAGE_ID || '0x75f9626ccc7e848c58823924644e5d5167d7231e381fe49734200d81b2419fdc';
+const ENCLAVE_CONFIG_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502';
 
 async function uploadToWalrus(content: string): Promise<{ blobId: string; blobObjectId: string }> {
   const response = await fetch(WALRUS_PUBLISHER, {
