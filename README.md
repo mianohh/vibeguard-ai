@@ -4,7 +4,30 @@
 
 VibeGuard AI is a full-stack threat intelligence infrastructure designed to eliminate blind signing. By combining live blockchain simulation, deterministic Move static analysis, a sovereign local threat agent, an event-driven on-chain reputation registry, a Seal-protected execution layer, and a Nautilus-verified compute pipeline, VibeGuard protects users from honeypot attacks and phishing exploits before a signature is ever broadcast. It automatically registers every detected threat on-chain with cryptographic attestation, creating a real-time, trustless security feed for the entire ecosystem to consume.
 
-**[Live Platform](https://vibeguardai.vercel.app)** | **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)** | **[B2B Dashboard](https://vibeguardai.vercel.app/dashboard)**
+**[Live Platform](https://vibeguardai.vercel.app)** | **[Interactive Demo](https://vibeguardai.vercel.app/demo)** | **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)** | **[B2B Dashboard](https://vibeguardai.vercel.app/dashboard)**
+
+---
+
+## Real-World Integration
+
+VibeGuard is designed as a **plug-and-play security primitive** for wallets, dApps, and DeFi protocols:
+
+### Wallet Integration
+Wallets like Sui Wallet, Ethos, and Suiet can integrate VibeGuard to analyze transactions before users sign:
+- **Pre-signature analysis**: Intercept transaction bytes before signing
+- **Real-time threat detection**: Instant feedback on malicious contracts
+- **Automatic blocking**: Prevent users from signing dangerous transactions
+- **Ecosystem protection**: Auto-report detected threats to on-chain registry
+
+### dApp Protection
+DeFi protocols and NFT marketplaces can use VibeGuard to protect their users:
+- **Transaction simulation**: Preview exact asset flows before execution
+- **Intent verification**: Confirm transactions match user expectations
+- **Reputation checks**: Query on-chain registry for known malicious contracts
+- **B2B threat feed**: Subscribe to real-time threat events via webhooks
+
+### Live Demo
+See VibeGuard in action with simulated attack scenarios: **[Interactive Demo](https://vibeguardai.vercel.app/demo)**
 
 ---
 
@@ -225,6 +248,37 @@ Integration with **MemWal** for persistent threat context:
 - **Persistent Threat Context**: Track evolving attack patterns across sessions
 - **Behavioral Profiling**: Build historical threat profiles
 - **Pattern Clustering**: Identify coordinated attacks
+
+---
+
+## Recent Updates (Week of April 20-26, 2025)
+
+### Infrastructure Hardening
+
+**1. Walrus Blob Lifetime Management**
+- Automated monitoring and extension of threat evidence storage
+- Daily cron job prevents critical threat intelligence from expiring
+- Real-time health dashboard at `/api/blob-health`
+- Ensures permanent availability of ecosystem threat feed
+
+**2. Hardened LocalThreatAgent**
+- Enhanced detection patterns for production readiness:
+  - **Blacklisted Target Detection**: Instant blocking of known malicious contracts
+  - **Asset Drain Detection**: Identifies honeypots disguised as airdrops/claims
+  - **Permission Hijack Detection**: Flags AdminCap, OwnerCap, TreasuryCap transfers
+- Zero false positives on common patterns (self-transfers, standard swaps)
+- Comprehensive test coverage with automated test suite
+
+**3. Interactive Demo Page**
+- Live simulated attack scenarios (honeypot, phishing, safe transactions)
+- Wallet integration visualization showing real-time protection
+- Step-by-step analysis flow demonstration
+- Code examples for wallet/dApp integration
+
+**4. Production Monitoring**
+- Automated cron jobs for blob lifetime management
+- Health dashboards for infrastructure monitoring
+- Enhanced error handling and validation
 
 ---
 
