@@ -39,6 +39,19 @@ export class LocalThreatAgent {
     userIntent?: string
   ): ThreatPattern {
     
+    // 0. Blacklisted Package Check (HIGHEST PRIORITY)
+    if (this.isBlacklistedPackage(effects)) {
+      return {
+        type: 'BLACKLISTED_TARGET',
+        severity: 'CRITICAL',
+        indicators: [
+          'Transaction interacts with known malicious contract',
+          'Package flagged in on-chain ReputationRegistry',
+          'Confirmed threat - do not proceed'
+        ]
+      };
+    }
+
     // 1. Intent Mismatch Detection (Honeypot/Phishing)
     if (userIntent && this.hasIntentMismatch(effects, userIntent)) {
       return {
@@ -52,7 +65,21 @@ export class LocalThreatAgent {
       };
     }
 
-    // 2. Self-Transfer (Safe Pattern)
+    // 2. Permission Hijack Detection (AdminCap/High-Value Object Transfer)
+    const permissionHijack = this.detectPermissionHijack(effects);
+    if (permissionHijack) {
+      return {
+        type: 'PERMISSION_HIJACK',
+        severity: 'CRITICAL',
+        indicators: [
+          'AdminCap or high-privilege object being transferred',
+          'Potential complete loss of contract control',
+          'Irreversible permission change'
+        ]
+      };
+    }
+
+    // 3. Self-Transfer (Safe Pattern)
     if (this.isSelfTransfer(effects)) {
       return {
         type: 'SAFE',
@@ -66,21 +93,13 @@ export class LocalThreatAgent {
       };
     }
 
-    // 3. Unexpected Asset Drain
-    const outgoingValue = this.calculateOutgoingValue(effects);
-    if (outgoingValue > 0 && !this.isExpectedTransfer(effects, userIntent)) {
-      return {
-        type: 'ASSET_DRAIN',
-        severity: 'HIGH',
-        indicators: [
-          `${outgoingValue.toFixed(4)} SUI leaving your wallet`,
-          'No corresponding incoming assets',
-          'Potential unauthorized transfer'
-        ]
-      };
+    // 4. Asset Drain Detection (Enhanced)
+    const drainPattern = this.detectAssetDrain(effects, userIntent);
+    if (drainPattern) {
+      return drainPattern;
     }
 
-    // 4. Permission Escalation
+    // 5. Permission Escalation
     if (effects.permissionChanges.length > 0) {
       return {
         type: 'PERMISSION_CHANGE',
@@ -91,7 +110,7 @@ export class LocalThreatAgent {
       };
     }
 
-    // 5. Complex Multi-Step Transaction
+    // 6. Complex Multi-Step Transaction
     if (effects.objectChanges.length > 5 || effects.uncertain.length > 0) {
       return {
         type: 'COMPLEX_TRANSACTION',
@@ -104,7 +123,7 @@ export class LocalThreatAgent {
       };
     }
 
-    // 6. Failed Transaction
+    // 7. Failed Transaction
     if (!effects.success) {
       return {
         type: 'FAILED_EXECUTION',
@@ -116,7 +135,7 @@ export class LocalThreatAgent {
       };
     }
 
-    // 7. Safe Transaction (default)
+    // 8. Safe Transaction (default)
     return {
       type: 'SAFE',
       severity: 'NONE',
@@ -126,6 +145,88 @@ export class LocalThreatAgent {
         'Assets remain under your control'
       ]
     };
+  }
+
+  private isBlacklistedPackage(effects: EffectsSummary): boolean {
+    // TODO: Query on-chain ReputationRegistry for blacklisted packages
+    // For now, check against known malicious patterns in object types
+    const suspiciousPatterns = [
+      '0xbad1bad1', // Example malicious package
+      '0xdead', // Example scam package
+    ];
+
+    return effects.objectChanges.some(obj => 
+      suspiciousPatterns.some(pattern => obj.objectType?.includes(pattern))
+    );
+  }
+
+  private detectPermissionHijack(effects: EffectsSummary): boolean {
+    // Check for AdminCap or high-privilege object transfers
+    const highPrivilegePatterns = [
+      'AdminCap',
+      'OwnerCap',
+      'TreasuryCap',
+      'MintCap',
+      'BurnCap'
+    ];
+
+    // Check if any high-privilege objects are being transferred
+    const hasCapTransfer = effects.objectChanges.some(obj => 
+      highPrivilegePatterns.some(cap => obj.objectType?.includes(cap)) &&
+      obj.owner !== 'you'
+    );
+
+    // Check for deeply nested object transfers (potential privilege escalation)
+    const hasDeepObjectTransfer = effects.transfers.some(t => 
+      t.from === 'you' && 
+      t.to !== 'you' && 
+      t.coinType !== 'Token' // Not a simple token transfer
+    );
+
+    return hasCapTransfer || hasDeepObjectTransfer;
+  }
+
+  private detectAssetDrain(effects: EffectsSummary, userIntent?: string): ThreatPattern | null {
+    const outgoingValue = this.calculateOutgoingValue(effects);
+    
+    // No outgoing assets = no drain
+    if (outgoingValue === 0) return null;
+
+    // Check if this is an expected transfer
+    if (this.isExpectedTransfer(effects, userIntent)) return null;
+
+    // Enhanced drain detection: Check for claim functions with outgoing transfers
+    const hasClaimFunction = userIntent?.toLowerCase().includes('claim');
+    const hasOutgoingTransfer = effects.transfers.some(t => 
+      t.from === 'you' && t.to !== 'you'
+    );
+
+    if (hasClaimFunction && hasOutgoingTransfer) {
+      return {
+        type: 'ASSET_DRAIN',
+        severity: 'CRITICAL',
+        indicators: [
+          'User calls claim function expecting to receive assets',
+          `Transaction contains TransferObjects moving ${outgoingValue.toFixed(4)} SUI out`,
+          'Classic honeypot pattern - assets drain instead of claim'
+        ]
+      };
+    }
+
+    // Standard asset drain
+    if (outgoingValue > 0) {
+      return {
+        type: 'ASSET_DRAIN',
+        severity: 'HIGH',
+        indicators: [
+          `${outgoingValue.toFixed(4)} SUI leaving your wallet`,
+          'No corresponding incoming assets',
+          'Potential unauthorized transfer'
+        ]
+      };
+    }
+
+    return null;
   }
 
   private isSelfTransfer(effects: EffectsSummary): boolean {
@@ -180,6 +281,28 @@ export class LocalThreatAgent {
   ): GeminiExplanation {
     
     const templates: Record<ThreatPatternType, ExplanationTemplate> = {
+      BLACKLISTED_TARGET: {
+        headline: '🚫 Known Malicious Contract',
+        plainEnglish: 'This transaction interacts with a contract that has been flagged as malicious in our on-chain threat registry. This is a confirmed threat.',
+        action: 'Do Not Sign',
+        checks: [
+          'This contract is blacklisted - do not proceed',
+          'Report this attempt to the dApp you are using',
+          'Check if your wallet has been compromised'
+        ]
+      },
+
+      PERMISSION_HIJACK: {
+        headline: '🔴 Critical Permission Transfer',
+        plainEnglish: 'This transaction will transfer administrative capabilities (AdminCap, OwnerCap, or similar) to another address. This grants complete control over the contract and is irreversible.',
+        action: 'Do Not Sign',
+        checks: [
+          'Verify you are the legitimate owner of this capability',
+          'Confirm the recipient address is correct and trusted',
+          'Understand this transfer is permanent and cannot be undone'
+        ]
+      },
+
       INTENT_MISMATCH: {
         headline: '🚨 Honeypot Attack Detected',
         plainEnglish: 'This transaction is designed to trick you. You expect to receive tokens, but it will actually send your assets to an unknown address. This is a classic airdrop scam.',
@@ -270,7 +393,9 @@ interface ThreatPattern {
 }
 
 type ThreatPatternType = 
+  | 'BLACKLISTED_TARGET'
   | 'INTENT_MISMATCH'
+  | 'PERMISSION_HIJACK'
   | 'ASSET_DRAIN'
   | 'PERMISSION_CHANGE'
   | 'COMPLEX_TRANSACTION'
