@@ -1,44 +1,35 @@
-import { NextResponse } from 'next/server';
-import { queryThreats } from '@/lib/threat-indexer';
-import { checkMultipleBlobsExpiration } from '@/lib/walrus-monitor';
+import { NextRequest, NextResponse } from 'next/server';
+import { checkAndExtendThreats } from '@/lib/walrus-lifetime';
 
-export async function GET() {
+/**
+ * GET /api/blob-health
+ * 
+ * Returns current status of all Walrus blobs in the threat registry
+ */
+export async function GET(req: NextRequest) {
   try {
-    const threats = queryThreats({ limit: 1000 });
-    const blobsWithEpoch = threats
-      .filter(t => t.endEpoch)
-      .map(t => ({ blobId: t.blobId, endEpoch: t.endEpoch! }));
-
-    if (blobsWithEpoch.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No blobs with expiration data',
-        total: 0,
-      });
-    }
-
-    const statuses = await checkMultipleBlobsExpiration(blobsWithEpoch);
-    
-    const expired = Array.from(statuses.values()).filter(s => s.isExpired).length;
-    const expiring = Array.from(statuses.values()).filter(s => s.needsRenewal).length;
-    const healthy = blobsWithEpoch.length - expired - expiring;
+    const result = await checkAndExtendThreats();
 
     return NextResponse.json({
       success: true,
-      total: blobsWithEpoch.length,
-      healthy,
-      expiring,
-      expired,
-      details: Array.from(statuses.entries()).map(([blobId, status]) => ({
-        blobId,
-        ...status,
-      })),
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalBlobs: result.checked,
+        healthy: result.checked - result.warnings.length,
+        needsAttention: result.warnings.length,
+        failed: result.failed
+      },
+      warnings: result.warnings.map(w => ({
+        blobId: w.blobId,
+        epochsRemaining: w.epochsRemaining,
+        severity: w.severity,
+        expirationEpoch: w.expirationEpoch
+      }))
     });
-  } catch (error) {
-    console.error('Blob health check error:', error);
-    return NextResponse.json(
-      { error: 'Health check failed' },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 });
   }
 }
