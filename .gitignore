@@ -66,3 +66,4 @@ src/nautilus-server/target/
 
 # Rust build artifacts
 **/target/
+tsconfig.tsbuildinfo
