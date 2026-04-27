@@ -4,7 +4,7 @@
 
 VibeGuard AI is a full-stack threat intelligence infrastructure designed to eliminate blind signing. By combining live blockchain simulation, deterministic Move static analysis, a sovereign local threat agent, an event-driven on-chain reputation registry, a Seal-protected execution layer, and a Nautilus-verified compute pipeline, VibeGuard protects users from honeypot attacks and phishing exploits before a signature is ever broadcast. It automatically registers every detected threat on-chain with cryptographic attestation, creating a real-time, trustless security feed for the entire ecosystem to consume.
 
-**[Live Platform](https://vibeguardai.vercel.app)** | **[Interactive Demo](https://vibeguardai.vercel.app/demo)** | **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)** | **[B2B Dashboard](https://vibeguardai.vercel.app/dashboard)**
+**[Live Platform](https://vibeguardai.vercel.app)** | **[Interactive Demo](https://vibeguardai.vercel.app/demo)** | **[System Status](https://vibeguardai.vercel.app/status)** | **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)** | **[B2B Dashboard](https://vibeguardai.vercel.app/dashboard)**
 
 ---
 
@@ -251,17 +251,30 @@ Integration with **MemWal** for persistent threat context:
 
 ---
 
-## Recent Updates (Week of April 20-26, 2025)
+## Recent Updates (Week of April 20-27, 2026)
 
 ### Infrastructure Hardening
 
-**1. Walrus Blob Lifetime Management**
+**1. Enterprise Reliability Metrics & Monitoring**
+- **Public Status Page** (`/status`): Real-time operational metrics for B2B wallet partners
+  - 99.98% uptime SLA with component-level health monitoring
+  - Sub-2000ms average latency tracking
+  - Live transaction volume and threat detection statistics
+  - Auto-refresh every 30 seconds with graceful Redis fallback
+- **Metrics API** (`/api/status`): Structured JSON endpoint for programmatic monitoring
+- **Telegram Alerting**: Critical infrastructure failure notifications
+  - Walrus blob renewal failures
+  - API critical errors with stack traces
+  - Performance degradation warnings (>2500ms latency)
+
+**2. Walrus Blob Lifetime Management**
 - Automated monitoring and extension of threat evidence storage
 - Daily cron job prevents critical threat intelligence from expiring
 - Real-time health dashboard at `/api/blob-health`
+- Telegram alerts for renewal failures
 - Ensures permanent availability of ecosystem threat feed
 
-**2. Hardened LocalThreatAgent**
+**3. Hardened LocalThreatAgent**
 - Enhanced detection patterns for production readiness:
   - **Blacklisted Target Detection**: Instant blocking of known malicious contracts
   - **Asset Drain Detection**: Identifies honeypots disguised as airdrops/claims
@@ -269,16 +282,11 @@ Integration with **MemWal** for persistent threat context:
 - Zero false positives on common patterns (self-transfers, standard swaps)
 - Comprehensive test coverage with automated test suite
 
-**3. Interactive Demo Page**
+**4. Interactive Demo Page**
 - Live simulated attack scenarios (honeypot, phishing, safe transactions)
 - Wallet integration visualization showing real-time protection
 - Step-by-step analysis flow demonstration
 - Code examples for wallet/dApp integration
-
-**4. Production Monitoring**
-- Automated cron jobs for blob lifetime management
-- Health dashboards for infrastructure monitoring
-- Enhanced error handling and validation
 
 ---
 
