@@ -8,8 +8,10 @@ import { analytics } from '@/lib/analytics';
 import { checkReputation } from '@/lib/reputation';
 import { autoReportThreat } from '@/lib/auto-reporter';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { sendTelegramAlert } from '@/lib/alerting';
 
 export async function POST(request: NextRequest) {
+  const startTime = performance.now();
   const ip = request.headers.get('x-forwarded-for') || 'anonymous';
   const rl = rateLimit(ip, 30, 60000);
 
@@ -157,8 +159,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate explanation using local threat agent
+    const agentStartTime = performance.now();
     const localAgent = new LocalThreatAgent();
     const explanation = await localAgent.analyze(simulation.effectsSummary, risk, sanitizedIntent);
+    const agentDuration = performance.now() - agentStartTime;
+
+    // Latency monitoring - alert if LocalThreatAgent is slow
+    if (agentDuration > 2500) {
+      sendTelegramAlert(
+        `⚠️ <b>Latency Warning: Threat detection took ${Math.round(agentDuration)}ms</b>\n\n` +
+        `Threshold: 2500ms\n` +
+        `Network: ${networkValidation.network}\n` +
+        `Risk Level: ${risk.riskLevel}`
+      ).catch(() => {}); // Non-blocking
+    }
 
     return NextResponse.json({
       simulation: {
@@ -171,6 +185,17 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Explanation error:', error);
+    console.log('🚨 Attempting to send Telegram alert...');
+    
+    // Critical failure alert
+    await sendTelegramAlert(
+      `🚨 <b>API Critical Failure</b>\n\n` +
+      `Error: ${error.message}\n` +
+      `Stack: ${error.stack?.split('\n')[0] || 'N/A'}\n` +
+      `Timestamp: ${new Date().toISOString()}`
+    );
+    
+    console.log('✅ Telegram alert sent');
     
     return NextResponse.json(
       { 

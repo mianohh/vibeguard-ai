@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { blobLifetimeCronJob } from '@/lib/walrus-lifetime';
+import { sendTelegramAlert } from '@/lib/alerting';
 
 /**
  * Cron endpoint for Walrus blob lifetime management
@@ -26,6 +27,17 @@ export async function GET(req: NextRequest) {
   try {
     const result = await blobLifetimeCronJob();
 
+    // Alert if any blobs failed to extend
+    if (result.failed > 0) {
+      await sendTelegramAlert(
+        `🚨 <b>VibeGuard Ops: Walrus Blob Renewal Failed</b>\n\n` +
+        `Failed: ${result.failed}\n` +
+        `Checked: ${result.checked}\n` +
+        `Extended: ${result.extended}\n` +
+        `Warnings: ${result.warnings.length}`
+      );
+    }
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -33,6 +45,13 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Blob lifetime cron failed:', error);
+    
+    // Critical failure alert
+    await sendTelegramAlert(
+      `🚨 <b>VibeGuard Ops: Walrus Blob Renewal Failed</b>\n\n` +
+      `Error: ${error.message}\n` +
+      `Timestamp: ${new Date().toISOString()}`
+    );
     
     return NextResponse.json({
       success: false,
