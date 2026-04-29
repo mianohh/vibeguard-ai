@@ -23,6 +23,7 @@
     "@mysten/seal": "^0.1.0",
     "@mysten/sui": "^1.45.2",
     "@noble/ed25519": "^2.3.0",
+    "@vercel/functions": "^3.4.4",
     "lucide-react": "^1.7.0",
     "next": "^14.0.0",
     "react": "^18.0.0",

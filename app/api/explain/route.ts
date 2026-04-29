@@ -7,7 +7,6 @@ import { parseTransactionBytes } from '@/lib/sui-parser';
 import { analytics } from '@/lib/analytics';
 import { checkReputation } from '@/lib/reputation';
 import { autoReportThreat } from '@/lib/auto-reporter';
-import { BackgroundQueue } from '@/lib/background-queue';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { sendTelegramAlert } from '@/lib/alerting';
 
@@ -153,10 +152,11 @@ export async function POST(request: NextRequest) {
       const maliciousPackageId = externalPackageId ?? drainRecipient;
 
       if (maliciousPackageId) {
-        BackgroundQueue.enqueue(request, {
-          name: 'auto-report-threat',
-          execute: () => autoReportThreat(maliciousPackageId, risk.reasons),
-        });
+        // Auto-report threat on-chain
+        // Note: Executes synchronously to ensure reliability until waitUntil() is available
+        await autoReportThreat(maliciousPackageId, risk.reasons).catch(err =>
+          console.error('Auto-report failed:', err.message)
+        );
       }
     }
 
