@@ -186,13 +186,7 @@ export default function StatusPage() {
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <p className="text-gray-500 text-sm">
-            For enterprise support and SLA inquiries, contact{' '}
-            <a href="mailto:support@vibeguard.ai" className="text-sui-cyan hover:text-sui-aqua transition-colors">
-              support@vibeguard.ai
-            </a>
-          </p>
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4">
             <a href="/" className="text-gray-400 hover:text-sui-cyan transition-colors text-sm">
               ← Back to Console
             </a>
