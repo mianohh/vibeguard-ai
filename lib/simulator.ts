@@ -17,7 +17,7 @@ export class SuiSimulator {
     }
 
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Simulation timeout after 8 seconds')), 8000);
+      setTimeout(() => reject(new Error('Simulation timeout after 8 seconds')), 20000);
     });
 
     // Try to resolve gas if userAddress is provided and tx has no gas payment
