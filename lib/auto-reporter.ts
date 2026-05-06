@@ -12,8 +12,6 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ||
 
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
-
-// SealEnclave contract — fresh deployment with LocalThreatAgent references
 const SEAL_PACKAGE_ID = process.env.SEAL_ENCLAVE_PACKAGE_ID || '0x75f9626ccc7e848c58823924644e5d5167d7231e381fe49734200d81b2419fdc';
 const ENCLAVE_CONFIG_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502';
 
@@ -32,13 +30,10 @@ async function uploadToWalrus(content: string): Promise<{ blobId: string; blobOb
 
   if (!blobId) throw new Error('No blobId in Walrus response');
 
-  console.log(`\u2705 Walrus Upload Success | Blob ID: ${blobId} | Sui-Linked Blob Object ID: ${blobObjectId}`);
+  console.log(`✅ Walrus Upload Success | Blob ID: ${blobId} | Sui-Linked Blob Object ID: ${blobObjectId}`);
   return { blobId, blobObjectId };
 }
 
-// Load the registered enclave keypair — public key is stored in EnclaveConfig on-chain.
-// In production: loaded from ENCLAVE_PRIVATE_KEY env var (set in Vercel).
-// Locally: falls back to scripts/enclave-keypair.json if env var not set.
 function loadEnclaveKeypair(): Ed25519Keypair {
   if (process.env.ENCLAVE_PRIVATE_KEY) {
     const raw = Buffer.from(process.env.ENCLAVE_PRIVATE_KEY, 'base64');
@@ -53,47 +48,28 @@ function loadEnclaveKeypair(): Ed25519Keypair {
 }
 
 function determineCategory(reasons: string[]): 'Honeypot' | 'Phishing' | 'Rug Pull' | 'Intent Mismatch' | 'Unknown' {
-  const reasonsText = reasons.join(' ').toLowerCase();
-  if (reasonsText.includes('honeypot')) return 'Honeypot';
-  if (reasonsText.includes('intent mismatch') || reasonsText.includes('unexpected')) return 'Intent Mismatch';
-  if (reasonsText.includes('phishing') || reasonsText.includes('fake')) return 'Phishing';
-  if (reasonsText.includes('rug pull') || reasonsText.includes('drain')) return 'Rug Pull';
+  const t = reasons.join(' ').toLowerCase();
+  if (t.includes('honeypot')) return 'Honeypot';
+  if (t.includes('intent mismatch') || t.includes('unexpected')) return 'Intent Mismatch';
+  if (t.includes('phishing') || t.includes('fake')) return 'Phishing';
+  if (t.includes('rug pull') || t.includes('drain')) return 'Rug Pull';
   return 'Unknown';
 }
 
 function determineSeverity(reasons: string[]): 'Critical' | 'High' | 'Medium' | 'Low' {
-  const reasonsText = reasons.join(' ').toLowerCase();
-  if (reasonsText.includes('drain') || reasonsText.includes('steal') || reasonsText.includes('honeypot')) return 'Critical';
-  if (reasonsText.includes('unexpected transfer') || reasonsText.includes('malicious')) return 'High';
-  if (reasonsText.includes('suspicious')) return 'Medium';
-  return 'High'; // Default to High for RED risk
+  const t = reasons.join(' ').toLowerCase();
+  if (t.includes('drain') || t.includes('steal') || t.includes('honeypot')) return 'Critical';
+  if (t.includes('unexpected transfer') || t.includes('malicious')) return 'High';
+  if (t.includes('suspicious')) return 'Medium';
+  return 'High';
 }
 
-export async function autoReportThreat(maliciousPackageId: string, reasons: string[]): Promise<void> {
-  console.log(`🚨 Auto-reporting malicious package: ${maliciousPackageId}`);
-
-  // 1. Load registered enclave keypair — public key matches EnclaveConfig on-chain
-  const systemBurner = loadEnclaveKeypair();
-  const reporterAddress = systemBurner.toSuiAddress();
-
-  // 2. Determine category and severity from reasons
+function buildEvidence(maliciousPackageId: string, reasons: string[], publisher: string): string {
   const category = determineCategory(reasons);
   const severity = determineSeverity(reasons);
   const timestamp = new Date().toISOString();
-
-  // 3. Structure metadata
-  const metadata = {
-    title: 'VibeGuard AI Threat Report',
-    publisher: reporterAddress,
-    category,
-    tags: reasons.map(r => r.toLowerCase().replace(/\s+/g, '-')),
-    severity,
-    timestamp,
-  };
-
-  const evidence = JSON.stringify({
-    // Optional metadata for enhanced features (backward compatible)
-    ...(metadata && { metadata }),
+  return JSON.stringify({
+    metadata: { title: 'VibeGuard AI Threat Report', publisher, category, severity, timestamp },
     packageId: maliciousPackageId,
     riskLevel: 'RED',
     headline: 'Automated Detection: Honeypot/Malicious Contract',
@@ -101,24 +77,120 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
     reportedAt: timestamp,
     reportedBy: 'vibeguard-automated-pipeline',
   });
+}
 
-  const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(evidence);
+async function submitOnChain(
+  maliciousPackageId: string,
+  walrusBlobId: string,
+  blobObjectId: string,
+  enclaveSignature: string,
+  timestampMs: number,
+  sender: string,
+  sponsorSignature: string,
+  txBytes: string,
+): Promise<string> {
+  const txBytesUint8 = fromBase64(txBytes);
+  const result = await suiClient.executeTransactionBlock({
+    transactionBlock: txBytesUint8,
+    signature: [sponsorSignature],
+    options: { showEffects: true },
+  });
+  if (result.effects?.status?.status !== 'success') {
+    throw new Error(`On-chain registration failed: ${result.effects?.status?.error}`);
+  }
+  return result.digest;
+}
 
-  // 3. Sign the payload — mirrors what the Nautilus enclave would do.
-  //    Includes timestamp_ms for freshness / replay resistance per Module 4.
-  const timestampMs = Date.now();
+export async function autoReportThreat(
+  maliciousPackageId: string,
+  reasons: string[],
+  _enclaveSignature?: string,
+  _timestampMs?: number
+): Promise<void> {
+  console.log(`🚨 Auto-reporting malicious package: ${maliciousPackageId}`);
+
+  const enclaveUrl = process.env.ENCLAVE_URL;
+
+  if (enclaveUrl) {
+    // Production: Walrus first, then enclave signs the final message
+    const sponsorKey = process.env.SPONSOR_PRIVATE_KEY;
+    if (!sponsorKey) throw new Error('SPONSOR_PRIVATE_KEY not set');
+    const sponsorKeypair = Ed25519Keypair.fromSecretKey(fromBase64(sponsorKey).slice(1));
+    const reporterAddress = sponsorKeypair.toSuiAddress();
+
+    // 1. Upload evidence to Walrus
+    const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(
+      buildEvidence(maliciousPackageId, reasons, reporterAddress)
+    );
+
+    // 2. Ask enclave to sign: pkg_bytes(32) + blob_bytes + timestamp_le(8)
+    //    This matches exactly what verify_and_report reconstructs in Move
+    const timestampMs = Date.now();
+    const signRes = await fetch(`${enclaveUrl}/sign_report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        malicious_package_id: maliciousPackageId,
+        walrus_blob_id: walrusBlobId,
+        timestamp_ms: timestampMs,
+      }),
+    });
+    if (!signRes.ok) throw new Error(`Enclave /sign_report failed: ${await signRes.text()}`);
+    const { signature: sigHex } = await signRes.json();
+    const enclaveSignature = Buffer.from(sigHex, 'hex').toString('base64');
+    console.log(`🔏 Enclave signed final report (pkg + blob + ts)`);
+
+    // 3. Build sponsored transaction
+    const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        packageId: PACKAGE_ID,
+        registryId: REGISTRY_ID,
+        sealPackageId: SEAL_PACKAGE_ID,
+        enclaveConfigId: ENCLAVE_CONFIG_ID,
+        maliciousPackageId,
+        walrusBlobId,
+        blobObjectId,
+        enclaveSignature,
+        timestampMs,
+        sender: reporterAddress,
+      }),
+    });
+    if (!sponsorRes.ok) {
+      const err = await sponsorRes.json();
+      throw new Error(`Sponsor API failed: ${err.error}`);
+    }
+    const { txBytes, sponsorSignature } = await sponsorRes.json();
+
+    // 4. Execute — sponsor is both sender and gas owner, only 1 signature needed
+    const digest = await submitOnChain(
+      maliciousPackageId, walrusBlobId, blobObjectId,
+      enclaveSignature, timestampMs, reporterAddress,
+      sponsorSignature, txBytes
+    );
+    console.log(`✅ Automated threat logged on-chain: ${digest}`);
+    return;
+  }
+
+  // Fallback: local keypair signing (dev mode without enclave)
+  const systemBurner = loadEnclaveKeypair();
+  const reporterAddress = systemBurner.toSuiAddress();
+
+  const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(
+    buildEvidence(maliciousPackageId, reasons, reporterAddress)
+  );
+
+  const localTimestampMs = Date.now();
   const addrBytes = Buffer.from(maliciousPackageId.replace('0x', '').padStart(64, '0'), 'hex');
   const blobBytes = Buffer.from(walrusBlobId, 'utf8');
   const tsBytes = Buffer.allocUnsafe(8);
-  tsBytes.writeBigUInt64LE(BigInt(timestampMs));
-  const msgToSign = Buffer.concat([addrBytes, blobBytes, tsBytes]);
-  // Use .sign() for raw Ed25519 — Move's ed25519_verify expects raw 64-byte sig, no prefix
-  const rawSig = await systemBurner.sign(msgToSign);
-  const enclaveSignature = Buffer.from(rawSig).toString('base64');
+  tsBytes.writeBigUInt64LE(BigInt(localTimestampMs));
+  const rawSig = await systemBurner.sign(Buffer.concat([addrBytes, blobBytes, tsBytes]));
+  const localEnclaveSignature = Buffer.from(rawSig).toString('base64');
 
-  console.log(`🔏 Payload signed by ephemeral enclave keypair: ${reporterAddress.slice(0, 10)}...`);
+  console.log(`🔏 Payload signed by local keypair: ${reporterAddress.slice(0, 10)}...`);
 
-  // 4. Request sponsored transaction
   const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -130,20 +202,16 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
       maliciousPackageId,
       walrusBlobId,
       blobObjectId,
-      enclaveSignature,
-      timestampMs,
+      enclaveSignature: localEnclaveSignature,
+      timestampMs: localTimestampMs,
       sender: reporterAddress,
     }),
   });
-
   if (!sponsorRes.ok) {
     const err = await sponsorRes.json();
     throw new Error(`Sponsor API failed: ${err.error}`);
   }
-
   const { txBytes, sponsorSignature } = await sponsorRes.json();
-
-  // 5. Sign with ephemeral burner and execute
   const txBytesUint8 = fromBase64(txBytes);
   const { signature: burnerSig } = await systemBurner.signTransaction(txBytesUint8);
 
@@ -152,10 +220,8 @@ export async function autoReportThreat(maliciousPackageId: string, reasons: stri
     signature: [burnerSig, sponsorSignature],
     options: { showEffects: true },
   });
-
   if (result.effects?.status?.status !== 'success') {
     throw new Error(`On-chain registration failed: ${result.effects?.status?.error}`);
   }
-
   console.log(`✅ Automated threat logged on-chain: ${result.digest}`);
 }
