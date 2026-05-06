@@ -11,12 +11,11 @@
     "test:nautilus": "bash scripts/test-nautilus-local.sh",
     "test:nautilus:e2e": "ts-node scripts/test-nautilus-e2e.ts",
     "test:local-agent": "ts-node scripts/test-local-agent.ts",
-    "test:hardened-agent": "npx tsx scripts/test-hardened-agent.ts",
-    "test:atomic": "npx tsx scripts/test-atomic-direct.ts",
     "test:blob-health": "curl http://localhost:3000/api/blob-health",
     "seal:setup": "ts-node scripts/seal-setup.ts",
-    "simulate:enclave": "bash scripts/simulate-nitro-enclave.sh",
-    "register:pcrs": "bash scripts/register-pcrs.sh"
+    "register:pcrs-prod": "bash scripts/register-pcrs-production.sh",
+    "enclave:build": "cd src/nautilus-server && cargo build --release --features nitro",
+    "enclave:run": "cd src/nautilus-server && cargo run --release"
   },
   "dependencies": {
     "@google/genai": "^0.2.0",
