@@ -10,6 +10,7 @@ import { autoReportThreat } from '@/lib/auto-reporter';
 import { BackgroundQueue } from '@/lib/background-queue';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { sendTelegramAlert } from '@/lib/alerting';
+import { getEnclaveClient } from '@/lib/enclave-client';
 
 export async function POST(request: NextRequest) {
   const startTime = performance.now();
@@ -153,10 +154,56 @@ export async function POST(request: NextRequest) {
       const maliciousPackageId = externalPackageId ?? drainRecipient;
 
       if (maliciousPackageId) {
+        // Try to get enclave signature if using production enclave
+        const enclaveClient = getEnclaveClient();
+        let enclaveSignature: string | undefined;
+        let timestampMs: number | undefined;
+
+        if (process.env.ENCLAVE_URL) {
+          try {
+            // Call enclave with full simulation data for accurate threat detection
+            const rawBalances = simulation.rawDryRun?.balanceChanges || [];
+            const rawObjectChanges = simulation.rawDryRun?.objectChanges || [];
+
+            const assetFlows = rawBalances.map((c: any) => ({
+              asset_type: c.coinType || '0x2::sui::SUI',
+              direction: parseInt(c.amount) < 0 ? 'OUT' : 'IN',
+              amount: Math.abs(parseInt(c.amount || '0')),
+              sender: parseInt(c.amount) < 0 ? (c.owner?.AddressOwner || null) : null,
+              recipient: parseInt(c.amount) > 0 ? (c.owner?.AddressOwner || null) : null,
+            }));
+
+            const moveCalls = (staticAnalysis.moveCalls || []).map((c: any) => ({
+              package: c.packageId,
+              module: c.module || 'unknown',
+              function: c.function || 'unknown',
+            }));
+
+            const enclaveResult = await enclaveClient.processDataWithSimulation({
+              transactionBytes: txBytes,
+              userIntent: sanitizedIntent,
+              userAddress: userAddress || '0x0',
+              network: networkValidation.network || 'testnet',
+              assetFlows,
+              moveCalls,
+              gasBudget: parseInt(staticAnalysis.gasBudget || '10000000'),
+            });
+            enclaveSignature = enclaveResult.signature;
+            timestampMs = enclaveResult.response.timestampMs;
+          } catch (error) {
+            console.error('Enclave signature failed, falling back to local signing:', error);
+          }
+        }
+
         // Auto-report threat on-chain (async - doesn't block response)
         BackgroundQueue.enqueue(request, {
           name: 'auto-report-threat',
-          execute: () => autoReportThreat(maliciousPackageId, risk.reasons),
+          execute: () => autoReportThreat(
+            maliciousPackageId,
+            risk.reasons,
+            enclaveSignature,
+            timestampMs
+          ),
         });
       }
     }
