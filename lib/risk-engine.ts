@@ -84,7 +84,7 @@ export class RiskEngine {
       
       // If user expects to RECEIVE but assets are LEAVING
       if ((isClaimIntent || isMintIntent || isReceiveIntent) && significantOutgoing) {
-        flags.push('⚠️ INTENT MISMATCH: You expect to receive assets, but this sends assets away');
+        flags.push('INTENT MISMATCH: You expect to receive assets, but this sends assets away');
       }
     }
 

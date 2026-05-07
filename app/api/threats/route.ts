@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       limit,
     });
   } catch (error) {
-    console.error('❌ Threat query error:', error);
+    console.error('Threat query error:', error);
     return NextResponse.json(
       {
         success: false,

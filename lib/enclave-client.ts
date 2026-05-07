@@ -62,9 +62,9 @@ export class EnclaveClient {
     this.useStub = !this.enclaveUrl;
 
     if (this.useStub) {
-      console.log('⚠️  EnclaveClient: Using stub mode (direct Gemini API)');
+      console.log('EnclaveClient: stub mode (no ENCLAVE_URL set)');
     } else {
-      console.log(`✅ EnclaveClient: Connected to enclave at ${this.enclaveUrl}`);
+      console.log(`EnclaveClient: connected to ${this.enclaveUrl}`);
     }
   }
 

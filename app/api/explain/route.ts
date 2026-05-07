@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         risk: {
           riskLevel: 'RED',
           reasons: [
-            '⚠️ CRITICAL: Interacts with a known malicious smart contract',
+            'CRITICAL: Interacts with a known malicious smart contract',
             `Blacklisted package detected: ${reputation.matchedPackage}`
           ],
           confidence: 1.0
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Explanation error:', error);
-    console.log('🚨 Attempting to send Telegram alert...');
+    console.log('Sending Telegram alert...');
     
     // Critical failure alert
     await sendTelegramAlert(
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
       `Timestamp: ${new Date().toISOString()}`
     );
     
-    console.log('✅ Telegram alert sent');
+    console.log('Telegram alert sent');
     
     return NextResponse.json(
       { 

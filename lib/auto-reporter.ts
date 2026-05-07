@@ -30,7 +30,7 @@ async function uploadToWalrus(content: string): Promise<{ blobId: string; blobOb
 
   if (!blobId) throw new Error('No blobId in Walrus response');
 
-  console.log(`✅ Walrus Upload Success | Blob ID: ${blobId} | Sui-Linked Blob Object ID: ${blobObjectId}`);
+    console.log(`Walrus upload: blob ${blobId} | object ${blobObjectId}`);
   return { blobId, blobObjectId };
 }
 
@@ -107,7 +107,7 @@ export async function autoReportThreat(
   _enclaveSignature?: string,
   _timestampMs?: number
 ): Promise<void> {
-  console.log(`🚨 Auto-reporting malicious package: ${maliciousPackageId}`);
+    console.log(`Auto-reporting malicious package: ${maliciousPackageId}`);
 
   const enclaveUrl = process.env.ENCLAVE_URL;
 
@@ -138,7 +138,7 @@ export async function autoReportThreat(
     if (!signRes.ok) throw new Error(`Enclave /sign_report failed: ${await signRes.text()}`);
     const { signature: sigHex } = await signRes.json();
     const enclaveSignature = Buffer.from(sigHex, 'hex').toString('base64');
-    console.log(`🔏 Enclave signed final report (pkg + blob + ts)`);
+    console.log('Enclave signed final report');
 
     // 3. Build sponsored transaction
     const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
@@ -169,7 +169,7 @@ export async function autoReportThreat(
       enclaveSignature, timestampMs, reporterAddress,
       sponsorSignature, txBytes
     );
-    console.log(`✅ Automated threat logged on-chain: ${digest}`);
+    console.log(`Threat logged on-chain: ${digest}`);
     return;
   }
 
@@ -189,7 +189,7 @@ export async function autoReportThreat(
   const rawSig = await systemBurner.sign(Buffer.concat([addrBytes, blobBytes, tsBytes]));
   const localEnclaveSignature = Buffer.from(rawSig).toString('base64');
 
-  console.log(`🔏 Payload signed by local keypair: ${reporterAddress.slice(0, 10)}...`);
+  console.log(`Local keypair signing: ${reporterAddress.slice(0, 10)}...`);
 
   const sponsorRes = await fetch(`${BASE_URL}/api/sponsor`, {
     method: 'POST',
@@ -223,5 +223,4 @@ export async function autoReportThreat(
   if (result.effects?.status?.status !== 'success') {
     throw new Error(`On-chain registration failed: ${result.effects?.status?.error}`);
   }
-  console.log(`✅ Automated threat logged on-chain: ${result.digest}`);
-}
+  console.log(`Threat logged on-chain: ${result.digest}`);}

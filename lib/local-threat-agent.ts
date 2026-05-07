@@ -29,6 +29,14 @@ export class LocalThreatAgent {
     // Pattern matching for common threat scenarios
     const threatPattern = this.detectThreatPattern(effects, risk, userIntent);
     
+    // For YELLOW risk with no specific pattern, use ASSET_DRAIN template
+    if (threatPattern.type === 'SAFE' && risk.riskLevel === 'YELLOW') {
+      return this.generateExplanation(
+        { type: 'ASSET_DRAIN', severity: 'HIGH', indicators: risk.reasons },
+        effects, risk
+      );
+    }
+
     // Generate explanation based on detected pattern
     return this.generateExplanation(threatPattern, effects, risk);
   }
@@ -315,9 +323,9 @@ export class LocalThreatAgent {
       },
       
       ASSET_DRAIN: {
-        headline: '⚠️ Unexpected Asset Transfer',
-        plainEnglish: 'This transaction will send assets from your wallet to another address. If you did not initiate a transfer or payment, this could be unauthorized.',
-        action: 'Do Not Sign',
+        headline: '⚠️ Outgoing Transfer — Verify Recipient',
+        plainEnglish: 'This transaction will send assets from your wallet to another address. Confirm the recipient and amount are correct before signing.',
+        action: 'Be Careful',
         checks: [
           'Confirm you intended to send these assets',
           'Verify the recipient address is correct',
