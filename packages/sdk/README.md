@@ -196,7 +196,19 @@ Full API docs: [vibeguardai.vercel.app/api-docs](https://vibeguardai.vercel.app/
 
 Every `RED` detection automatically registers the malicious package on the VibeGuard `ReputationRegistry` Move contract on Sui Testnet, emitting a `ThreatReported` event with a Walrus blob reference. Wallet providers and dApps can subscribe to this event feed as a real-time security signal.
 
+The threat engine runs inside an AWS Nitro Enclave TEE and detects sophisticated attack patterns:
+
+- `INTENT_MISMATCH_HONEYPOT` — user expects inflow but simulation shows outflow
+- `MULTI_RECIPIENT_DRAIN` — assets routed to 3+ unique recipients
+- `DRAIN_FUNCTION` — dangerous Move functions: `transfer_all`, `drain`, `sweep`, `approve_all`, `emergency_withdraw`
+- `UNEXPECTED_OUTFLOW` — unexpected asset outflow against stated intent
+- `HIGH_GAS_BUDGET` — gas budget exceeds 500M MIST
+
+**Performance:** 218.98 req/s max throughput, 226ms avg response time, 0.00% error rate at 50 concurrent requests.
+
 - [ReputationRegistry on Sui Testnet](https://suiscan.xyz/testnet/object/0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be)
+- [Enclave Registration](https://suiscan.xyz/testnet/tx/DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2)
+- [Live Atomic Threat Report](https://suiscan.xyz/testnet/tx/6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk)
 - [Live Platform](https://vibeguardai.vercel.app)
 - [Threat Intelligence Portal](https://vibeguardai.vercel.app/report)
 - [B2B Dashboard](https://vibeguardai.vercel.app/dashboard)
