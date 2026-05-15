@@ -196,13 +196,15 @@ export async function POST(request: NextRequest) {
         }
 
         // Auto-report threat on-chain (async - doesn't block response)
+        const reportNonce = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         BackgroundQueue.enqueue(request, {
           name: 'auto-report-threat',
           execute: () => autoReportThreat(
             maliciousPackageId,
             risk.reasons,
             enclaveSignature,
-            timestampMs
+            timestampMs,
+            reportNonce
           ),
         });
       }

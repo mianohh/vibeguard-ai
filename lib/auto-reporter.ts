@@ -64,7 +64,7 @@ function determineSeverity(reasons: string[]): 'Critical' | 'High' | 'Medium' | 
   return 'High';
 }
 
-function buildEvidence(maliciousPackageId: string, reasons: string[], publisher: string): string {
+function buildEvidence(maliciousPackageId: string, reasons: string[], publisher: string, nonce?: string): string {
   const category = determineCategory(reasons);
   const severity = determineSeverity(reasons);
   const timestamp = new Date().toISOString();
@@ -76,6 +76,7 @@ function buildEvidence(maliciousPackageId: string, reasons: string[], publisher:
     reasons,
     reportedAt: timestamp,
     reportedBy: 'vibeguard-automated-pipeline',
+    nonce: nonce ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   });
 }
 
@@ -105,7 +106,8 @@ export async function autoReportThreat(
   maliciousPackageId: string,
   reasons: string[],
   _enclaveSignature?: string,
-  _timestampMs?: number
+  _timestampMs?: number,
+  nonce?: string
 ): Promise<void> {
     console.log(`Auto-reporting malicious package: ${maliciousPackageId}`);
 
@@ -118,9 +120,9 @@ export async function autoReportThreat(
     const sponsorKeypair = Ed25519Keypair.fromSecretKey(fromBase64(sponsorKey).slice(1));
     const reporterAddress = sponsorKeypair.toSuiAddress();
 
-    // 1. Upload evidence to Walrus
+    // 1. Upload evidence to Walrus — nonce ensures unique blob per request
     const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(
-      buildEvidence(maliciousPackageId, reasons, reporterAddress)
+      buildEvidence(maliciousPackageId, reasons, reporterAddress, nonce)
     );
 
     // 2. Ask enclave to sign: pkg_bytes(32) + blob_bytes + timestamp_le(8)
@@ -178,7 +180,7 @@ export async function autoReportThreat(
   const reporterAddress = systemBurner.toSuiAddress();
 
   const { blobId: walrusBlobId, blobObjectId } = await uploadToWalrus(
-    buildEvidence(maliciousPackageId, reasons, reporterAddress)
+    buildEvidence(maliciousPackageId, reasons, reporterAddress, nonce)
   );
 
   const localTimestampMs = Date.now();
