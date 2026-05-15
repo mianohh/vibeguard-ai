@@ -3,7 +3,7 @@ use axum::{routing::get, routing::post, Router};
 use fastcrypto::{ed25519::Ed25519KeyPair, traits::KeyPair};
 use fastcrypto::encoding::{Hex, Encoding};
 use nautilus_server::app::{process_data, sign_report};
-use nautilus_server::common::get_attestation;
+use nautilus_server::common::{get_attestation, health_check};
 use nautilus_server::AppState;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
     info!("🚀 VibeGuard Nautilus Server starting...");
 
     let eph_kp = Ed25519KeyPair::generate(&mut rand::thread_rng());
-    let public_key_hex = Hex::encode(eph_kp.public().as_bytes());
+    let public_key_hex = Hex::encode(eph_kp.public().as_ref());
     
     info!("🔑 Generated ephemeral enclave keypair");
     info!("   Public key: {}", public_key_hex);
@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     let cors = CorsLayer::new().allow_methods(Any).allow_headers(Any);
 
     let app = Router::new()
-        .route("/health_check", get(nautilus_server::common::health_check))
+        .route("/health_check", get(health_check))
         .route("/get_attestation", get(get_attestation))
         .route("/process_data", post(process_data))
         .route("/sign_report", post(sign_report))

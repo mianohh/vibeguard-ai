@@ -15,7 +15,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Cryptography
-fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "main" }
+fastcrypto = { git = "https://github.com/MystenLabs/fastcrypto", rev = "2ae161a" }
 rand = "0.8"
 sha2 = "0.10"
 

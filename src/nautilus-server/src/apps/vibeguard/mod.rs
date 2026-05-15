@@ -163,9 +163,9 @@ fn analyze(input: &ThreatInput) -> ThreatPayload {
     }
 
     let (intent_u8, risk_level, headline, malicious_package_id) =
-        if flags.iter().any(|f| f.starts_with("INTENT_MISMATCH_HONEYPOT") || f.starts_with("DRAIN_FUNCTION")) {
+        if flags.iter().any(|f| f.starts_with("INTENT_MISMATCH_HONEYPOT") || f.starts_with("DRAIN_FUNCTION") || f.starts_with("MULTI_RECIPIENT_DRAIN")) {
             (2u8, "RED".to_string(), "Honeypot detected — assets will leave your wallet".to_string(), candidate_package)
-        } else if flags.iter().any(|f| f.starts_with("UNEXPECTED_OUTFLOW") || f.starts_with("HIGH_GAS_BUDGET") || f.starts_with("MULTI_RECIPIENT_DRAIN")) {
+        } else if flags.iter().any(|f| f.starts_with("UNEXPECTED_OUTFLOW") || f.starts_with("HIGH_GAS_BUDGET")) {
             (1u8, "YELLOW".to_string(), "Suspicious transaction — review asset flows carefully".to_string(), None)
         } else {
             (0u8, "GREEN".to_string(), "Transaction looks safe".to_string(), None)

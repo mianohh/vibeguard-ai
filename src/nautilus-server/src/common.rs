@@ -1,10 +1,24 @@
 use axum::{extract::State, response::Json};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::sync::Arc;
 use tracing::info;
 use fastcrypto::encoding::{Hex, Encoding};
+use fastcrypto::traits::KeyPair;
 
 use crate::AppState;
+
+#[derive(Serialize)]
+pub struct HealthResponse {
+    pub status: String,
+    pub service: String,
+}
+
+pub async fn health_check() -> Json<HealthResponse> {
+    Json(HealthResponse {
+        status: "healthy".to_string(),
+        service: "vibeguard-nautilus-server".to_string(),
+    })
+}
 
 #[derive(Serialize)]
 pub struct AttestationResponse {
@@ -29,7 +43,7 @@ pub async fn get_attestation(
     info!("📡 /get_attestation called");
 
     use fastcrypto::traits::KeyPair;
-    let public_key = Hex::encode(state.eph_kp.public().as_bytes());
+    let public_key = Hex::encode(state.eph_kp.public().as_ref());
 
     let (pcr0, pcr1, pcr2) = get_pcr_measurements();
     let attestation_document = get_attestation_document();
