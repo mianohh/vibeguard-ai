@@ -125,6 +125,26 @@ export class EnclaveClient {
   /**
    * Call /process_data with full simulation data for accurate threat detection
    */
+  private async fetchWithRetry(url: string, init: RequestInit, retries = 2): Promise<Response> {
+    const TIMEOUT_MS = 10_000;
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Invalid enclave URL protocol');
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const res = await fetch(url, { ...init, signal: controller.signal });
+        clearTimeout(timer);
+        return res;
+      } catch (err: any) {
+        clearTimeout(timer);
+        if (attempt === retries) throw new Error(`Enclave unreachable after ${retries + 1} attempts: ${err.message}`);
+        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      }
+    }
+    throw new Error('Enclave fetch failed');
+  }
+
   async processDataWithSimulation(payload: ThreatAnalysisPayloadWithSimulation): Promise<SignedEnclaveResponse> {
     if (this.useStub) {
       return this.processDataStub(payload);
@@ -144,7 +164,7 @@ export class EnclaveClient {
       },
     };
 
-    const response = await fetch(`${this.enclaveUrl}/process_data`, {
+    const response = await this.fetchWithRetry(`${this.enclaveUrl}/process_data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(enclavePayload),
