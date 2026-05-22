@@ -28,6 +28,15 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Sponsor wallet has insufficient funds' }, { status: 503 });
     }
 
+    const totalBalance = coins.data.reduce((sum, c) => sum + BigInt(c.balance), 0n);
+    if (totalBalance < 5_000_000n) {
+      console.warn(`[sponsor] LOW GAS WARNING: ${totalBalance} MIST remaining`);
+      return Response.json({ error: 'Sponsor wallet critically low on gas' }, { status: 503 });
+    }
+    if (totalBalance < 50_000_000n) {
+      console.warn(`[sponsor] Gas balance low: ${totalBalance} MIST — consider refilling`);
+    }
+
     const tx = new Transaction();
 
     // Call 1: verify_and_report on seal_enclave — proves the payload was signed
@@ -63,7 +72,7 @@ export async function POST(req: Request) {
     tx.setGasOwner(sponsorAddress);
     tx.setGasBudget(10_000_000);
 
-    console.log('[sponsor] tx built', { network: 'testnet', senderPrefix: body.sender?.slice(0, 8), gasBudget: 10_000_000 });
+    console.log('[sponsor] tx built', { network: 'testnet', senderPrefix: body.sender?.slice(0, 8)?.replace(/[^a-fA-F0-9x]/g, ''), gasBudget: 10_000_000 });
 
     const builtTxBytes = await tx.build({ client: suiClient });
     const sponsorSignatureResult = await sponsorKeypair.signTransaction(builtTxBytes);
