@@ -15,23 +15,31 @@ const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae6
 const SEAL_PACKAGE_ID = process.env.SEAL_ENCLAVE_PACKAGE_ID || '0x75f9626ccc7e848c58823924644e5d5167d7231e381fe49734200d81b2419fdc';
 const ENCLAVE_CONFIG_ID = process.env.ENCLAVE_CONFIG_OBJECT_ID || '0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502';
 
-async function uploadToWalrus(content: string): Promise<{ blobId: string; blobObjectId: string }> {
-  const response = await fetch(WALRUS_PUBLISHER, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: content,
-  });
+async function uploadToWalrus(content: string, retries = 3): Promise<{ blobId: string; blobObjectId: string }> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(WALRUS_PUBLISHER, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: content,
+      });
 
-  if (!response.ok) throw new Error(`Walrus upload failed: ${response.status}`);
+      if (!response.ok) throw new Error(`Walrus upload failed: ${response.status}`);
 
-  const result = await response.json();
-  const blobId = result.newlyCreated?.blobObject?.blobId ?? result.alreadyCertified?.blobId;
-  const blobObjectId = result.newlyCreated?.blobObject?.id ?? result.alreadyCertified?.blobObject?.id ?? blobId;
+      const result = await response.json();
+      const blobId = result.newlyCreated?.blobObject?.blobId ?? result.alreadyCertified?.blobId;
+      const blobObjectId = result.newlyCreated?.blobObject?.id ?? result.alreadyCertified?.blobObject?.id ?? blobId;
 
-  if (!blobId) throw new Error('No blobId in Walrus response');
+      if (!blobId) throw new Error('No blobId in Walrus response');
 
-    console.log(`Walrus upload: blob ${blobId} | object ${blobObjectId}`);
-  return { blobId, blobObjectId };
+      console.log(`Walrus upload: blob ${blobId.replace(/[^a-zA-Z0-9_\-]/g, '')} | object ${blobObjectId.replace(/[^a-zA-Z0-9_\-]/g, '')}`);
+      return { blobId, blobObjectId };
+    } catch (err: any) {
+      if (attempt === retries) throw err;
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  throw new Error('Walrus upload failed after retries');
 }
 
 function loadEnclaveKeypair(): Ed25519Keypair {
