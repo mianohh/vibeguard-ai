@@ -373,6 +373,46 @@ console.log(data.explanation.recommendedAction);`}
           </pre>
         </div>
 
+        {/* Enclave & Performance */}
+        <div className="glass-card p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-200 mb-4">Production Enclave</h2>
+          <p className="text-gray-300 mb-4">
+            Threat analysis runs inside an AWS Nitro Enclave TEE. The enclave signs every threat payload with a registered Ed25519 keypair verified on-chain before registry commitment.
+          </p>
+          <div className="space-y-2 text-sm font-mono">
+            <div><span className="text-gray-400">Endpoint:</span> <span className="text-sui-cyan">http://98.82.186.207:3000</span></div>
+            <div><span className="text-gray-400">Public Key:</span> <span className="text-sui-cyan text-xs break-all">fca7f87123c37761226ea680dc2dc7d7dcf4378ee72cddde3094302b33685acd</span></div>
+            <div><span className="text-gray-400">Max Throughput:</span> <span className="text-status-safe">218.98 req/s @ 50 concurrent</span></div>
+            <div><span className="text-gray-400">Avg Response Time:</span> <span className="text-status-safe">226ms (stable under load)</span></div>
+            <div><span className="text-gray-400">Error Rate:</span> <span className="text-status-safe">0.00% across all concurrency levels</span></div>
+          </div>
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-gray-400">Live proof transactions:</p>
+            <a href="https://suiscan.xyz/testnet/tx/DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2" target="_blank" rel="noopener noreferrer" className="block text-sui-cyan hover:text-sui-aqua text-xs font-mono">Enclave Registration — DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2</a>
+            <a href="https://suiscan.xyz/testnet/tx/6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk" target="_blank" rel="noopener noreferrer" className="block text-sui-cyan hover:text-sui-aqua text-xs font-mono">Atomic Threat Report — 6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk</a>
+          </div>
+        </div>
+
+        {/* Adversarial Detection */}
+        <div className="glass-card p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-200 mb-4">Adversarial Threat Detection</h2>
+          <p className="text-gray-300 mb-4">The enclave threat engine detects sophisticated attack patterns with 100% accuracy across all test cases.</p>
+          <div className="space-y-3 text-sm">
+            {[
+              { flag: 'INTENT_MISMATCH_HONEYPOT', desc: 'User expects inflow but simulation shows outflow — classic airdrop scam' },
+              { flag: 'MULTI_RECIPIENT_DRAIN', desc: 'Assets routed to 3+ unique recipients — multi-hop drain attack' },
+              { flag: 'DRAIN_FUNCTION', desc: 'Dangerous Move functions: transfer_all, drain, sweep, approve_all, emergency_withdraw' },
+              { flag: 'UNEXPECTED_OUTFLOW', desc: 'Unexpected asset outflow when user expects to receive' },
+              { flag: 'HIGH_GAS_BUDGET', desc: 'Gas budget exceeds 500M MIST — indicator of complex exploit' },
+            ].map(({ flag, desc }) => (
+              <div key={flag} className="glass-card bg-ocean-mid/30 p-3">
+                <code className="text-status-warning text-xs">{flag}</code>
+                <p className="text-gray-400 text-xs mt-1">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Support */}
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-4">

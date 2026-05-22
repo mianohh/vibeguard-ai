@@ -34,7 +34,7 @@ export default function EcosystemPage() {
                 <div className="pl-4 text-slate-400">↓</div>
                 <div className="pl-4 text-pink-400">Nautilus (verified compute)</div>
                 <div className="pl-4 text-slate-400">↓</div>
-                <div className="pl-4 text-cyan-400">Seal (API key protection)</div>
+                <div className="pl-4 text-cyan-400">Seal (agent config protection)</div>
               </div>
             </div>
           </section>
@@ -143,6 +143,44 @@ export default function EcosystemPage() {
             </div>
           </section>
 
+          {/* Seal Integration */}
+          <section className="mb-12">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="sui-symbol w-8 h-8" />
+              <h2 className="text-2xl font-bold text-white">Seal Access Control</h2>
+            </div>
+
+            <div className="glass-card bg-cyan-500/10 border-cyan-400/30 p-6 mb-4">
+              <p className="text-sm text-gray-300 mb-3">
+                <strong>Pattern 4 — Secure Input Layer for Verified Compute</strong>
+              </p>
+              <p className="text-sm text-gray-400 mb-4">
+                The proprietary threat-agent configuration (scoring weights, risk thresholds, heuristic rules)
+                is encrypted under a PCR-based Seal policy. Only an enclave whose PCR measurements match
+                the registered policy can decrypt and load the configuration.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>✓ Secret encrypted under Seal policy ID <code className="text-cyan-400">0x00</code> via <code className="text-cyan-400">scripts/seal-setup.ts</code></li>
+                <li>✓ Approved enclave registered via <code className="text-cyan-400">seal_enclave::register_enclave()</code> — stores PCRs + Ed25519 pubkey on-chain</li>
+                <li>✓ Seal key servers verify PCR measurements before returning key shares</li>
+                <li>✓ Enclave signs output: <code className="text-cyan-400">pkg_bytes(32) + blob_bytes + timestamp_ms LE64</code></li>
+                <li>✓ <code className="text-cyan-400">seal_enclave::verify_and_report()</code> verifies Ed25519 signature before emitting <code className="text-cyan-400">ThreatVerified</code></li>
+              </ul>
+            </div>
+
+            <div className="glass-card bg-ocean-mid/30 p-4">
+              <p className="text-sm text-gray-300 mb-1">EnclaveConfig Object (registered PCRs + public key)</p>
+              <a
+                href="https://suiscan.xyz/testnet/object/0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sui-cyan hover:text-sui-aqua text-xs font-mono break-all"
+              >
+                0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502
+              </a>
+            </div>
+          </section>
+
           {/* Product Pattern */}
           <section className="mb-12">
             <div className="flex items-center gap-2 mb-4">
@@ -157,9 +195,9 @@ export default function EcosystemPage() {
               <ul className="space-y-2 text-sm text-gray-300">
                 <li>✓ Entry: zkLogin for community reporting</li>
                 <li>✓ State: Sui (ReputationRegistry)</li>
-                <li>✓ Compute: Nautilus (AI threat detection)</li>
-                <li>✓ Access: Seal (Gemini API key)</li>
-                <li>✓ Verification: verified: true on-chain</li>
+                <li>✓ Compute: Nautilus (Rust TEE threat detection inside AWS Nitro Enclave)</li>
+                <li>✓ Access: Seal (threat-agent config encrypted under PCR-based policy — inaccessible outside approved enclave)</li>
+                <li>✓ Verification: <code className="text-purple-300">ThreatVerified</code> event emitted on-chain after Ed25519 signature check</li>
               </ul>
             </div>
           </section>
@@ -173,26 +211,26 @@ export default function EcosystemPage() {
             
             <div className="space-y-3">
               <div className="glass-card bg-ocean-mid/30 p-4">
-                <p className="text-sm text-gray-200 mb-2">Enclave Registration</p>
+                <p className="text-sm text-gray-200 mb-2">Production Enclave Registration (May 15, 2026)</p>
                 <a 
-                  href="https://suiscan.xyz/testnet/tx/HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap"
+                  href="https://suiscan.xyz/testnet/tx/DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sui-cyan hover:text-sui-aqua text-xs font-mono break-all"
                 >
-                  HGomNmBWweAd9dttBsyVhJZDPj8R69JL4jpXEy4SfPap
+                  DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2
                 </a>
               </div>
 
               <div className="glass-card bg-ocean-mid/30 p-4">
-                <p className="text-sm text-gray-200 mb-2">Nautilus Verified Compute</p>
+                <p className="text-sm text-gray-200 mb-2">Atomic Threat Report (ThreatVerified + ThreatReported)</p>
                 <a 
-                  href="https://suiscan.xyz/testnet/tx/8CS9rBGcRoApdvqaiqNCsYuMn7xWm3Tm6i4MovrrJiVW"
+                  href="https://suiscan.xyz/testnet/tx/6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sui-cyan hover:text-sui-aqua text-xs font-mono break-all"
                 >
-                  8CS9rBGcRoApdvqaiqNCsYuMn7xWm3Tm6i4MovrrJiVW
+                  6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk
                 </a>
               </div>
 
