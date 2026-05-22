@@ -15,12 +15,13 @@ import { getEnclaveClient } from '@/lib/enclave-client';
 export async function POST(request: NextRequest) {
   const startTime = performance.now();
   const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-  const rl = rateLimit(ip, 30, 60000);
+  const rl = await rateLimit(ip, 30, 60000);
+  const rlHeaders = getRateLimitHeaders(rl);
 
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Rate limit exceeded. Max 30 requests per minute.' },
-      { status: 429, headers: getRateLimitHeaders(rl) }
+      { status: 429, headers: rlHeaders }
     );
   }
 
@@ -233,7 +234,7 @@ export async function POST(request: NextRequest) {
       },
       risk,
       explanation
-    });
+    }, { headers: rlHeaders });
 
   } catch (error: any) {
     console.error('Explanation error:', error);

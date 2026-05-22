@@ -34,8 +34,8 @@ export async function GET() {
     const [data, enclaveHealth, suiRpcHealth] = await Promise.all([
       Promise.race([
         analytics.getData(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 2000))
-      ]) as Awaited<ReturnType<typeof analytics.getData>>,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 2000))
+      ]),
       pingEnclave(),
       pingSuiRpc(),
     ]);

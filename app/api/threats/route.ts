@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-  const rl = rateLimit(ip, 100, 60000);
+  const rl = await rateLimit(ip, 100, 60000);
 
   if (!rl.allowed) {
     return NextResponse.json(

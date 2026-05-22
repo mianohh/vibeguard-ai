@@ -28,12 +28,12 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Sponsor wallet has insufficient funds' }, { status: 503 });
     }
 
-    const totalBalance = coins.data.reduce((sum, c) => sum + BigInt(c.balance), 0n);
-    if (totalBalance < 5_000_000n) {
+    const totalBalance = coins.data.reduce((sum, c) => sum + BigInt(c.balance), BigInt(0));
+    if (totalBalance < BigInt(5_000_000)) {
       console.warn(`[sponsor] LOW GAS WARNING: ${totalBalance} MIST remaining`);
       return Response.json({ error: 'Sponsor wallet critically low on gas' }, { status: 503 });
     }
-    if (totalBalance < 50_000_000n) {
+    if (totalBalance < BigInt(50_000_000)) {
       console.warn(`[sponsor] Gas balance low: ${totalBalance} MIST — consider refilling`);
     }
 
