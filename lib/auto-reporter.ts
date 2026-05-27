@@ -124,8 +124,6 @@ export async function autoReportThreat(
     const { enqueueReport } = await import('./ptb-batcher');
     const flushPromise = enqueueReport({ maliciousPackageId, reasons, nonce });
     if (flushPromise) {
-      // On Vercel: keep function alive past response via waitUntil
-      // Locally: run as detached promise (fire-and-forget)
       try {
         const { waitUntil } = await import('@vercel/functions');
         waitUntil(flushPromise.catch(e =>

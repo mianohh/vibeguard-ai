@@ -10,56 +10,115 @@ export interface PendingReport {
   nonce?: string;
 }
 
-const BATCH_WINDOW_MS = Number(process.env.PTB_BATCH_WINDOW_MS ?? 0); // 0 = flush immediately on Hobby tier
+const BATCH_WINDOW_MS = Number(process.env.PTB_BATCH_WINDOW_MS ?? 3_000); // 3s collection window
 const MAX_BATCH_SIZE  = Number(process.env.PTB_MAX_BATCH_SIZE  ?? 5);
+const QUEUE_KEY       = 'vibeguard:threat_queue';
+const LOCK_KEY        = 'vibeguard:flush_lock';
+const LOCK_TTL_MS     = 25_000; // covers full flush pipeline
 
-// ─── Singleton batch state ────────────────────────────────────────────────────
+// ─── Redis client (lazy) ──────────────────────────────────────────────────────
 
-let queue: PendingReport[]     = [];
-let seen:  Set<string>         = new Set();
-let windowOpen                 = false;
+let _redis: any = null;
+let _connecting: Promise<any> | null = null;
+
+async function getRedis() {
+  if (_redis?.isReady) return _redis;
+  if (_connecting) return _connecting;
+  const { createClient } = await import('redis');
+  _redis = createClient({
+    url: process.env.REDIS_URL,
+    socket: { reconnectStrategy: (retries: number) => Math.min(retries * 100, 2000) },
+  });
+  _redis.on('error', (e: any) => console.error('[ptb-batcher] redis:', e.message));
+  _connecting = _redis.connect().then(() => { _connecting = null; return _redis; });
+  return _connecting;
+}
+
+// ─── Singleton batch state (local, non-Vercel only) ───────────────────────────
+
+let queue: PendingReport[] = [];
+let seen:  Set<string>     = new Set();
+let windowOpen             = false;
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/**
- * Enqueue a report.
- * Returns the flush Promise if this call opened the window (first report),
- * or null if the window was already open (subsequent reports just append).
- * The caller should pass a non-null return value to waitUntil().
- */
 export function enqueueReport(report: PendingReport): Promise<void> | null {
+  if (process.env.REDIS_URL) return _enqueueRedis(report);
+  return _enqueueLocal(report);
+}
+
+// ─── Redis path (Vercel) ──────────────────────────────────────────────────────
+
+async function _enqueueRedis(report: PendingReport): Promise<void> {
+  const redis = await getRedis();
+
+  // Try to become the flusher FIRST before pushing
+  // This prevents concurrent flushes racing on the same sponsor coin
+  const won = await redis.set(LOCK_KEY, '1', { NX: true, PX: LOCK_TTL_MS });
+
+  // Always push to queue regardless of lock outcome
+  await redis.lPush(QUEUE_KEY, JSON.stringify(report));
+  console.log(`[ptb-batcher] redis enqueued ${report.maliciousPackageId.slice(0, 14)}...`);
+
+  if (won !== 'OK') {
+    console.log(`[ptb-batcher] lock held by another instance — enqueued only`);
+    return;
+  }
+
+  console.log(`[ptb-batcher] won flush lock — waiting ${BATCH_WINDOW_MS}ms for more reports`);
+  await new Promise(r => setTimeout(r, BATCH_WINDOW_MS));
+  await _flushFromRedis(redis);
+}
+
+async function _flushFromRedis(redis: any): Promise<void> {
+  // Atomically drain up to MAX_BATCH_SIZE reports
+  const raw = await redis.lRange(QUEUE_KEY, 0, MAX_BATCH_SIZE - 1);
+  if (raw.length === 0) { await redis.del(LOCK_KEY); return; }
+  await redis.lTrim(QUEUE_KEY, raw.length, -1);
+  await redis.del(LOCK_KEY);
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const batch: PendingReport[] = raw
+    .map((r: string) => JSON.parse(r))
+    .filter((r: PendingReport) => {
+      if (seen.has(r.maliciousPackageId)) return false;
+      seen.add(r.maliciousPackageId);
+      return true;
+    });
+
+  console.log(`[ptb-batcher] flush-start batchSize=${batch.length} reason=window-elapsed`);
+  try {
+    await _flush(batch);
+  } catch (err: any) {
+    console.error(`[ptb-batcher] flush-fail: ${err.message}`);
+  }
+}
+
+// ─── In-memory path (local dev) ───────────────────────────────────────────────
+
+function _enqueueLocal(report: PendingReport): Promise<void> | null {
   if (seen.has(report.maliciousPackageId)) {
     console.log(`[ptb-batcher] duplicate skipped: ${report.maliciousPackageId.slice(0, 14)}...`);
     return null;
   }
-
   seen.add(report.maliciousPackageId);
   queue.push(report);
   console.log(`[ptb-batcher] enqueued ${report.maliciousPackageId.slice(0, 14)}... depth=${queue.length}`);
 
-  if (windowOpen) return null; // window already running, another instance is the flusher
-
-  // First report — open the window and return the flush promise
+  if (windowOpen) return null;
   windowOpen = true;
   console.log(`[ptb-batcher] window opened (${BATCH_WINDOW_MS}ms)`);
-  return _runWindow();
+  return _runLocalWindow();
 }
 
-// ─── Internal ─────────────────────────────────────────────────────────────────
-
-async function _runWindow(): Promise<void> {
-  // Wait for the batch window to collect more reports
+async function _runLocalWindow(): Promise<void> {
   await new Promise(r => setTimeout(r, BATCH_WINDOW_MS));
-
-  // Snapshot and reset state so new reports start a fresh window
   const batch = queue.splice(0, MAX_BATCH_SIZE);
   seen.clear();
   windowOpen = false;
-
   if (batch.length === 0) return;
-
   console.log(`[ptb-batcher] flush-start batchSize=${batch.length} reason=window-elapsed`);
-
   try {
     await _flush(batch);
   } catch (err: any) {
