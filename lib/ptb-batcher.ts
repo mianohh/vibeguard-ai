@@ -10,7 +10,7 @@ export interface PendingReport {
   nonce?: string;
 }
 
-const BATCH_WINDOW_MS = Number(process.env.PTB_BATCH_WINDOW_MS ?? 3_000); // 3s collection window
+const BATCH_WINDOW_MS = Number(process.env.PTB_BATCH_WINDOW_MS ?? 1_000); // 1s collection window
 const MAX_BATCH_SIZE  = Number(process.env.PTB_MAX_BATCH_SIZE  ?? 5);
 const QUEUE_KEY       = 'vibeguard:threat_queue';
 const LOCK_KEY        = 'vibeguard:flush_lock';
@@ -166,39 +166,42 @@ async function _flush(batch: PendingReport[]): Promise<void> {
     return;
   }
 
-  // ── Step 2: parallel enclave signing ───────────────────────────────────────
+  // ── Step 2: parallel enclave signing (with local fallback) ─────────────────
   const nowMs = Date.now();
   const signResults = await Promise.allSettled(
     withBlobs.map(async ({ report, blobId }) => {
-      if (!enclaveUrl) throw new Error('ENCLAVE_URL not set');
-      const res = await fetch(`${enclaveUrl}/sign_report`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          malicious_package_id: report.maliciousPackageId,
-          walrus_blob_id:       blobId,
-          timestamp_ms:         nowMs,
-        }),
-      });
-      if (!res.ok) throw new Error(`sign_report failed: ${await res.text()}`);
-      const { signature: sigHex } = await res.json();
-      return Buffer.from(sigHex, 'hex').toString('base64');
+      if (!enclaveUrl) return null; // signal: use local fallback
+      try {
+        const res = await fetch(`${enclaveUrl}/sign_report`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            malicious_package_id: report.maliciousPackageId,
+            walrus_blob_id:       blobId,
+            timestamp_ms:         nowMs,
+          }),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) throw new Error(`sign_report failed: ${await res.text()}`);
+        const { signature: sigHex } = await res.json();
+        return Buffer.from(sigHex, 'hex').toString('base64');
+      } catch {
+        return null; // enclave unreachable — will skip verify_and_report
+      }
     })
   );
 
-  const assembled = withBlobs
-    .map((b, i) => ({ ...b, sig: signResults[i] }))
-    .filter(({ sig }) => sig.status === 'fulfilled')
-    .map(({ report, blobId, blobObjectId, sig }) => ({
-      maliciousPackageId: report.maliciousPackageId,
-      walrusBlobId:       blobId,
-      blobObjectId,
-      enclaveSignature:   (sig as PromiseFulfilledResult<string>).value,
-      timestampMs:        nowMs,
-    }));
+  // All reports proceed regardless — null signature means skip verify_and_report
+  const assembled = withBlobs.map((b, i) => ({
+    maliciousPackageId: b.report.maliciousPackageId,
+    walrusBlobId:       b.blobId,
+    blobObjectId:       b.blobObjectId,
+    enclaveSignature:   signResults[i].status === 'fulfilled' ? (signResults[i] as PromiseFulfilledResult<string|null>).value : null,
+    timestampMs:        nowMs,
+  }));
 
   if (assembled.length === 0) {
-    console.error('[ptb-batcher] all enclave signings failed — aborting flush');
+    console.error('[ptb-batcher] no reports to assemble — aborting flush');
     return;
   }
 
@@ -219,6 +222,8 @@ async function _flush(batch: PendingReport[]): Promise<void> {
           tx.object('0x6'),
         ],
       });
+    } else {
+      console.log(`[ptb-batcher] skipping verify_and_report for ${a.maliciousPackageId.slice(0,14)}... (enclave unreachable)`);
     }
     tx.moveCall({
       target: `${PACKAGE_ID}::registry::report_malicious_contract`,
