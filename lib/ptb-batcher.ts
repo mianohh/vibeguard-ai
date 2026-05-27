@@ -71,7 +71,7 @@ async function _enqueueRedis(report: PendingReport): Promise<void> {
 }
 
 async function _flushFromRedis(redis: any): Promise<void> {
-  // Atomically drain up to MAX_BATCH_SIZE reports
+  // Drain up to MAX_BATCH_SIZE reports
   const raw = await redis.lRange(QUEUE_KEY, 0, MAX_BATCH_SIZE - 1);
   if (raw.length === 0) { await redis.del(LOCK_KEY); return; }
   await redis.lTrim(QUEUE_KEY, raw.length, -1);
@@ -92,6 +92,16 @@ async function _flushFromRedis(redis: any): Promise<void> {
     await _flush(batch);
   } catch (err: any) {
     console.error(`[ptb-batcher] flush-fail: ${err.message}`);
+  }
+
+  // If queue still has items, immediately claim lock and flush again
+  const remaining = await redis.lLen(QUEUE_KEY);
+  if (remaining > 0) {
+    const won = await redis.set(LOCK_KEY, '1', { NX: true, PX: LOCK_TTL_MS });
+    if (won === 'OK') {
+      console.log(`[ptb-batcher] queue still has ${remaining} reports — flushing again`);
+      await _flushFromRedis(redis);
+    }
   }
 }
 
