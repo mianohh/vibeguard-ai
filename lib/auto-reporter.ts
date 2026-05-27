@@ -89,12 +89,10 @@ function buildEvidence(maliciousPackageId: string, reasons: string[], publisher:
 }
 
 async function submitOnChain(
-  maliciousPackageId: string,
   walrusBlobId: string,
   blobObjectId: string,
   enclaveSignature: string,
   timestampMs: number,
-  sender: string,
   sponsorSignature: string,
   txBytes: string,
 ): Promise<string> {
@@ -117,7 +115,32 @@ export async function autoReportThreat(
   _timestampMs?: number,
   nonce?: string
 ): Promise<void> {
-    console.log(`Auto-reporting malicious package: ${maliciousPackageId}`);
+  console.log(`Auto-reporting malicious package: ${maliciousPackageId}`);
+
+  // PTB Batching: first report opens a 30s window.
+  // Subsequent reports within the window just enqueue — the flusher
+  // executes a single atomic PTB for all collected reports.
+  try {
+    const { enqueueReport } = await import('./ptb-batcher');
+    const flushPromise = enqueueReport({ maliciousPackageId, reasons, nonce });
+    if (flushPromise) {
+      // On Vercel: keep function alive past response via waitUntil
+      // Locally: run as detached promise (fire-and-forget)
+      try {
+        const { waitUntil } = await import('@vercel/functions');
+        waitUntil(flushPromise.catch(e =>
+          console.error('[auto-reporter] flush error:', e.message)
+        ));
+      } catch {
+        flushPromise.catch(e =>
+          console.error('[auto-reporter] flush error:', e.message)
+        );
+      }
+    }
+    return;
+  } catch (err: any) {
+    console.warn(`[auto-reporter] PTB batcher unavailable, falling back: ${err.message}`);
+  }
 
   const enclaveUrl = process.env.ENCLAVE_URL;
 
@@ -175,8 +198,8 @@ export async function autoReportThreat(
 
     // 4. Execute — sponsor is both sender and gas owner, only 1 signature needed
     const digest = await submitOnChain(
-      maliciousPackageId, walrusBlobId, blobObjectId,
-      enclaveSignature, timestampMs, reporterAddress,
+      walrusBlobId, blobObjectId,
+      enclaveSignature, timestampMs,
       sponsorSignature, txBytes
     );
     console.log(`Threat logged on-chain: ${digest}`);

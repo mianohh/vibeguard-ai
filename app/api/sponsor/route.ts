@@ -5,6 +5,36 @@ import { Transaction } from '@mysten/sui/transactions';
 
 const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
 
+function addReportCalls(
+  tx: Transaction,
+  report: { maliciousPackageId: string; walrusBlobId: string; blobObjectId: string; enclaveSignature?: string; timestampMs?: number },
+  opts: { packageId: string; registryId: string; sealPackageId?: string; enclaveConfigId?: string }
+) {
+  if (opts.sealPackageId && opts.enclaveConfigId && report.enclaveSignature) {
+    const sigBytes = Array.from(Buffer.from(report.enclaveSignature, 'base64'));
+    tx.moveCall({
+      target: `${opts.sealPackageId}::enclave::verify_and_report`,
+      arguments: [
+        tx.object(opts.enclaveConfigId),
+        tx.pure.address(report.maliciousPackageId),
+        tx.pure.string(report.walrusBlobId),
+        tx.pure.vector('u8', sigBytes),
+        tx.pure.u64(BigInt(report.timestampMs ?? Date.now())),
+        tx.object('0x6'),
+      ],
+    });
+  }
+  tx.moveCall({
+    target: `${opts.packageId}::registry::report_malicious_contract`,
+    arguments: [
+      tx.object(opts.registryId),
+      tx.pure.address(report.maliciousPackageId),
+      tx.pure.string(report.walrusBlobId),
+      tx.pure.address(report.blobObjectId),
+    ],
+  });
+}
+
 export async function POST(req: Request) {
   try {
     if (!process.env.SPONSOR_PRIVATE_KEY) {
@@ -13,21 +43,15 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    if (!body.packageId || !body.registryId || !body.maliciousPackageId || !body.walrusBlobId || !body.blobObjectId || !body.sender) {
-      return Response.json({ error: 'Missing required parameters' }, { status: 400 });
-    }
-
     const rawKey = fromBase64(process.env.SPONSOR_PRIVATE_KEY);
     const secretKey = rawKey.length === 33 ? rawKey.slice(1) : rawKey;
     const sponsorKeypair = Ed25519Keypair.fromSecretKey(secretKey);
     const sponsorAddress = sponsorKeypair.toSuiAddress();
 
     const coins = await suiClient.getCoins({ owner: sponsorAddress, coinType: '0x2::sui::SUI' });
-
     if (coins.data.length === 0) {
       return Response.json({ error: 'Sponsor wallet has insufficient funds' }, { status: 503 });
     }
-
     const totalBalance = coins.data.reduce((sum, c) => sum + BigInt(c.balance), BigInt(0));
     if (totalBalance < BigInt(5_000_000)) {
       console.warn(`[sponsor] LOW GAS WARNING: ${totalBalance} MIST remaining`);
@@ -38,48 +62,42 @@ export async function POST(req: Request) {
     }
 
     const tx = new Transaction();
+    const opts = {
+      packageId: body.packageId,
+      registryId: body.registryId,
+      sealPackageId: body.sealPackageId,
+      enclaveConfigId: body.enclaveConfigId,
+    };
+    let gasBudget: number;
 
-    // Call 1: verify_and_report on seal_enclave — proves the payload was signed
-    // by the approved enclave keypair before accepting it into the registry.
-    // This is the on-chain verification step of the Seal–Nautilus integration.
-    if (body.sealPackageId && body.enclaveConfigId && body.enclaveSignature) {
-      const sigBytes = Array.from(Buffer.from(body.enclaveSignature, 'base64'));
-      tx.moveCall({
-        target: `${body.sealPackageId}::enclave::verify_and_report`,
-        arguments: [
-          tx.object(body.enclaveConfigId),
-          tx.pure.address(body.maliciousPackageId),
-          tx.pure.string(body.walrusBlobId),
-          tx.pure.vector('u8', sigBytes),
-          tx.pure.u64(body.timestampMs ?? Date.now()),
-          tx.object('0x6'), // Sui Clock shared object
-        ],
-      });
+    if (Array.isArray(body.reports) && body.reports.length > 0) {
+      // ── Batch path ────────────────────────────────────────────────────────
+      if (!body.packageId || !body.registryId || !body.sender) {
+        return Response.json({ error: 'Missing required batch parameters' }, { status: 400 });
+      }
+      for (const report of body.reports) addReportCalls(tx, report, opts);
+      gasBudget = 5_000_000 * body.reports.length + 1_000_000;
+      console.log(`[sponsor] batch tx built batchSize=${body.reports.length} gasBudget=${gasBudget}`);
+    } else {
+      // ── Single-report path ────────────────────────────────────────────────
+      if (!body.packageId || !body.registryId || !body.maliciousPackageId || !body.walrusBlobId || !body.blobObjectId || !body.sender) {
+        return Response.json({ error: 'Missing required parameters' }, { status: 400 });
+      }
+      addReportCalls(tx, body, opts);
+      gasBudget = 10_000_000;
+      console.log(`[sponsor] single tx built gasBudget=${gasBudget}`);
     }
-
-    // Call 2: report_malicious_contract on reputation_registry — existing pipeline
-    tx.moveCall({
-      target: `${body.packageId}::registry::report_malicious_contract`,
-      arguments: [
-        tx.object(body.registryId),
-        tx.pure.address(body.maliciousPackageId),
-        tx.pure.string(body.walrusBlobId),
-        tx.pure.address(body.blobObjectId),
-      ],
-    });
 
     tx.setSender(body.sender);
     tx.setGasOwner(sponsorAddress);
-    tx.setGasBudget(10_000_000);
-
-    console.log('[sponsor] tx built', { network: 'testnet', senderPrefix: body.sender?.slice(0, 8)?.replace(/[^a-fA-F0-9x]/g, ''), gasBudget: 10_000_000 });
+    tx.setGasBudget(gasBudget);
 
     const builtTxBytes = await tx.build({ client: suiClient });
     const sponsorSignatureResult = await sponsorKeypair.signTransaction(builtTxBytes);
 
     return Response.json({
       txBytes: toBase64(builtTxBytes),
-      sponsorSignature: sponsorSignatureResult.signature
+      sponsorSignature: sponsorSignatureResult.signature,
     });
 
   } catch (e: any) {
