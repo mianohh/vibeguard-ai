@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use crate::AppState;
 
-pub mod threat_agent;
-
 #[derive(Deserialize)]
 pub struct ProcessDataRequest {
     pub payload: ThreatInput,

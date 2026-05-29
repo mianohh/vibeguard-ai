@@ -13,7 +13,8 @@ echo "🔒 Configuring enclave traffic rules..."
 # Only Seal key servers are required for configuration decryption
 ALLOWED_DOMAINS=(
     "seal-testnet.walrus.space"          # Seal key servers
-    "aggregator.walrus-testnet.walrus.space"  # Walrus (for evidence storage)
+    "aggregator.walrus-testnet.walrus.space"  # Walrus aggregator
+    "publisher.walrus-testnet.walrus.space"   # Walrus publisher (enclave uploads evidence)
 )
 
 echo "✅ Allowed domains:"
