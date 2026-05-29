@@ -117,25 +117,13 @@ export async function autoReportThreat(
 ): Promise<void> {
   console.log(`Auto-reporting malicious package: ${maliciousPackageId}`);
 
-  // PTB Batching: first report opens a 30s window.
-  // Subsequent reports within the window just enqueue — the flusher
-  // executes a single atomic PTB for all collected reports.
+  // PTB Batching: enqueue and return immediately.
+  // The flush happens asynchronously in the background after the batch window.
   try {
     const { enqueueReport } = await import('./ptb-batcher');
-    const flushPromise = enqueueReport({ maliciousPackageId, reasons, nonce });
-    if (flushPromise) {
-      try {
-        const { waitUntil } = await import('@vercel/functions');
-        waitUntil(flushPromise.catch(e =>
-          console.error('[auto-reporter] flush error:', e.message)
-        ));
-      } catch {
-        flushPromise.catch(e =>
-          console.error('[auto-reporter] flush error:', e.message)
-        );
-      }
-    }
-    return;
+    enqueueReport({ maliciousPackageId, reasons, nonce });
+    console.log(`[auto-reporter] enqueued ${maliciousPackageId.slice(0, 14)}... — PTB will execute in background`);
+    return; // Return immediately — API responds fast
   } catch (err: any) {
     console.warn(`[auto-reporter] PTB batcher unavailable, falling back: ${err.message}`);
   }
