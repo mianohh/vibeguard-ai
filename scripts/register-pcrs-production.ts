@@ -11,11 +11,13 @@ import { fromBase64 } from '@mysten/sui/utils';
 const SEAL_ENCLAVE_PACKAGE_ID = '0x75f9626ccc7e848c58823924644e5d5167d7231e381fe49734200d81b2419fdc';
 const ENCLAVE_CONFIG_OBJECT_ID = '0x2ca9a5fe17b6f53259ccf2c793268a82bd04e3d82fb3bc482a4dbb740400c502';
 
-// Production PCRs from AWS Nitro Enclave
-const PCR0 = 'cf2c632b8610f9ede51dc20a78d01aa2d813410affec09a51726b52ccc4be49fb69c04ac6eb8b83a38dac821d14a98db';
-const PCR1 = 'cf2c632b8610f9ede51dc20a78d01aa2d813410affec09a51726b52ccc4be49fb69c04ac6eb8b83a38dac821d14a98db';
-const PCR2 = '21b9efbc184807662e966d34f390821309eeac6802309798826296bf3e8bec7c10edb30948c90ba67310f7b964fc500a';
-const PUBLIC_KEY = 'fca7f87123c37761226ea680dc2dc7d7dcf4378ee72cddde3094302b33685acd';
+// Real PCRs derived from binary SHA-384 (computed on startup from running binary)
+// Binary: /home/ec2-user/nautilus-server/target/release/nautilus-server
+// Keypair: persistent seed from /home/ec2-user/nautilus-server/enclave-keypair.json
+const PCR0 = '6b1455851c652e4f148370bd24823b6d20639f8d767900991114f153a3f5c469d50776f955538e544d2d117c6de636ef';
+const PCR1 = '6f2f27e05cef1d7a7c05f5e80060b42ffc1bd8501e2b8803501f23d01ddd711ab1a68125ab8655acdef23e77ade88288';
+const PCR2 = '20e060bdf0deead1828134851188446e72f071a0303f3fbe480de7e97b72ca111c2d53c142a56c9480cb7da0eaf4a5bf';
+const PUBLIC_KEY = '676ae54a4abf8f8c1daef53edd64855ceb4c4f300d303d31db4845e50589529d';
 
 async function main() {
   console.log('🔐 Registering Production PCRs On-Chain');
