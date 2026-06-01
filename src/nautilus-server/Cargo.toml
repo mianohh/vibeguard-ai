@@ -27,28 +27,15 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
 thiserror = "1.0"
 
-# Base64 encoding
+# Encoding
 base64 = "0.21"
-
-# Hex encoding
 hex = "0.4"
 
-# HTTP client (for Walrus upload from inside the enclave)
+# HTTP client (Walrus upload from inside enclave)
 reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }
 
 # Date/time
 chrono = { version = "0.4", features = ["serde"] }
-
-# AES-GCM encryption (for Seal config decryption)
-aes-gcm = "0.10"
-
-# AWS Nitro Enclaves (optional, only works in real enclave)
-[target.'cfg(target_os = "linux")'.dependencies]
-aws-nitro-enclaves-nsm-api = { version = "0.4", optional = true }
-
-[features]
-default = []
-nitro = ["aws-nitro-enclaves-nsm-api"]
 
 [lib]
 name = "nautilus_server"

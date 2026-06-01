@@ -6,12 +6,12 @@ pub mod app {
 }
 pub mod apps;
 pub mod common;
-pub mod attestation;
-pub mod seal_client;
-pub mod sui_parser;
 
 pub struct AppState {
     pub eph_kp: Ed25519KeyPair,
     pub api_key: String,
     pub agent_config: AgentConfig,
+    pub pcr0: String,
+    pub pcr1: String,
+    pub pcr2: String,
 }
