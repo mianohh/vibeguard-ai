@@ -250,5 +250,10 @@ function _loadSponsor(): Ed25519Keypair {
     return Ed25519Keypair.fromSecretKey(decodeSuiPrivateKey(key).secretKey);
   }
   const raw = Buffer.from(key, 'base64');
-  return Ed25519Keypair.fromSecretKey(raw.length === 33 ? raw.slice(1) : raw);
+  // Ed25519 private keys are 32 bytes. If we have 33, the first byte is a flag (0x00)
+  const secretKey = raw.length === 33 ? raw.slice(1) : raw;
+  if (secretKey.length !== 32) {
+    throw new Error(`Invalid private key length: expected 32 bytes, got ${secretKey.length}`);
+  }
+  return Ed25519Keypair.fromSecretKey(secretKey);
 }
