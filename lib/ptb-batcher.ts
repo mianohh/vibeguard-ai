@@ -140,13 +140,23 @@ async function _runLocalWindow(): Promise<void> {
 // ─── Core flush — enclave handles Walrus, we just build + execute PTB ─────────
 
 async function _flush(batch: PendingReport[]): Promise<void> {
-  const enclaveUrl  = process.env.ENCLAVE_URL!;
+  const enclaveUrl  = process.env.ENCLAVE_URL;
   const PACKAGE_ID  = process.env.NEXT_PUBLIC_PACKAGE_ID!;
   const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID!;
   const SEAL_PKG    = process.env.SEAL_ENCLAVE_PACKAGE_ID!;
   const ENCLAVE_CFG = process.env.ENCLAVE_CONFIG_OBJECT_ID!;
-  const sponsor     = _loadSponsor();
-  const reporter    = sponsor.toSuiAddress();
+
+  if (!enclaveUrl) {
+    console.error('[ptb-batcher] ENCLAVE_URL not set — cannot flush. Set it in Vercel environment variables.');
+    return;
+  }
+  if (!PACKAGE_ID || !REGISTRY_ID) {
+    console.error('[ptb-batcher] NEXT_PUBLIC_PACKAGE_ID or NEXT_PUBLIC_REGISTRY_ID not set — cannot flush.');
+    return;
+  }
+
+  const sponsor  = _loadSponsor();
+  const reporter = sponsor.toSuiAddress();
 
   // ── Step 1: call enclave /sign_report per report (parallel)
   // Enclave uploads to Walrus internally and returns blob_id + blob_object_id + signature
