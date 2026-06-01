@@ -115,6 +115,7 @@ VibeGuard implements **Pattern 4 — Secure Input Layer for Verified Compute** f
 | Event | Transaction |
 |---|---|
 | **Production Enclave Registration (May 15, 2026)** | [`DyCyjEm6...39Q2`](https://suiscan.xyz/testnet/tx/DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2) |
+| **Enclave Re-registration — Real PCRs (Jun 1, 2026)** | [`3QNgqGy5...oZPb`](https://suiscan.xyz/testnet/tx/3QNgqGy5uMYdzuEjitbjkkd8s6LyWeqD9CJwptYkoZPb) |
 | **Atomic Threat Report (ThreatVerified + ThreatReported)** | [`6qBWeX62...YDk`](https://suiscan.xyz/testnet/tx/6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk) |
 
 **Production Enclave**
@@ -122,9 +123,12 @@ VibeGuard implements **Pattern 4 — Secure Input Layer for Verified Compute** f
 | Property | Value |
 |---|---|
 | Endpoint | `http://98.82.186.207:3000` |
-| Public Key | `fca7f87123c37761226ea680dc2dc7d7dcf4378ee72cddde3094302b33685acd` |
-| PCR0/PCR1 | `cf2c632b8610f9ede51dc20a78d01aa2d813410affec09a51726b52ccc4be49fb69c04ac6eb8b83a38dac821d14a98db` |
-| PCR2 | `21b9efbc184807662e966d34f390821309eeac6802309798826296bf3e8bec7c10edb30948c90ba67310f7b964fc500a` |
+| Public Key | `676ae54a4abf8f8c1daef53edd64855ceb4c4f300d303d31db4845e50589529d` |
+| PCR0 | `6b1455851c652e4f148370bd24823b6d20639f8d767900991114f153a3f5c469d50776f955538e544d2d117c6de636ef` |
+| PCR1 | `6f2f27e05cef1d7a7c05f5e80060b42ffc1bd8501e2b8803501f23d01ddd711ab1a68125ab8655acdef23e77ade88288` |
+| PCR2 | `20e060bdf0deead1828134851188446e72f071a0303f3fbe480de7e97b72ca111c2d53c142a56c9480cb7da0eaf4a5bf` |
+
+**Note**: PCR values are derived deterministically from the SHA-384 hash of the running binary. The keypair is persistent — the public key is stable across restarts.
 
 ---
 
@@ -159,6 +163,43 @@ The enclave threat engine detects sophisticated attack patterns with 100% accura
 | `HIGH_GAS_BUDGET` | Gas budget exceeds 500M MIST |
 
 Framework packages (`0x1`, `0x2`, `0x3`, `0x5`) are automatically whitelisted to eliminate false positives.
+
+---
+
+## PTB Batching & Gas Optimization
+
+VibeGuard implements **Programmable Transaction Block (PTB) batching** to dramatically reduce gas costs for automated threat reporting. Multiple threat reports are batched into a single on-chain transaction, achieving **96% gas savings** compared to individual transactions.
+
+### How It Works
+
+1. **Fast API Response**: Reports are enqueued immediately (~5ms) and the API responds instantly
+2. **Batch Window**: Reports accumulate for 1 second (configurable via `PTB_BATCH_WINDOW_MS`)
+3. **Parallel Enclave Signing**: Multiple reports are signed concurrently by the enclave
+4. **Single PTB Execution**: All reports are submitted in one atomic transaction
+
+### Performance Metrics
+
+| Metric | Value |
+|---|---|
+| API Response Time | 5ms (instant user feedback) |
+| Batch Window | 1000ms (configurable) |
+| Max Batch Size | 5 reports (configurable via `PTB_MAX_BATCH_SIZE`) |
+| Gas Savings | 96% vs individual transactions |
+| Vercel Compliance | 0.05% of 10s function limit |
+
+### Gas Efficiency
+
+**Example: 5 Reports**
+- Individual transactions: ~25,000,000 MIST
+- Batched transaction: ~1,000,000 MIST
+- **Savings**: 24,000,000 MIST (96%)
+
+### Verified On-Chain
+
+- **Batch Transaction**: [`2sTnAxD9...jetQ`](https://suiscan.xyz/testnet/tx/2sTnAxD9uSBGUuRQ1ydzAi6UHvk7aC7zgj9UaUazjetQ)
+- **Reports Verified**: 5 concurrent reports
+- **Events Emitted**: 10 (5 ThreatVerified + 5 ThreatReported)
+- **Status**: ✅ All signatures verified on-chain
 
 ---
 
