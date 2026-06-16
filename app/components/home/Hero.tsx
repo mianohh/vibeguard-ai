@@ -23,8 +23,8 @@ export default function Hero() {
               </h1>
 
               <p className="text-white font-normal mb-10 max-w-[85%] lg:text-start text-center lg:mx-0 mx-auto">
-                Analyze real Sui transactions before you sign them. AI-powered threat detection,
-                enclave-verified analysis, and decentralized evidence storage protect every transaction.
+                Analyze real Sui transactions before you sign them. Deterministic threat analysis,
+                enclave-verified pattern scoring, and decentralized evidence storage protect every transaction.
               </p>
 
               <div className="flex align-middle justify-center lg:justify-start flex-wrap gap-4">
