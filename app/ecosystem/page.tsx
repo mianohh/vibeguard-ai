@@ -1,24 +1,28 @@
 'use client';
 
+import { SuiIcon, WalrusIcon, NitroIcon, GoogleIcon, SealIcon, CheckCircleIcon, CrossIcon, ShieldCheckIcon } from '../components/icons';
+
 export default function EcosystemPage() {
   return (
     <div className="min-h-screen relative">
       <div className="ocean-background" />
+      <div className="purple-section-blur" />
       
-      <div className="relative z-10 container mx-auto px-6 py-12 max-w-5xl">
-        <div className="glass-card p-8 liquid-expand">
+      <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
+        <div className="glass-card p-4 sm:p-6 lg:p-8 liquid-expand">
           <div className="flex items-center gap-3 mb-4">
-            <div className="sui-symbol w-10 h-10" />
+            <SuiIcon className="w-10 h-10 text-sui-blue" />
             <h1 className="text-4xl font-bold text-white tracking-tight">
               Ecosystem Primitives & Cross-Stack Integration
             </h1>
           </div>
-          <p className="text-gray-400 text-lg mb-8">
+          <p className="text-lightblue text-lg mb-8">
             How VibeGuard AI combines Sui ecosystem primitives with core stack layers
           </p>
 
           {/* Architecture Overview */}
           <section className="mb-12">
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">System Design</p>
             <h2 className="text-2xl font-bold text-white mb-4">Architecture Overview</h2>
             <div className="glass-card bg-ocean-mid/30 p-6">
               <div className="space-y-2 font-mono text-sm">
@@ -28,7 +32,7 @@ export default function EcosystemPage() {
                 <div className="pl-4 text-slate-400">↓</div>
                 <div className="pl-4 text-yellow-400">Sponsored Transaction (gasless)</div>
                 <div className="pl-4 text-slate-400">↓</div>
-                <div className="pl-4 text-purple-400">Sui (ReputationRegistry)</div>
+                <div className="pl-4 text-primary">Sui (ReputationRegistry)</div>
                 <div className="pl-4 text-slate-400">↓</div>
                 <div className="pl-4 text-orange-400">Walrus (threat evidence)</div>
                 <div className="pl-4 text-slate-400">↓</div>
@@ -41,32 +45,33 @@ export default function EcosystemPage() {
 
           {/* Core vs Primitives */}
           <section className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-4">Core Stack vs Ecosystem Primitives</h2>
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Stack Comparison</p>
+            <h2 className="text-2xl font-bold text-white mb-4 text-center">Core Stack vs Ecosystem Primitives</h2>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto justify-center">
               <div className="glass-card bg-sui-blue/10 border-sui-cyan/30 p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="sui-symbol w-6 h-6" />
-                <h3 className="font-semibold text-sui-cyan">Core Stack</h3>
-              </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <SuiIcon className="w-6 h-6 text-sui-blue" />
+                  <h3 className="font-semibold text-sui-cyan">Core Stack</h3>
+                </div>
                 <ul className="space-y-2 text-sm text-gray-300">
-                  <li>▸ Sui: Trusted state</li>
-                  <li>▸ Walrus: Decentralized storage</li>
-                  <li>▸ Seal: Protected access</li>
-                  <li>▸ Nautilus: Verified compute</li>
+                  <li className="flex items-center gap-2"><SuiIcon className="w-4 h-4 text-sui-blue" /> Sui: Trusted state</li>
+                  <li className="flex items-center gap-2"><WalrusIcon className="w-4 h-4 text-sui-cyan" /> Walrus: Decentralized storage</li>
+                  <li className="flex items-center gap-2"><SealIcon className="w-4 h-4 text-sui-aqua" /> Seal: Protected access</li>
+                  <li className="flex items-center gap-2"><NitroIcon className="w-4 h-4 text-status-warning" /> Nautilus: Verified compute</li>
                 </ul>
               </div>
 
               <div className="glass-card bg-status-safe/10 border-status-safe/30 p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="sui-symbol w-6 h-6" />
-                <h3 className="font-semibold text-status-safe">Ecosystem Primitives</h3>
-              </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircleIcon className="w-6 h-6 text-status-safe" />
+                  <h3 className="font-semibold text-status-safe">Ecosystem Primitives</h3>
+                </div>
                 <ul className="space-y-2 text-sm text-gray-300">
-                  <li>✓ zkLogin: OAuth wallet</li>
-                  <li>✓ Sponsored Tx: Gasless execution</li>
-                  <li className="text-gray-500">✗ Enoki: Not used</li>
-                  <li className="text-gray-500">✗ DeepBook: Not applicable</li>
+                  <li className="flex items-center gap-2"><GoogleIcon className="w-4 h-4 text-status-safe" /> zkLogin: OAuth wallet</li>
+                  <li className="flex items-center gap-2"><CheckCircleIcon className="w-4 h-4 text-status-safe" /> Sponsored Tx: Gasless execution</li>
+                  <li className="flex items-center gap-2 text-lightblue"><CrossIcon className="w-4 h-4" /> Enoki: Not used</li>
+                  <li className="flex items-center gap-2 text-lightblue"><CrossIcon className="w-4 h-4" /> DeepBook: Not applicable</li>
                 </ul>
               </div>
             </div>
@@ -74,8 +79,9 @@ export default function EcosystemPage() {
 
           {/* zkLogin */}
           <section className="mb-12">
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Authentication</p>
             <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
+              <GoogleIcon className="w-8 h-8 text-red-400" />
               <h2 className="text-2xl font-bold text-white">zkLogin Integration</h2>
             </div>
             
@@ -104,8 +110,9 @@ export default function EcosystemPage() {
 
           {/* Why Not Enoki */}
           <section className="mb-12">
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Design Decision</p>
             <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
+              <SuiIcon className="w-8 h-8 text-sui-blue" />
               <h2 className="text-2xl font-bold text-white">Why Native zkLogin (Not Enoki)?</h2>
             </div>
             
@@ -119,7 +126,7 @@ export default function EcosystemPage() {
                 <li>✓ Simpler architecture for B2B product</li>
                 <li>✓ No external service dependencies</li>
               </ul>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-lightblue">
                 <strong>Product Context:</strong> VibeGuard is B2B security infrastructure. 
                 Primary users are wallet providers consuming threat intelligence. 
                 Community reporting is secondary where current UX is acceptable.
@@ -129,8 +136,9 @@ export default function EcosystemPage() {
 
           {/* Why No DeepBook */}
           <section className="mb-12">
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Scope Clarification</p>
             <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
+              <CrossIcon className="w-8 h-8 text-status-danger" />
               <h2 className="text-2xl font-bold text-white">Why No DeepBookV3?</h2>
             </div>
             
@@ -145,8 +153,9 @@ export default function EcosystemPage() {
 
           {/* Seal Integration */}
           <section className="mb-12">
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Access Control</p>
             <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
+              <SealIcon className="w-8 h-8 text-sui-aqua" />
               <h2 className="text-2xl font-bold text-white">Seal Access Control</h2>
             </div>
 
@@ -154,7 +163,7 @@ export default function EcosystemPage() {
               <p className="text-sm text-gray-300 mb-3">
                 <strong>Pattern 4 — Secure Input Layer for Verified Compute</strong>
               </p>
-              <p className="text-sm text-gray-400 mb-4">
+              <p className="text-sm text-lightblue mb-4">
                 The proprietary threat-agent configuration (scoring weights, risk thresholds, heuristic rules)
                 is encrypted under a PCR-based Seal policy. Only an enclave whose PCR measurements match
                 the registered policy can decrypt and load the configuration.
@@ -183,12 +192,13 @@ export default function EcosystemPage() {
 
           {/* Product Pattern */}
           <section className="mb-12">
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Verified Compute</p>
             <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
+              <ShieldCheckIcon className="w-8 h-8 text-primary" />
               <h2 className="text-2xl font-bold text-white">Product Pattern: Verified-Compute</h2>
             </div>
             
-            <div className="glass-card bg-purple-500/10 border-purple-400/30 p-6">
+            <div className="glass-card bg-primary/10 border-primary/30 p-6">
               <p className="text-sm text-gray-300 mb-3">
                 <strong>Module 5 Pattern 3: Verified-Compute Product</strong>
               </p>
@@ -197,28 +207,29 @@ export default function EcosystemPage() {
                 <li>✓ State: Sui (ReputationRegistry)</li>
                 <li>✓ Compute: Nautilus (Rust TEE threat detection inside AWS Nitro Enclave)</li>
                 <li>✓ Access: Seal (threat-agent config encrypted under PCR-based policy — inaccessible outside approved enclave)</li>
-                <li>✓ Verification: <code className="text-purple-300">ThreatVerified</code> event emitted on-chain after Ed25519 signature check</li>
+                <li>✓ Verification: <code className="text-primary">ThreatVerified</code> event emitted on-chain after Ed25519 signature check</li>
               </ul>
             </div>
           </section>
 
           {/* Live Proofs */}
           <section>
+            <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">On-Chain Evidence</p>
             <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
+              <CheckCircleIcon className="w-8 h-8 text-status-safe" />
               <h2 className="text-2xl font-bold text-white">Live Proof Transactions</h2>
             </div>
             
             <div className="space-y-3">
               <div className="glass-card bg-ocean-mid/30 p-4">
-                <p className="text-sm text-gray-200 mb-2">Production Enclave Registration (May 15, 2026)</p>
+                <p className="text-sm text-gray-200 mb-2">Production Enclave Registration</p>
                 <a 
-                  href="https://suiscan.xyz/testnet/tx/DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2"
+                  href="https://suiscan.xyz/testnet/tx/3QNgqGy5uMYdzuEjitbjkkd8s6LyWeqD9CJwptYkoZPb"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sui-cyan hover:text-sui-aqua text-xs font-mono break-all"
                 >
-                  DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2
+                  3QNgqGy5uMYdzuEjitbjkkd8s6LyWeqD9CJwptYkoZPb
                 </a>
               </div>
 
