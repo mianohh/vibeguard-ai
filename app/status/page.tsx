@@ -44,6 +44,7 @@ export default function StatusPage() {
     return (
       <div className="min-h-screen relative">
         <div className="ocean-background" />
+        <div className="purple-section-blur" />
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-sui-cyan text-xl">Loading status...</div>
         </div>
@@ -54,24 +55,25 @@ export default function StatusPage() {
   return (
     <div className="min-h-screen relative">
       <div className="ocean-background" />
+      <div className="purple-section-blur" />
       
-      <div className="relative z-10 container mx-auto px-6 py-12 max-w-6xl">
+      <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
         
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="sui-symbol w-12 h-12" />
             <h1 className="text-4xl font-display font-bold">
-              <span className="gradient-text">VibeGuard Status</span>
+              <span className="gradient-text-purple">VibeGuard Status</span>
             </h1>
           </div>
-          <p className="text-gray-400 text-lg">
+          <p className="text-lightblue text-lg">
             Real-time system health and performance metrics
           </p>
         </div>
 
         {/* Hero Status Banner */}
-        <div className="glass-card p-8 mb-12 text-center border-2 border-status-safe">
+        <div className="glass-card p-5 lg:p-8 mb-8 lg:mb-12 text-center border border-white/10">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-4 h-4 rounded-full bg-status-safe animate-pulse-glow shadow-[0_0_20px_rgba(0,255,163,0.5)]" />
             <h2 className="text-3xl font-bold text-status-safe">
@@ -81,77 +83,78 @@ export default function StatusPage() {
           <p className="text-gray-300 text-lg">
             VibeGuard infrastructure is running smoothly
           </p>
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="text-lightblue text-sm mt-2">
             Last checked: {data ? new Date(data.lastChecked).toLocaleString() : 'N/A'}
           </p>
         </div>
 
         {/* Key Metrics Grid */}
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-8 lg:mb-12">
           {/* Uptime */}
-          <div className="glass-card p-6 hover:border-sui-cyan transition-all">
-            <div className="text-gray-400 text-sm font-semibold mb-2 uppercase tracking-wide">
+          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
+            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
               Uptime
             </div>
             <div className="text-4xl font-bold text-status-safe mb-1">
               {data?.uptime}%
             </div>
-            <div className="text-gray-500 text-xs">
+            <div className="text-lightblue text-xs">
               Last 30 days
             </div>
           </div>
 
           {/* Average Latency */}
-          <div className="glass-card p-6 hover:border-sui-cyan transition-all">
-            <div className="text-gray-400 text-sm font-semibold mb-2 uppercase tracking-wide">
+          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
+            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
               Avg Latency
             </div>
             <div className="text-4xl font-bold text-sui-cyan mb-1">
               {data?.averageLatencyMs}ms
             </div>
-            <div className="text-gray-500 text-xs">
+            <div className="text-lightblue text-xs">
               Threat detection speed
             </div>
           </div>
 
           {/* Total Scanned */}
-          <div className="glass-card p-6 hover:border-sui-cyan transition-all">
-            <div className="text-gray-400 text-sm font-semibold mb-2 uppercase tracking-wide">
+          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
+            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
               Total Scanned
             </div>
             <div className="text-4xl font-bold text-white mb-1">
               {data?.totalTransactionsAnalyzed.toLocaleString()}
             </div>
-            <div className="text-gray-500 text-xs">
+            <div className="text-lightblue text-xs">
               Transactions analyzed
             </div>
           </div>
 
           {/* Threats Blocked */}
-          <div className="glass-card p-6 hover:border-sui-cyan transition-all">
-            <div className="text-gray-400 text-sm font-semibold mb-2 uppercase tracking-wide">
+          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
+            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
               Threats Blocked
             </div>
             <div className="text-4xl font-bold text-status-danger mb-1">
               {data?.totalThreatsBlocked.toLocaleString()}
             </div>
-            <div className="text-gray-500 text-xs">
+            <div className="text-lightblue text-xs">
               Malicious transactions
             </div>
           </div>
         </div>
 
         {/* System Components */}
-        <div className="glass-card p-8">
-          <h3 className="text-2xl font-bold text-white mb-6">
+        <div className="glass-card p-5 lg:p-8">
+          <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-1">Infrastructure</p>
+          <h3 className="text-xl lg:text-2xl font-bold text-white mb-4 lg:mb-6">
             System Components
           </h3>
           
           <div className="space-y-4">
             {data && Object.entries(data.components).map(([key, component]) => (
-              <div 
+              <div
                 key={key}
-                className="flex items-center justify-between p-4 bg-ocean-mid/50 rounded-lg border border-ocean-surface hover:border-sui-cyan/50 transition-all"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-ocean-mid/50 rounded-lg border border-ocean-surface hover:border-sui-cyan/50 transition-all gap-3"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-3 h-3 rounded-full bg-status-safe animate-pulse-glow shadow-[0_0_12px_rgba(0,255,163,0.5)]" />
@@ -159,7 +162,7 @@ export default function StatusPage() {
                     <div className="text-white font-semibold">
                       {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                     </div>
-                    <div className="text-gray-400 text-sm">
+                    <div className="text-lightblue text-sm">
                       {component.description}
                     </div>
                   </div>
@@ -169,11 +172,11 @@ export default function StatusPage() {
                     <div className="text-sui-cyan font-mono text-sm">
                       {component.latency}ms
                     </div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-lightblue text-xs">
                       Response time
                     </div>
                   </div>
-                  <div className="px-3 py-1 bg-status-safe/20 border border-status-safe/50 rounded-full">
+                  <div className="px-3 py-1 bg-status-safe/10 border border-white/10 rounded-full">
                     <span className="text-status-safe text-xs font-semibold uppercase">
                       Operational
                     </span>
@@ -187,11 +190,11 @@ export default function StatusPage() {
         {/* Footer */}
         <div className="mt-12 text-center">
           <div className="flex items-center justify-center gap-4">
-            <a href="/" className="text-gray-400 hover:text-sui-cyan transition-colors text-sm">
+            <a href="/" className="text-lightblue hover:text-sui-cyan transition-colors text-sm">
               ← Back to Console
             </a>
-            <span className="text-gray-600">|</span>
-            <a href="/api-docs" className="text-gray-400 hover:text-sui-cyan transition-colors text-sm">
+            <span className="text-ocean-surface">|</span>
+            <a href="/api-docs" className="text-lightblue hover:text-sui-cyan transition-colors text-sm">
               API Documentation
             </a>
           </div>

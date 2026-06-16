@@ -4,12 +4,9 @@ import { useState, useEffect } from 'react';
 import ZkLoginButton from '../components/ZkLoginButton';
 import Toast from '../components/Toast';
 import { publishThreatReportToWalrus, type ThreatReport } from '@/lib/walrus';
-import { Transaction } from '@mysten/sui/transactions';
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
-const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID!;
 const client = new SuiClient({ url: getFullnodeUrl('testnet') });
 
 interface ToastState {
@@ -37,7 +34,7 @@ export default function ReportPage() {
       const burnerAddress = sessionStorage.getItem('burner_address');
       setIsLoggedIn(!!(zkLoginBurnerSession && burnerAddress));
     };
-    
+
     checkLogin();
     const interval = setInterval(checkLogin, 1000);
     return () => clearInterval(interval);
@@ -64,7 +61,7 @@ export default function ReportPage() {
 
       if (result.risk?.riskLevel === 'RED' || result.risk?.riskLevel === 'CRITICAL') {
         setVerificationResult('verified');
-        setVerificationData(result); // Store for Walrus upload
+        setVerificationData(result);
         setToast({
           show: true,
           message: 'Threat Verified!',
@@ -94,35 +91,32 @@ export default function ReportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!packageId || !description) {
       alert('Please fill in all fields');
       return;
     }
 
     setSubmitting(true);
-    
+
     try {
-      // Get zkLogin-backed burner wallet session
       const secretKeyBase64 = sessionStorage.getItem('burner_secret_key');
       const zkLoginBurnerSession = sessionStorage.getItem('zklogin_burner_session');
-      
+
       if (!secretKeyBase64) {
         throw new Error('Please authenticate with zkLogin Burner Wallet first.');
       }
-      
+
       let sessionInfo = { reportedBy: 'anonymous' };
       if (zkLoginBurnerSession) {
         const session = JSON.parse(zkLoginBurnerSession);
         sessionInfo.reportedBy = `${session.email} (${session.zkLoginAddress})`;
       }
-      
-      // Rebuild the burner keypair
+
       const secretKeyBytes = Buffer.from(secretKeyBase64, 'base64');
       const ephemeralKeyPair = Ed25519Keypair.fromSecretKey(new Uint8Array(secretKeyBytes));
       const userAddress = ephemeralKeyPair.toSuiAddress();
-      
-      // Step 1: Prepare threat report data
+
       const threatReport: ThreatReport = {
         packageId,
         transactionBytes: proofTxHash || undefined,
@@ -136,29 +130,27 @@ export default function ReportPage() {
         reportedBy: sessionInfo.reportedBy
       };
 
-      // Step 2: Upload to Walrus decentralized storage
       setLoadingStage('Uploading threat evidence to Walrus decentralized storage...');
       let walrusBlobId: string;
       let walrusBlobObjectId: string;
-      
+
       try {
         const walrusResult = await publishThreatReportToWalrus(threatReport);
         walrusBlobId = walrusResult.blobId;
         walrusBlobObjectId = walrusResult.blobObjectId;
       } catch (walrusError) {
-        console.error('❌ Walrus upload failed:', walrusError);
+        console.error('Walrus upload failed:', walrusError);
         walrusBlobId = 'test_blob_' + Date.now();
         walrusBlobObjectId = '0x0000000000000000000000000000000000000000000000000000000000000000';
       }
-      
+
       if (!walrusBlobId) {
         throw new Error('Failed to generate blob ID');
       }
 
-      // Step 3: Request sponsored transaction from backend
       setLoadingStage('Requesting gas sponsorship...');
-      
-      const sponsorPayload = { 
+
+      const sponsorPayload = {
         packageId: process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de',
         registryId: process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be',
         maliciousPackageId: packageId,
@@ -166,7 +158,7 @@ export default function ReportPage() {
         blobObjectId: walrusBlobObjectId,
         sender: userAddress
       };
-      
+
       const sponsorResponse = await fetch('/api/sponsor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -180,22 +172,14 @@ export default function ReportPage() {
 
       const { txBytes: sponsoredTxBytes, sponsorSignature } = await sponsorResponse.json();
 
-      // Step 4: Sign with burner wallet
       setLoadingStage('Signing with burner wallet...');
-      
-      // Import required modules
+
       const { fromBase64 } = await import('@mysten/sui/utils');
-      
-      // Decode transaction bytes
       const txBytesUint8Array = fromBase64(sponsoredTxBytes);
-      
-      // Sign the transaction with burner wallet
       const { signature: userSignature } = await ephemeralKeyPair.signTransaction(txBytesUint8Array);
-      
-      // Step 5: Execute sponsored transaction with both signatures
+
       setLoadingStage('Executing gasless transaction...');
-      
-      // Execute with both signatures (burner + sponsor)
+
       const result = await client.executeTransactionBlock({
         transactionBlock: txBytesUint8Array,
         signature: [userSignature, sponsorSignature],
@@ -205,24 +189,24 @@ export default function ReportPage() {
           showEvents: true,
         },
       });
-      
+
       if (result.effects?.status?.status !== 'success') {
         throw new Error(`Transaction failed: ${result.effects?.status?.error || 'Unknown error'}`);
       }
-      
+
       setToast({
         show: true,
         message: 'Report Submitted Successfully!',
         type: 'success',
         details: `Transaction: ${result.digest}\nPackage: ${packageId}\nWalrus Blob: ${walrusBlobId}`
       });
-      
+
       setPackageId('');
       setDescription('');
       setProofTxHash('');
       setVerificationResult(null);
       setVerificationData(null);
-      
+
     } catch (error) {
       console.error('Failed to submit report:', error);
       setToast({
@@ -240,7 +224,8 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen relative">
       <div className="ocean-background" />
-      
+      <div className="purple-section-blur" />
+
       {toast.show && (
         <Toast
           message={toast.message}
@@ -249,11 +234,12 @@ export default function ReportPage() {
           onClose={() => setToast({ ...toast, show: false })}
         />
       )}
-      
-      <div className="relative z-10 container mx-auto px-6 py-12 max-w-4xl">
-        <div className="glass-card p-8 liquid-expand">
-          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+
+      <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
+        <div className="glass-card p-4 sm:p-6 lg:p-8 liquid-expand">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 flex-wrap gap-4">
             <div>
+              <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Community Protection</p>
               <div className="flex items-center gap-3 mb-2">
                 <svg className="w-8 h-8 text-status-danger" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -262,7 +248,7 @@ export default function ReportPage() {
                   Report Malicious Contract
                 </h1>
               </div>
-              <p className="text-gray-400">
+              <p className="text-lightblue">
                 Help protect the Sui community by reporting suspicious contracts
               </p>
             </div>
@@ -270,12 +256,13 @@ export default function ReportPage() {
           </div>
 
           <div className="border-t border-ocean-surface pt-8">
-            <div className="glass-card bg-sui-blue/10 border-sui-cyan/30 p-6 mb-6">
+            <div className="glass-card bg-sui-blue/10 border border-white/10 p-6 mb-6">
+              <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-2">AI Analysis Pipeline</p>
               <div className="flex items-center gap-2 mb-2">
                 <svg className="w-5 h-5 text-sui-cyan" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
                 </svg>
-                <h3 className="font-semibold text-sui-cyan">
+                <h3 className="font-semibold text-primary">
                   Automated Verification with VibeGuard AI
                 </h3>
               </div>
@@ -286,7 +273,7 @@ export default function ReportPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3 tracking-wide">
+                <label className="block text-sm font-semibold text-primary mb-3 tracking-wide">
                   MALICIOUS PACKAGE ID
                 </label>
                 <input
@@ -300,7 +287,7 @@ export default function ReportPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3 tracking-wide">
+                <label className="block text-sm font-semibold text-primary mb-3 tracking-wide">
                   THREAT DESCRIPTION
                 </label>
                 <textarea
@@ -314,7 +301,7 @@ export default function ReportPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3 tracking-wide">
+                <label className="block text-sm font-semibold text-primary mb-3 tracking-wide">
                   PROOF TRANSACTION HASH (OPTIONAL)
                 </label>
                 <div className="flex gap-2">
@@ -330,7 +317,7 @@ export default function ReportPage() {
                     type="button"
                     onClick={handleVerify}
                     disabled={!isLoggedIn || !proofTxHash.trim() || verifying}
-                    className="px-6 py-3 bg-status-safe hover:bg-status-safe/80 disabled:bg-ocean-surface disabled:text-gray-500 disabled:cursor-not-allowed text-ocean-deepest font-semibold rounded-lg border border-status-safe/50 transition-all duration-200 shadow-verified"
+                    className="px-6 py-3 bg-status-safe hover:bg-status-safe/80 disabled:bg-ocean-surface disabled:text-gray-500 disabled:cursor-not-allowed text-ocean-deepest font-semibold rounded-lg border border-white/10 transition-all duration-200 shadow-verified"
                   >
                     {verifying ? 'Verifying...' : 'Verify'}
                   </button>
@@ -351,7 +338,7 @@ export default function ReportPage() {
                     Verification failed - will be submitted as unverified
                   </p>
                 )}
-                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                <p className="text-xs text-lightblue mt-2 leading-relaxed">
                   Provide a transaction hash that demonstrates the malicious behavior for instant verification
                 </p>
               </div>
@@ -359,20 +346,20 @@ export default function ReportPage() {
               <button
                 type="submit"
                 disabled={!isLoggedIn || submitting}
-                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-purple w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="relative z-10">
                   {!isLoggedIn ? 'Login to Submit Report' : submitting ? (
                     <div className="flex items-center justify-center space-x-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>{loadingStage || 'Submitting...'}</span>
                     </div>
                   ) : 'Submit Report'}
                 </span>
               </button>
 
-              <div className="text-center text-xs text-gray-500 mt-4">
-                Powered by <span className="text-sui-cyan font-semibold">Google OAuth</span> & <span className="text-sui-cyan font-semibold">Walrus Decentralized Storage</span>
+              <div className="text-center text-xs text-lightblue mt-4">
+                Powered by <span className="text-primary font-semibold">Google OAuth</span> & <span className="text-primary font-semibold">Walrus Decentralized Storage</span>
               </div>
             </form>
           </div>
