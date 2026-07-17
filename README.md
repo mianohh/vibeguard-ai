@@ -3,12 +3,12 @@
 **Hardware-Secured Transaction Security & Decentralized Threat Intelligence for the Sui Ecosystem**
 
 [![Status](https://img.shields.io/badge/Status-Live_on_Sui_Testnet-green.svg)](https://vibeguardai.vercel.app)
-[![Compute](https://img.shields.io/badge/Compute-AWS_Nitro_Enclaves-orange.svg)](https://aws.amazon.com/ec2/nitro/nitro-enclaves/)
+[![Compute](https://img.shields.io/badge/Compute-GCP_Confidential_VM_(SEV--SNP)-blue.svg)](https://cloud.google.com/confidential-computing)
 [![npm](https://img.shields.io/npm/v/vibeguard-sui-security.svg)](https://www.npmjs.com/package/vibeguard-sui-security)
 [![npm downloads](https://img.shields.io/npm/dw/vibeguard-sui-security.svg)](https://www.npmjs.com/package/vibeguard-sui-security)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-VibeGuard AI is a pre-signature security primitive designed to eliminate blind signing. By combining live blockchain simulation, a sovereign Rust-based threat engine running inside AWS Nitro Enclaves, and decentralized storage, VibeGuard protects users from honeypots before a signature is ever broadcast. Detected threats are automatically signed by the enclave and registered on-chain, creating a trustless, cryptographic B2B security feed for wallets and dApps.
+VibeGuard AI is a pre-signature security primitive designed to eliminate blind signing. By combining live blockchain simulation, a sovereign Rust-based threat engine running inside GCP Confidential VMs (AMD SEV-SNP), and decentralized storage, VibeGuard protects users from honeypots before a signature is ever broadcast. Detected threats are automatically signed by the enclave and registered on-chain, creating a trustless, cryptographic B2B security feed for wallets and dApps.
 
 **[Live Platform](https://vibeguardai.vercel.app)** | **[Developer API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Intelligence Portal](https://vibeguardai.vercel.app/report)**
 
@@ -52,8 +52,9 @@ For full SDK documentation, integration examples, and REST API reference, see th
 VibeGuard operates as a **Decentralized Security Primitive** with multi-layered, verifiable protection:
 
 - **Simulation & Mismatch Detection**: Parses Base64 bytes offline, leverages `dryRunTransactionBlock` for live state simulation, and compares asset flows against user intent.
-- **Nautilus Verified Compute (AWS Nitro Enclaves)**: The core Rust threat agent (`src/nautilus-server`) executes entirely inside an isolated TEE, communicating via native `AF_VSOCK`. Analysis is deterministic and pattern-based — no external API dependencies.
-- **Cryptographic Attestation**: Upon detecting a threat, the enclave signs the evidence payload with its registered Ed25519 keypair.
+- **Nautilus Verified Compute (GCP Confidential VMs)**: The core Rust threat agent (`src/nautilus-server`) executes entirely inside an isolated AMD SEV-SNP TEE with hardware-backed attestation via vTPM. Communication over standard HTTPS — no VSOCK proxy needed.
+- **TEE Abstraction Layer**: Modular `TeeProvider` trait (`src/nautilus-server/src/attestation/`) separates cloud-specific attestation from core threat analysis. Supports GCP SEV-SNP and Simulation modes, selected via `VIBEGUARD_TEE_MODE` env var.
+- **Cryptographic Attestation**: Upon detecting a threat, the enclave signs the evidence payload with its registered Ed25519 keypair. Signatures are verified client-side using `@noble/ed25519`.
 - **Walrus Decentralized Storage**: Rich threat evidence is stored immutably as JSON blobs on the Walrus protocol.
 - **On-Chain Core (Seal & Registry)**: The `ReputationRegistry` and `SealEnclave` Move contracts verify the enclave's Ed25519 signature against registered PCR measurements before committing any threat.
 
@@ -64,7 +65,7 @@ VibeGuard operates as a **Decentralized Security Primitive** with multi-layered,
         |
 [ Enclave Simulation ] dryRunTransactionBlock -> Map asset flows
         |
-[ Threat Analysis ] Rust LocalThreatAgent in AWS Nitro Enclave — deterministic scoring
+[ Threat Analysis ] Rust LocalThreatAgent in GCP SEV-SNP TEE — deterministic scoring
         |
 [ Cryptographic Signing ] Enclave Ed25519 keypair signs evidence payload
         |
@@ -114,19 +115,19 @@ VibeGuard implements **Pattern 4 — Secure Input Layer for Verified Compute** f
 
 | Event | Transaction |
 |---|---|
-| **Production Enclave Registration (May 15, 2026)** | [`DyCyjEm6...39Q2`](https://suiscan.xyz/testnet/tx/DyCyjEm6zc4AhmW6MquPAy72GjgLjJzokybjmUWj39Q2) |
-| **Enclave Re-registration — Real PCRs (Jun 1, 2026)** | [`3QNgqGy5...oZPb`](https://suiscan.xyz/testnet/tx/3QNgqGy5uMYdzuEjitbjkkd8s6LyWeqD9CJwptYkoZPb) |
-| **Atomic Threat Report (ThreatVerified + ThreatReported)** | [`6qBWeX62...YDk`](https://suiscan.xyz/testnet/tx/6qBWeX62UUzxm6GromBfo6fwXsNNNYjh9WbzfTrJqYDk) |
+| **GCP Enclave PCR Registration (Jul 17, 2026)** | [`7SJNRpNt...B8QU`](https://suiscan.xyz/testnet/tx/7SJNRpNtJMMxT2KFWWZ1JcHDRDWtAU7rHik161yLB8QU) |
+| **Full Pipeline RED Signal Test (Jul 17, 2026)** | [`2DmCYg4K...T3X`](https://suiscan.xyz/testnet/tx/2DmCYg4KwJoBUjvyENk7YXwRwSKNTXfEwm53SYgm9T3X) |
 
-**Production Enclave**
+**Production Enclave (GCP Confidential VM)**
 
 | Property | Value |
 |---|---|
-| Endpoint | `http://98.82.186.207:3000` |
-| Public Key | `676ae54a4abf8f8c1daef53edd64855ceb4c4f300d303d31db4845e50589529d` |
-| PCR0 | `6b1455851c652e4f148370bd24823b6d20639f8d767900991114f153a3f5c469d50776f955538e544d2d117c6de636ef` |
-| PCR1 | `6f2f27e05cef1d7a7c05f5e80060b42ffc1bd8501e2b8803501f23d01ddd711ab1a68125ab8655acdef23e77ade88288` |
-| PCR2 | `20e060bdf0deead1828134851188446e72f071a0303f3fbe480de7e97b72ca111c2d53c142a56c9480cb7da0eaf4a5bf` |
+| Endpoint | `http://136.112.189.77:3000` |
+| Provider | `gcp_sev` (AMD SEV-SNP) |
+| Public Key | `4cb5abf6ad79fbf5abbccafcc269d85cd2651ed4b885b5869f241aedf0a5ba29` |
+| PCR0 | `35d08dd73abd589ab0a45261d3df8007a3f199f94f525eb8d1922094a350f4e8598ec636ffdf48cbcbbe30e112abbad7` |
+| PCR1 | `b20e37bd8c6c83f5cb8f6876fbae49c2887f89991c081314167431286badd9564addac844f8a31f5bb25c37351572f19` |
+| PCR2 | `e7904f29052cc7b013dd955e613c21eca1d021a02e0b208f8ca4f9382c13e439b18282bef0d5f73cf616a595e076ef4a` |
 
 **Note**: PCR values are derived deterministically from the SHA-384 hash of the running binary. The keypair is persistent — the public key is stable across restarts.
 
@@ -136,7 +137,7 @@ VibeGuard implements **Pattern 4 — Secure Input Layer for Verified Compute** f
 
 ### Production Enclave Performance
 
-Load tested on May 15, 2026 against production enclave at `http://98.82.186.207:3000`:
+Load tested on GCP Confidential VM (n2d-standard-4) with AMD SEV-SNP:
 
 | Concurrency | Throughput (req/s) | Avg Response | P95 Response | P99 Response | Error Rate |
 |---|---|---|---|---|---|
@@ -205,11 +206,34 @@ VibeGuard implements **Programmable Transaction Block (PTB) batching** to dramat
 
 ## Security Guarantees
 
-- **Sovereign Execution**: Core threat analysis runs inside an isolated AWS Nitro Enclave — no external API dependencies.
+- **Sovereign Execution**: Core threat analysis runs inside an isolated GCP Confidential VM with AMD SEV-SNP hardware attestation — no external API dependencies.
 - **Zero Private Key Exposure**: Analyzes unsigned bytes only.
 - **Hardware-Grade Access Control**: Proprietary agent config encrypted under PCR-based Seal policies — inaccessible outside the approved enclave.
 - **Gasless Reporting**: Sponsored Transactions and zkLogin enable frictionless community reporting at zero user cost.
-- **Cryptographic Attestation**: Every automated threat registration is signed by the registered enclave keypair and verified on-chain before registry commitment.
+- **Cryptographic Attestation**: Every automated threat registration is signed by the registered enclave keypair and verified on-chain (Ed25519) before registry commitment.
+- **Client-Side Signature Verification**: TypeScript SDK verifies enclave signatures using `@noble/ed25519` against the registered public key.
+
+---
+
+## TEE Abstraction Layer
+
+VibeGuard implements a modular TEE abstraction (`src/nautilus-server/src/attestation/`) that separates cloud-specific attestation from core threat analysis:
+
+```rust
+pub trait TeeProvider: Send + Sync {
+    fn compute_pcrs(&self) -> Result<(String, String, String)>;
+    fn provider_name(&self) -> &str;
+    fn mode(&self) -> TeeMode;
+    fn attest(&self) -> Result<AttestationProof>;
+}
+```
+
+| Provider | Mode | Trust Anchor | Use Case |
+|---|---|---|---|
+| `GcpSevProvider` | `gcp_sev` | vTPM device (fallback: binary hash) | Production on GCP Confidential VMs |
+| `SimulationProvider` | `simulation` | Binary hash (rejects production) | Local development and testing |
+
+Selection is automatic via `VIBEGUARD_TEE_MODE` env var or compile-time `cfg!(debug_assertions)`.
 
 ---
 
