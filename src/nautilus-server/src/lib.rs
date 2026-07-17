@@ -5,6 +5,7 @@ pub mod app {
     pub use crate::apps::vibeguard::{process_data, sign_report};
 }
 pub mod apps;
+pub mod attestation;
 pub mod common;
 
 pub struct AppState {

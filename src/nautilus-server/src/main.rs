@@ -4,6 +4,7 @@ use fastcrypto::ed25519::{Ed25519KeyPair, Ed25519PrivateKey};
 use fastcrypto::encoding::{Hex, Encoding};
 use fastcrypto::traits::{KeyPair, ToFromBytes};
 use nautilus_server::app::{process_data, sign_report};
+use nautilus_server::attestation::create_tee_provider;
 use nautilus_server::common::{get_attestation, health_check};
 use nautilus_server::apps::vibeguard::threat_agent::AgentConfig;
 use nautilus_server::AppState;
@@ -37,44 +38,6 @@ fn load_persistent_keypair() -> Result<Ed25519KeyPair> {
     Ok(Ed25519KeyPair::from(private_key))
 }
 
-/// Compute deterministic PCRs from the running binary's SHA-384 hash.
-/// PCR0 = SHA384(binary_sha384_bytes)
-/// PCR1 = SHA384("kernel" + binary_sha384_hex_bytes)
-/// PCR2 = SHA384("app"    + binary_sha384_hex_bytes)
-fn compute_pcrs() -> Result<(String, String, String)> {
-    use sha2::{Sha384, Digest};
-
-    // Get path of the running binary
-    let binary_path = std::env::current_exe()
-        .context("Failed to get current exe path")?;
-
-    let binary_bytes = std::fs::read(&binary_path)
-        .with_context(|| format!("Failed to read binary: {:?}", binary_path))?;
-
-    // SHA-384 of the binary
-    let binary_hash: Vec<u8> = Sha384::digest(&binary_bytes).to_vec();
-    let binary_hash_hex = hex::encode(&binary_hash);
-
-    // PCR0: hash of the binary hash bytes (simulates enclave image measurement)
-    let pcr0 = hex::encode(Sha384::digest(&binary_hash).as_slice());
-
-    // PCR1: hash of "kernel" prefix + binary hash hex
-    let mut h1 = Sha384::new();
-    h1.update(b"kernel");
-    h1.update(binary_hash_hex.as_bytes());
-    let pcr1 = hex::encode(h1.finalize().as_slice());
-
-    // PCR2: hash of "app" prefix + binary hash hex
-    let mut h2 = Sha384::new();
-    h2.update(b"app");
-    h2.update(binary_hash_hex.as_bytes());
-    let pcr2 = hex::encode(h2.finalize().as_slice());
-
-    info!("📊 Binary SHA-384: {}...", &binary_hash_hex[..16]);
-
-    Ok((pcr0, pcr1, pcr2))
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
@@ -94,11 +57,12 @@ async fn main() -> Result<()> {
     info!("🔑 Loaded persistent enclave keypair");
     info!("   Public key: {}", public_key_hex);
 
-    // Compute real PCRs from binary hash
-    let (pcr0, pcr1, pcr2) = compute_pcrs()
+    // Initialize TEE provider and compute PCR measurements
+    let tee = create_tee_provider();
+    let (pcr0, pcr1, pcr2) = tee.compute_pcrs()
         .context("Failed to compute PCR measurements")?;
 
-    info!("📡 PCR measurements computed from binary");
+    info!("📡 PCR measurements computed via {} provider", tee.provider_name());
     info!("   PCR0: {}...", &pcr0[..16]);
     info!("   PCR1: {}...", &pcr1[..16]);
     info!("   PCR2: {}...", &pcr2[..16]);

@@ -6,6 +6,7 @@ use std::sync::Arc;
 use tracing::info;
 
 use crate::AppState;
+use crate::attestation::TeeMode;
 
 #[derive(Serialize)]
 pub struct HealthResponse {
@@ -35,6 +36,10 @@ pub struct AttestationResponse {
     pub pcr1: String,
     /// PCR2: SHA384("app" + SHA384(binary) hex) — application measurement
     pub pcr2: String,
+    /// TEE provider identifier
+    pub provider: String,
+    /// TEE mode
+    pub mode: TeeMode,
     /// Attestation document (None on non-Nitro instances)
     pub attestation_document: Option<String>,
 }
@@ -54,6 +59,8 @@ pub async fn get_attestation(
         pcr0: state.pcr0.clone(),
         pcr1: state.pcr1.clone(),
         pcr2: state.pcr2.clone(),
+        provider: "gcp_sev".to_string(),
+        mode: TeeMode::GcpSev,
         attestation_document: None,
     })
 }
