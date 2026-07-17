@@ -56,7 +56,7 @@ export async function POST(req: Request) {
             reasons:              r.reasons,
             reporter,
           }),
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(15000),
         }).then(async res => {
           if (!res.ok) throw new Error(`enclave error: ${await res.text()}`);
           return res.json() as Promise<EnclaveSignResponse>;
@@ -83,7 +83,8 @@ export async function POST(req: Request) {
     }
 
     // ── Step 2: build single PTB for all assembled reports
-    const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+    const suiRpcUrl = process.env.SUI_RPC_URL || getFullnodeUrl('testnet');
+    const suiClient = new SuiClient({ url: suiRpcUrl });
     const tx        = new Transaction();
 
     for (const a of assembled) {
