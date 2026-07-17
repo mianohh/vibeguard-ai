@@ -5,9 +5,10 @@ export class SuiSimulator {
   private clients: Map<SuiNetwork, SuiClient> = new Map();
 
   constructor() {
-    this.clients.set('mainnet', new SuiClient({ url: getFullnodeUrl('mainnet') }));
-    this.clients.set('testnet', new SuiClient({ url: getFullnodeUrl('testnet') }));
-    this.clients.set('devnet', new SuiClient({ url: getFullnodeUrl('devnet') }));
+    const fallbackRpc = process.env.SUI_RPC_URL;
+    this.clients.set('mainnet', new SuiClient({ url: fallbackRpc || getFullnodeUrl('mainnet') }));
+    this.clients.set('testnet', new SuiClient({ url: fallbackRpc || getFullnodeUrl('testnet') }));
+    this.clients.set('devnet', new SuiClient({ url: fallbackRpc || getFullnodeUrl('devnet') }));
   }
 
   async simulate(transactionBytes: string, network: SuiNetwork, userAddress?: string): Promise<SimulationResult> {

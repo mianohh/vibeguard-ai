@@ -203,7 +203,8 @@ async function _flush(batch: PendingReport[]): Promise<void> {
   }
 
   // ── Step 2: build single PTB ────────────────────────────────────────────────
-  const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+  const suiRpcUrl = process.env.SUI_RPC_URL || getFullnodeUrl('testnet');
+  const suiClient = new SuiClient({ url: suiRpcUrl });
   const tx        = new Transaction();
 
   for (const a of assembled) {
