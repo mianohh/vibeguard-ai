@@ -140,8 +140,8 @@ export default function ReportPage() {
         walrusBlobObjectId = walrusResult.blobObjectId;
       } catch (walrusError) {
         console.error('Walrus upload failed:', walrusError);
-        walrusBlobId = 'test_blob_' + Date.now();
-        walrusBlobObjectId = '0x0000000000000000000000000000000000000000000000000000000000000000';
+        // Do not proceed with fake blob ID - it would poison the on-chain registry
+        throw new Error(`Walrus upload failed: ${walrusError instanceof Error ? walrusError.message : 'Unknown error'}. Cannot proceed without valid blob storage.`);
       }
 
       if (!walrusBlobId) {
