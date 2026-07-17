@@ -7,13 +7,16 @@ import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 
 const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
 
+// Walrus publisher and aggregator URLs - can be overridden via environment variables
+const WALRUS_NETWORK = process.env.WALRUS_NETWORK || 'testnet';
+const WALRUS_BASE_URL = process.env.WALRUS_PUBLISHER_URL || `https://publisher.walrus-${WALRUS_NETWORK}.walrus.space`;
+const WALRUS_AGGREGATOR_URL = process.env.WALRUS_AGGREGATOR_URL || `https://aggregator.walrus-${WALRUS_NETWORK}.walrus.space`;
+
 const WALRUS_PUBLISHER_NODES = [
-  'https://publisher.walrus-testnet.walrus.space/v1/blobs?epochs=5',
+  `${WALRUS_BASE_URL}/v1/blobs?epochs=5`,
   'https://walrus-testnet-publisher.natsai.xyz/v1/blobs?epochs=5',
   'https://walrus-testnet-publisher.nodeinfra.com/v1/blobs?epochs=5',
 ];
-
-const WALRUS_AGGREGATOR_URL = 'https://aggregator.walrus-testnet.walrus.space';
 
 export interface ThreatReport {
   packageId: string;
@@ -102,22 +105,20 @@ export async function publishThreatReportToWalrus(
       let blobObjectId: string;
 
       if (result.newlyCreated) {
-        blobId = result.newlyCreated.blobObject.blobId;
-        blobObjectId = result.newlyCreated.blobObject.id;
+        const blobId = result.newlyCreated.blobObject.blobId;
+        const blobObjectId = result.newlyCreated.blobObject.id;
         const endEpoch = result.newlyCreated.blobObject.storage.endEpoch;
         console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId, '| Expires at epoch:', endEpoch);
         return { blobId, blobObjectId, endEpoch };
       } else if (result.alreadyCertified) {
-        blobId = result.alreadyCertified.blobId;
-        blobObjectId = result.alreadyCertified.blobObject?.id ?? blobId;
+        const blobId = result.alreadyCertified.blobId;
+        const blobObjectId = result.alreadyCertified.blobObject?.id ?? blobId;
         const endEpoch = result.alreadyCertified.endEpoch;
         console.log('✅ Walrus Upload Success | Blob ID:', blobId, '| Sui-Linked Blob Object ID:', blobObjectId, '| Expires at epoch:', endEpoch);
         return { blobId, blobObjectId, endEpoch };
       } else {
         throw new Error('Unexpected Walrus response format');
       }
-
-      return { blobId, blobObjectId };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error');
       console.warn(`⚠️ Failed to upload to ${publisherUrl}:`, lastError.message);

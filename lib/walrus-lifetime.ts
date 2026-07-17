@@ -176,6 +176,9 @@ export async function checkAndExtendThreats(): Promise<{
       if (newBlobObjectId) {
         extended++;
         // TODO: Update on-chain registry with new blob_object_id
+        // This requires calling the on-chain contract to update the blob reference
+        // For now, the extended blob will be accessible via the original blob_id
+        console.log(`Extended blob ${lifetime.blobId.slice(0, 10)}... | New object ID: ${newBlobObjectId}`);
       } else {
         failed++;
       }
