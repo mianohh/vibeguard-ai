@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { analytics } from '@/lib/analytics';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ async function pingEnclave(): Promise<{ status: string; latency: number }> {
 }
 
 async function pingSuiRpc(): Promise<{ status: string; latency: number }> {
-  const client = new SuiClient({ url: getFullnodeUrl('testnet') });
+  const client = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
   const t0 = Date.now();
   try {
     await client.getLatestCheckpointSequenceNumber();

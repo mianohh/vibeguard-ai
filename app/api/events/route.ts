@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -8,7 +8,7 @@ const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd
 
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
-  const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+  const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
 
   const stream = new ReadableStream({
     async start(controller) {

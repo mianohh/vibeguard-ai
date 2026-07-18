@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     }
 
     // ── Step 2: build single PTB for all assembled reports
-    const suiRpcUrl = process.env.SUI_RPC_URL || getFullnodeUrl('testnet');
+    const suiRpcUrl = process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com';
     const suiClient = new SuiClient({ url: suiRpcUrl });
     const tx        = new Transaction();
 
