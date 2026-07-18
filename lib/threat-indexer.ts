@@ -3,10 +3,10 @@
  * Indexes ThreatReported events for fast B2B queries
  */
 
-import { SuiClient, getFullnodeUrl, SuiEvent } from '@mysten/sui/client';
+import { SuiClient, SuiEvent } from '@mysten/sui/client';
 import { retrieveThreatReportFromWalrus } from './walrus';
 
-const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
 
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 

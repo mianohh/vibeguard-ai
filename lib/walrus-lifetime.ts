@@ -5,9 +5,9 @@
  * Critical for enterprise-grade threat intelligence infrastructure.
  */
 
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 
-const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
 
 const WALRUS_PUBLISHER = 'https://publisher.walrus-testnet.walrus.space/v1/store';
 const EXTENSION_EPOCHS = 5; // Extend by 5 epochs when near expiration

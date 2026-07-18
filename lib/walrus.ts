@@ -3,9 +3,9 @@
  * Publishes threat reports to Walrus and returns blob_id for on-chain storage
  */
 
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 
-const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
 
 // Walrus publisher and aggregator URLs - can be overridden via environment variables
 const WALRUS_NETWORK = process.env.WALRUS_NETWORK || 'testnet';

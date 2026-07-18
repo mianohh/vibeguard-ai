@@ -1,14 +1,19 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 import { SuiNetwork, SimulationResult, EffectsSummary } from '@/types';
+
+const RPC_URLS: Record<SuiNetwork, string> = {
+  mainnet: process.env.SUI_RPC_URL_MAINNET || process.env.SUI_RPC_URL || 'https://sui-mainnet.publicnode.com',
+  testnet: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com',
+  devnet: process.env.SUI_RPC_URL_DEVNET || process.env.SUI_RPC_URL || 'https://sui-devnet.publicnode.com',
+};
 
 export class SuiSimulator {
   private clients: Map<SuiNetwork, SuiClient> = new Map();
 
   constructor() {
-    const fallbackRpc = process.env.SUI_RPC_URL;
-    this.clients.set('mainnet', new SuiClient({ url: fallbackRpc || getFullnodeUrl('mainnet') }));
-    this.clients.set('testnet', new SuiClient({ url: fallbackRpc || getFullnodeUrl('testnet') }));
-    this.clients.set('devnet', new SuiClient({ url: fallbackRpc || getFullnodeUrl('devnet') }));
+    this.clients.set('mainnet', new SuiClient({ url: RPC_URLS.mainnet }));
+    this.clients.set('testnet', new SuiClient({ url: RPC_URLS.testnet }));
+    this.clients.set('devnet', new SuiClient({ url: RPC_URLS.devnet }));
   }
 
   async simulate(transactionBytes: string, network: SuiNetwork, userAddress?: string): Promise<SimulationResult> {

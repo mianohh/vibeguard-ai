@@ -1,5 +1,11 @@
-import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 import { SuiNetwork } from '@/types';
+
+const RPC_URLS: Record<SuiNetwork, string> = {
+  mainnet: process.env.SUI_RPC_URL_MAINNET || process.env.SUI_RPC_URL || 'https://sui-mainnet.publicnode.com',
+  testnet: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com',
+  devnet: process.env.SUI_RPC_URL_DEVNET || process.env.SUI_RPC_URL || 'https://sui-devnet.publicnode.com',
+};
 
 const WHITELISTED_PACKAGES = [
   '0x1', '0x2', '0x3',
@@ -51,7 +57,7 @@ export async function checkReputation(packageIds: string[], network: SuiNetwork 
     return { status: 'UNKNOWN', reason: 'No registry deployed on this network' };
   }
 
-  const client = new SuiClient({ url: getFullnodeUrl(network) });
+  const client = new SuiClient({ url: RPC_URLS[network] });
 
   for (const pkgId of packageIds) {
     try {
