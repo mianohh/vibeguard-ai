@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { generateNonce, generateRandomness, getExtendedEphemeralPublicKey } from '@mysten/sui/zklogin';
-import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui/client';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '920125293845-8ocp43b7fg1er9o7dcscbg3ne93mh1iv.apps.googleusercontent.com';
 const PROVER_URL = 'https://prover-dev.mystenlabs.com/v1';
-const SUI_CLIENT = new SuiClient({ url: getFullnodeUrl('testnet') });
+const SUI_RPC_URL = process.env.NEXT_PUBLIC_SUI_RPC_URL || process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com';
+const SUI_CLIENT = new SuiClient({ url: SUI_RPC_URL });
 
 interface ZkLoginBurnerSession {
   zkLoginAddress: string;
@@ -76,10 +77,7 @@ export default function ZkLoginButton() {
       sessionStorage.setItem('zklogin_randomness', randomness);
       sessionStorage.setItem('zklogin_max_epoch', maxEpoch.toString());
       sessionStorage.setItem('zklogin_nonce', nonce);
-      
-      console.log('✅ zkLogin initialization complete, redirecting to Google...');
 
-      // Step 5: Redirect to Google OAuth
       const redirectUri = `${window.location.origin}/report`;
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
@@ -90,7 +88,6 @@ export default function ZkLoginButton() {
 
       window.location.href = authUrl.toString();
     } catch (error) {
-      console.error('❌ zkLogin initialization failed:', error);
       alert(`Failed to initialize zkLogin: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -117,7 +114,6 @@ export default function ZkLoginButton() {
       const userSalt = await generateSalt(payload.sub);
       const extendedEphemeralPublicKey = getExtendedEphemeralPublicKey(ephemeralKeyPair.getPublicKey());
       
-      console.log('🔄 Requesting ZK proof from Mysten prover...');
       const zkProofResponse = await fetch(PROVER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,7 +173,6 @@ export default function ZkLoginButton() {
       setUserEmail(payload.email || 'user@gmail.com');
       
     } catch (error) {
-      console.error('❌ zkLogin-Backed Burner creation failed:', error);
       alert(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // Cleanup on failure
@@ -239,9 +234,9 @@ export default function ZkLoginButton() {
 
   if (isGeneratingProof) {
     return (
-      <div className="flex items-center gap-3 px-6 py-2 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-        <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
-        <span className="text-sm text-blue-300">Authenticating...</span>
+      <div className="flex items-center gap-3 px-6 py-2 bg-sui-blue/10 border border-sui-blue/30 rounded-lg">
+        <div className="w-4 h-4 border-2 border-sui-blue/30 border-t-sui-blue rounded-full animate-spin"></div>
+        <span className="text-sm text-sui-blue/80">Authenticating...</span>
       </div>
     );
   }
@@ -251,24 +246,24 @@ export default function ZkLoginButton() {
       {!isLoggedIn ? (
         <button
           onClick={handleLogin}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium border border-blue-500/50 shadow-lg shadow-blue-900/20"
+          className="px-6 py-2 bg-sui-blue text-ocean-deepest rounded-lg hover:bg-sui-blue/90 transition-colors font-medium shadow-sui-glow"
         >
           🔐 Sign in with Google
         </button>
       ) : (
         <div className="flex items-center gap-3">
           <div className="text-sm">
-            <div className="text-slate-400">
+            <div className="text-lightblue">
               {userEmail && <span className="mr-2">📧 {userEmail}</span>}
-              <span className="text-blue-400">🔐 Authenticated</span>
+              <span className="text-sui-blue">🔐 Authenticated</span>
             </div>
-            <div className="text-slate-300">
+            <div className="text-lightpurple">
               Connected: {userAddress?.slice(0, 6)}...{userAddress?.slice(-4)}
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm border border-slate-600"
+            className="px-4 py-2 bg-ocean-mid text-lightblue rounded-lg hover:bg-ocean-surface transition-colors text-sm border border-border"
           >
             Logout
           </button>

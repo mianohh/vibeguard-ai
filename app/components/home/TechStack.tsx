@@ -16,7 +16,7 @@ const techItems = [
     icon: <WalrusIcon />,
   },
   {
-    name: 'AWS Nitro Enclaves',
+    name: 'GCP Confidential VMs',
     description: 'Verified compute in TEE',
     color: '#FBBF24',
     icon: <NitroIcon />,

@@ -64,7 +64,7 @@ export function SecurityAnalysis({ result }: SecurityAnalysisProps) {
           <ul className="space-y-3">
             {result.explanation.bulletPoints.map((point, index) => (
               <li key={index} className="flex items-start space-x-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2.5 flex-shrink-0"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-sui-blue mt-2.5 flex-shrink-0"></div>
                 <span className="text-slate-300 text-sm leading-relaxed">{point}</span>
               </li>
             ))}

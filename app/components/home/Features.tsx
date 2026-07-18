@@ -63,17 +63,17 @@ export default function Features() {
   return (
     <section id="features-section" className="scroll-mt-16">
       <div className="container relative">
-        <div className="bg-linear-to-r from-primary to-secondary absolute w-full h-full top-0 -left-1/4 blur-390" />
+        <div className="bg-sui-blue/10 absolute w-full h-full top-0 -left-1/4 blur-390" />
 
         <div className="relative z-10">
           <div className="mb-8">
-            <p className="text-primary text-base sm:text-lg font-semibold mb-4 text-center uppercase tracking-wider">
+            <p className="text-sui-blue text-base sm:text-lg font-semibold mb-4 text-center uppercase tracking-wider">
               Features
             </p>
-            <h2 className="font-semibold mb-6 text-center max-w-2xl mx-auto sm:leading-14">
+            <h2 className="font-semibold mb-6 text-center max-w-2xl mx-auto sm:leading-14 text-white">
               Enterprise-Grade Security for Sui
             </h2>
-            <p className="lg:text-lg font-normal text-lightpurple text-center max-w-2xl mx-auto">
+            <p className="lg:text-lg font-normal text-slate-400 text-center max-w-2xl mx-auto">
               Comprehensive threat detection and prevention built for the Sui ecosystem.
               From individual users to institutional wallets.
             </p>
@@ -83,15 +83,15 @@ export default function Features() {
             {features.map((feature, i) => (
               <div
                 key={i}
-                className="glass-card p-5 lg:p-8 rounded-lg flex flex-col gap-3 border border-white/5 hover:border-sui-cyan/30 transition-all duration-300"
+                className="glass-card p-5 lg:p-8 rounded-lg flex flex-col gap-3 border border-white/10 hover:border-sui-blue/40 transition-all duration-300"
               >
-                <div className="rounded-full bg-linear-to-r from-primary to-secondary w-fit p-4 flex items-center justify-center text-white">
+                <div className="rounded-full bg-sui-blue/15 w-fit p-4 flex items-center justify-center text-sui-blue">
                   {feature.icon}
                 </div>
-                <h5 className="text-white/80 text-lg font-medium">
+                <h5 className="text-white text-lg font-semibold">
                   {feature.title}
                 </h5>
-                <p className="text-white/40 text-sm font-normal">
+                <p className="text-slate-400 text-sm font-normal leading-relaxed">
                   {feature.description}
                 </p>
               </div>

@@ -13,16 +13,16 @@ export default function Hero() {
             <div className="lg:col-span-7 mb-6 lg:mb-0">
               <div className="flex items-center gap-2 mb-6">
                 <div className="sui-symbol w-10 h-10" />
-                <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-secondary text-white rounded-full">
+                <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-sui-blue/20 text-sui-blue border border-sui-blue/40 rounded-full">
                   Pre-Transaction Security
                 </span>
               </div>
 
-              <h1 className="mb-5 lg:text-start text-center sm:leading-snug leading-tight">
+              <h1 className="mb-5 lg:text-start text-center sm:leading-snug leading-tight text-white">
                 Eliminate Blind Signing on Sui
               </h1>
 
-              <p className="text-white font-normal mb-10 max-w-[85%] lg:text-start text-center lg:mx-0 mx-auto">
+              <p className="text-slate-300 font-normal mb-10 max-w-[85%] lg:text-start text-center lg:mx-0 mx-auto leading-relaxed">
                 Analyze real Sui transactions before you sign them. Deterministic threat analysis,
                 enclave-verified pattern scoring, and decentralized evidence storage protect every transaction.
               </p>
@@ -30,13 +30,13 @@ export default function Hero() {
               <div className="flex align-middle justify-center lg:justify-start flex-wrap gap-4">
                 <Link
                   href="/"
-                  className="text-base lg:text-xl font-semibold text-white py-3 lg:py-4 px-6 lg:px-12 bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary rounded-xl cursor-pointer transition-all duration-300"
+                  className="text-base lg:text-xl font-semibold text-white py-3 lg:py-4 px-6 lg:px-12 bg-sui-blue hover:bg-sui-blue/90 rounded-xl cursor-pointer transition-all duration-300 shadow-sui-glow"
                 >
                   Analyze Transaction
                 </Link>
                 <Link
                   href="/demo"
-                  className="flex items-center gap-2 text-white hover:text-primary transition-colors cursor-pointer py-3 lg:py-4 px-4 lg:px-6"
+                  className="flex items-center gap-2 text-white hover:text-sui-blue transition-colors cursor-pointer py-3 lg:py-4 px-4 lg:px-6"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
@@ -48,7 +48,7 @@ export default function Hero() {
 
             <div className="hidden lg:flex lg:col-span-5 justify-center">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 blur-3xl rounded-full" />
+                <div className="absolute inset-0 bg-sui-blue/15 blur-3xl rounded-full" />
                 <div className="relative glass-card p-8 w-80">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 rounded-full bg-status-safe/20 flex items-center justify-center">
@@ -58,24 +58,24 @@ export default function Hero() {
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-white">Transaction Analysis</div>
-                      <div className="text-xs text-lightblue">Real-time simulation</div>
+                      <div className="text-xs text-slate-400">Real-time simulation</div>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-lightblue">Risk Level</span>
+                      <span className="text-slate-400">Risk Level</span>
                       <span className="text-status-safe font-mono font-bold">GREEN</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-lightblue">Confidence</span>
-                      <span className="text-sui-cyan font-mono">94.2%</span>
+                      <span className="text-slate-400">Confidence</span>
+                      <span className="text-sui-blue font-mono">94.2%</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-lightblue">Enclave Verified</span>
+                      <span className="text-slate-400">Enclave Verified</span>
                       <span className="text-status-verified font-mono">YES</span>
                     </div>
                     <div className="h-px bg-border" />
-                    <div className="text-xs text-lightpurple">
+                    <div className="text-xs text-slate-400">
                       Safe to sign. No asset outflows detected.
                     </div>
                   </div>

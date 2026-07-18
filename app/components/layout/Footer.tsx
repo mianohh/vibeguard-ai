@@ -13,7 +13,7 @@ const footerLinks = [
 const techStack = [
   { name: 'Sui Network', color: 'text-sui-blue' },
   { name: 'Walrus Protocol', color: 'text-sui-cyan' },
-  { name: 'AWS Nitro Enclaves', color: 'text-status-warning' },
+  { name: 'GCP Confidential VMs', color: 'text-status-warning' },
 ];
 
 export default function Footer() {
@@ -28,7 +28,7 @@ export default function Footer() {
               <div className="sui-symbol w-8 h-8" />
               <span className="text-xl font-bold text-white font-display">VibeGuard AI</span>
             </div>
-            <p className="text-lightblue text-sm font-normal max-w-96 leading-6 mb-5">
+            <p className="text-slate-400 text-sm font-normal max-w-96 leading-6 mb-5">
               Pre-transaction security layer for the Sui blockchain. Eliminate blind signing
               with AI-powered threat detection, enclave-verified analysis, and decentralized
               evidence storage.
@@ -59,13 +59,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-white text-lg font-medium mb-4">Quick Links</p>
+            <p className="text-white text-lg font-semibold mb-4">Quick Links</p>
             <ul>
               {footerLinks.map((link) => (
                 <li key={link.href} className="mb-3">
                   <Link
                     href={link.href}
-                    className="text-lightblue text-sm font-normal hover:text-primary transition-colors"
+                    className="text-slate-400 text-sm font-normal hover:text-sui-blue transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -75,12 +75,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-white text-lg font-medium mb-4">Secured By</p>
+            <p className="text-white text-lg font-semibold mb-4">Secured By</p>
             <ul className="space-y-3">
               {techStack.map((tech) => (
                 <li key={tech.name} className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full bg-current ${tech.color}`} />
-                  <span className="text-lightblue text-sm">{tech.name}</span>
+                  <span className="text-slate-400 text-sm">{tech.name}</span>
                 </li>
               ))}
             </ul>
@@ -89,13 +89,13 @@ export default function Footer() {
       </div>
 
       <div className="py-4 px-4 border-t border-border">
-        <p className="text-center text-lightblue text-sm">
+        <p className="text-center text-slate-400 text-sm">
           &copy; {new Date().getFullYear()} VibeGuard AI. Built on{' '}
-          <a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sui-cyan hover:text-sui-aqua transition-colors">
+          <a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sui-blue hover:text-sui-blue/80 transition-colors">
             Sui Network
           </a>
           {' '}with{' '}
-          <a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sui-cyan hover:text-sui-aqua transition-colors">
+          <a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sui-blue hover:text-sui-blue/80 transition-colors">
             Walrus Protocol
           </a>
         </p>
