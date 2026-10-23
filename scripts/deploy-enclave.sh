@@ -1,25 +1,25 @@
 #!/bin/bash
-# deploy-enclave.sh — Build on AWS and restart the enclave
+# deploy-enclave.sh — Build and restart the Nautilus enclave on the production Oracle host
+# Update ORACLE_HOST below after provisioning a new instance (see scripts/deploy-nautilus-oracle.sh)
 set -e
 
-AWS_HOST="98.82.186.207"
-AWS_USER="ec2-user"
-KEY="$HOME/.ssh/vibeguard-key.pem"
+ORACLE_HOST="${ORACLE_HOST:-92.4.140.187}"
+ORACLE_USER="${ORACLE_USER:-ubuntu}"
+KEY="${ORACLE_SSH_KEY:-$HOME/.ssh/id_ed25519}"
 SSH="ssh -i $KEY -o StrictHostKeyChecking=no"
 SCP="scp -i $KEY -o StrictHostKeyChecking=no"
-REMOTE="$AWS_USER@$AWS_HOST"
+REMOTE="$ORACLE_USER@$ORACLE_HOST"
 REMOTE_DIR="~/nautilus-server"
 BINARY="$REMOTE_DIR/target/release/nautilus-server"
 
 echo "═══════════════════════════════════════════════════════"
-echo " VibeGuard Enclave Deploy — AWS $AWS_HOST"
+echo " VibeGuard Enclave Deploy — Oracle $ORACLE_HOST"
 echo "═══════════════════════════════════════════════════════"
 
 # ── Step 1: Sync source files to AWS ────────────────────────────────────────
 echo "STEP 1 — Syncing source to AWS..."
 $SCP src/nautilus-server/Cargo.toml "$REMOTE:$REMOTE_DIR/Cargo.toml"
 $SCP src/nautilus-server/src/apps/vibeguard/mod.rs "$REMOTE:$REMOTE_DIR/src/apps/vibeguard/mod.rs"
-$SCP src/nautilus-server/src/apps/vibeguard/threat_agent.rs "$REMOTE:$REMOTE_DIR/src/apps/vibeguard/threat_agent.rs"
 echo "✅ Source synced"
 
 # ── Step 2: Build on AWS ─────────────────────────────────────────────────────

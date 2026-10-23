@@ -238,22 +238,19 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Explanation error:', error);
-    console.log('Sending Telegram alert...');
-    
+
     // Critical failure alert
     await sendTelegramAlert(
       `🚨 <b>API Critical Failure</b>\n\n` +
       `Error: ${error.message}\n` +
       `Stack: ${error.stack?.split('\n')[0] || 'N/A'}\n` +
       `Timestamp: ${new Date().toISOString()}`
-    );
-    
-    console.log('Telegram alert sent');
-    
+    ).catch(() => {});
+
     return NextResponse.json(
-      { 
+      {
         error: 'Explanation failed',
-        details: error.message 
+        details: error.message
       },
       { status: 500 }
     );

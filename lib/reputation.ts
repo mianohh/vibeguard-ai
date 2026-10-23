@@ -1,11 +1,5 @@
-import { SuiClient } from '@mysten/sui/client';
 import { SuiNetwork } from '@/types';
-
-const RPC_URLS: Record<SuiNetwork, string> = {
-  mainnet: process.env.SUI_RPC_URL_MAINNET || process.env.SUI_RPC_URL || 'https://sui-mainnet.publicnode.com',
-  testnet: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com',
-  devnet: process.env.SUI_RPC_URL_DEVNET || process.env.SUI_RPC_URL || 'https://sui-devnet.publicnode.com',
-};
+import { getObjectSnapshot, findDynamicFieldId, addressToBcsBase64 } from './sui-rpc';
 
 const WHITELISTED_PACKAGES = [
   '0x1', '0x2', '0x3',
@@ -20,7 +14,7 @@ const BLACKLISTED_PACKAGES = [
 ];
 
 const REGISTRY_IDS: Record<SuiNetwork, string | null> = {
-  testnet: '0x6d447256edfa7e8687eaf95324b5ac99a5969ecdaede1d6b3f8e27b14dca7ac3',
+  testnet: process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be',
   mainnet: null,
   devnet: null,
 };
@@ -57,24 +51,35 @@ export async function checkReputation(packageIds: string[], network: SuiNetwork 
     return { status: 'UNKNOWN', reason: 'No registry deployed on this network' };
   }
 
-  const client = new SuiClient({ url: RPC_URLS[network] });
+  let tableId = registryId;
+  try {
+    const registry = await getObjectSnapshot(registryId, network);
+    tableId = registry?.json?.threats?.id || registryId;
+  } catch {
+    // fall back to querying the registry object directly
+  }
 
   for (const pkgId of packageIds) {
     try {
-      const field = await client.getDynamicFieldObject({
-        parentId: registryId,
-        name: { type: 'address', value: pkgId }
-      });
+      const fieldId = await findDynamicFieldId(
+        tableId,
+        addressToBcsBase64(pkgId),
+        network,
+      );
+      if (!fieldId) continue;
 
-      if (field?.data) {
-        const walrusBlobId = (field.data as any)?.content?.fields?.value as string | undefined;
-        return {
-          status: 'MALICIOUS',
-          matchedPackage: pkgId,
-          reason: `Package ${pkgId} is registered as malicious on-chain`,
-          walrusBlobId
-        };
-      }
+      const field = await getObjectSnapshot(fieldId, network);
+      const value = field?.json?.value;
+      const walrusBlobId =
+        typeof value === 'string'
+          ? value
+          : ((value ?? {}) as { walrus_blob_id?: string }).walrus_blob_id;
+      return {
+        status: 'MALICIOUS' as const,
+        matchedPackage: pkgId,
+        reason: `Package ${pkgId} is registered as malicious on-chain`,
+        walrusBlobId,
+      };
     } catch (rpcError: unknown) {
       const msg = rpcError instanceof Error ? rpcError.message : String(rpcError);
       // 404-style errors mean the package is not in the registry — that's expected

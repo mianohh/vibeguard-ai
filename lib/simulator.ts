@@ -1,27 +1,8 @@
-import { SuiClient } from '@mysten/sui/client';
 import { SuiNetwork, SimulationResult, EffectsSummary } from '@/types';
-
-const RPC_URLS: Record<SuiNetwork, string> = {
-  mainnet: process.env.SUI_RPC_URL_MAINNET || process.env.SUI_RPC_URL || 'https://sui-mainnet.publicnode.com',
-  testnet: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com',
-  devnet: process.env.SUI_RPC_URL_DEVNET || process.env.SUI_RPC_URL || 'https://sui-devnet.publicnode.com',
-};
+import { makeSuiRpcAdapter, simulateTransactionRaw, fetchTransactionBytes } from './sui-rpc';
 
 export class SuiSimulator {
-  private clients: Map<SuiNetwork, SuiClient> = new Map();
-
-  constructor() {
-    this.clients.set('mainnet', new SuiClient({ url: RPC_URLS.mainnet }));
-    this.clients.set('testnet', new SuiClient({ url: RPC_URLS.testnet }));
-    this.clients.set('devnet', new SuiClient({ url: RPC_URLS.devnet }));
-  }
-
   async simulate(transactionBytes: string, network: SuiNetwork, userAddress?: string): Promise<SimulationResult> {
-    const client = this.clients.get(network);
-    if (!client) {
-      throw new Error(`Unsupported network: ${network}`);
-    }
-
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Simulation timeout after 8 seconds')), 20000);
     });
@@ -35,7 +16,7 @@ export class SuiSimulator {
         const txData = tx.getData();
         if (!txData.gasData?.payment?.length) {
           tx.setSenderIfNotSet(userAddress);
-          resolvedBytes = Buffer.from(await tx.build({ client })).toString('base64');
+          resolvedBytes = Buffer.from(await tx.build({ client: makeSuiRpcAdapter(network) })).toString('base64');
         }
       } catch {
         // If resolution fails, fall back to original bytes
@@ -47,9 +28,7 @@ export class SuiSimulator {
     
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const simulationPromise = client.dryRunTransactionBlock({
-          transactionBlock: resolvedBytes,
-        });
+        const simulationPromise = simulateTransactionRaw(resolvedBytes, network);
 
         const rawDryRun = await Promise.race([simulationPromise, timeoutPromise]);
         const effectsSummary = this.normalizeEffects(rawDryRun, userAddress);
@@ -69,7 +48,7 @@ export class SuiSimulator {
         }
         
         // For non-network errors, throw immediately with more context
-        if (error.message?.includes('Invalid transaction')) {
+        if (error.message?.includes('Invalid transaction') || error.message?.includes('invalid')) {
           throw new Error('Invalid transaction format - ensure you copied the complete base64 transaction from your wallet');
         }
         
@@ -81,26 +60,7 @@ export class SuiSimulator {
   }
 
   async fetchTransactionBytes(digest: string, network: SuiNetwork): Promise<string> {
-    const client = this.clients.get(network);
-    if (!client) {
-      throw new Error(`Unsupported network: ${network}`);
-    }
-
-    try {
-      const txBlock = await client.getTransactionBlock({
-        digest,
-        options: { showInput: true, showRawInput: true }
-      });
-
-      const txBytes = (txBlock as any).rawTransaction;
-      if (!txBytes) {
-        throw new Error('Transaction bytes not found in response');
-      }
-
-      return txBytes;
-    } catch (error: any) {
-      throw new Error(`Failed to fetch transaction: ${error.message}`);
-    }
+    return fetchTransactionBytes(digest, network);
   }
 
   private normalizeEffects(dryRun: any, userAddress?: string): EffectsSummary {

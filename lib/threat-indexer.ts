@@ -3,10 +3,8 @@
  * Indexes ThreatReported events for fast B2B queries
  */
 
-import { SuiClient, SuiEvent } from '@mysten/sui/client';
+import { queryEventsPage } from './sui-rpc';
 import { retrieveThreatReportFromWalrus } from './walrus';
-
-const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
 
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 
@@ -45,17 +43,15 @@ let lastIndexedCursor: string | null | undefined = null;
 export async function indexThreats(fromCursor?: string | null): Promise<number> {
   const cursor = fromCursor || lastIndexedCursor || undefined;
   
-  const events = await suiClient.queryEvents({
-    query: {
-      MoveEventType: `${PACKAGE_ID}::registry::ThreatReported`,
-    },
-    cursor: cursor as any,
+  const events = await queryEventsPage({
+    eventType: `${PACKAGE_ID}::registry::ThreatReported`,
+    cursor,
     limit: 50,
   });
 
   let indexed = 0;
 
-  for (const event of events.data) {
+  for (const event of events.events) {
     const { malicious_package_id, walrus_blob_id, blob_object_id, reporter } = event.parsedJson as {
       malicious_package_id: string;
       walrus_blob_id: string;
@@ -90,8 +86,8 @@ export async function indexThreats(fromCursor?: string | null): Promise<number> 
       reporter,
       category,
       severity,
-      timestamp: Number(event.timestampMs),
-      txDigest: event.id.txDigest,
+      timestamp: event.timestampMs,
+      txDigest: event.txDigest,
       reasons,
       endEpoch,
       blobStatus: endEpoch ? 'active' : undefined,
@@ -102,7 +98,7 @@ export async function indexThreats(fromCursor?: string | null): Promise<number> 
   }
 
   if (events.hasNextPage) {
-    lastIndexedCursor = events.nextCursor as any;
+    lastIndexedCursor = events.nextCursor;
   }
 
   console.log(`✅ Indexed ${indexed} new threats (total: ${threatCache.size})`);

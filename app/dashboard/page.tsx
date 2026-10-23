@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ArrowUpRight, Loader2, Radio } from 'lucide-react';
+import StatTile from '@/app/components/ui/StatTile';
+import StatusPill, { levelTone, toneTextClass } from '@/app/components/ui/StatusPill';
+import { EmptyState, Skeleton } from '@/app/components/ui/Skeleton';
+import CodeBlock from '@/app/components/ui/CodeBlock';
+import SectionHeading from '@/app/components/ui/SectionHeading';
 
 interface ThreatStats {
   total: number;
@@ -17,6 +23,27 @@ interface Threat {
   reasons?: string[];
 }
 
+const sampleCode = `// Subscribe to threat feed (Sui GraphQL)
+const GRAPHQL_URL = 'https://graphql.testnet.sui.io/graphql';
+
+async function pollThreats() {
+  const res = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: '{ events(last: 10, filter: { type: "${process.env.NEXT_PUBLIC_PACKAGE_ID}::registry::ThreatReported" }) { edges { node { contents { json } } } } }',
+    }),
+  });
+  const { data } = await res.json();
+  for (const { node } of data.events.edges) {
+    const { malicious_package_id, walrus_blob_id } = node.contents.json;
+    // handle new threat
+    onThreat({ malicious_package_id, walrus_blob_id });
+  }
+}
+
+setInterval(pollThreats, 15000);`;
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<ThreatStats | null>(null);
   const [threats, setThreats] = useState<Threat[]>([]);
@@ -24,17 +51,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [statsRes, threatsRes] = await Promise.all([
-        fetch('/api/threats?stats=true'),
-        fetch('/api/threats?limit=10')
-      ]);
-      
-      const statsData = await statsRes.json();
-      const threatsData = await threatsRes.json();
-      
-      setStats(statsData.stats);
-      setThreats(threatsData.threats);
-      setLoading(false);
+      try {
+        const [statsRes, threatsRes] = await Promise.all([
+          fetch('/api/threats?stats=true'),
+          fetch('/api/threats?limit=10'),
+        ]);
+        const statsData = await statsRes.json();
+        const threatsData = await threatsRes.json();
+        setStats(statsData.stats);
+        setThreats(threatsData.threats || []);
+      } catch {
+        /* keep last snapshot */
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -42,136 +72,136 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen relative">
-        <div className="ocean-background" />
-        <div className="purple-section-blur" />
-        <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
-          <h1 className="text-3xl font-bold text-white mb-8">Loading...</h1>
+  return (
+    <div className="shell py-10 lg:py-14 max-w-5xl">
+      <SectionHeading
+        kicker="Real-time intelligence"
+        title="Threat intelligence dashboard"
+        lede={
+          <>
+            Community and engine reports, as they land on-chain · refreshes every 30 seconds{' '}
+            <span className="font-mono text-[13px] text-faint">
+              · updated {new Date().toLocaleTimeString()}
+            </span>
+          </>
+        }
+      />
+
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <StatTile
+          label="total threats"
+          value={stats?.total ?? '—'}
+          hint="flagged to the on-chain registry"
+        />
+        <div className="surface rounded-[var(--radius-tile)] px-5 py-[18px]">
+          <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-low mb-3">by category</div>
+          {loading ? (
+            <div className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /></div>
+          ) : (
+            <div className="space-y-1.5">
+              {Object.entries(stats?.byCategory || {}).map(([cat, count]) => (
+                <div key={cat} className="flex justify-between text-[13px]">
+                  <span className="text-mid">{cat}</span>
+                  <span className="font-mono text-sui tabular">{count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="surface rounded-[var(--radius-tile)] px-5 py-[18px]">
+          <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-low mb-3">by severity</div>
+          {loading ? (
+            <div className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /></div>
+          ) : (
+            <div className="space-y-1.5">
+              {Object.entries(stats?.bySeverity || {}).map(([sev, count]) => (
+                <div key={sev} className="flex justify-between text-[13px]">
+                  <span className="text-mid">{sev}</span>
+                  <span className={`font-mono tabular ${toneTextClass(levelTone(sev))}`}>{count}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen relative">
-      <div className="ocean-background" />
-      <div className="purple-section-blur" />
-      
-      <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
-        <div className="mb-8">
-          <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Real-Time Intelligence</p>
-          <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">Threat Intelligence Dashboard</h1>
-          <p className="text-lightblue">Real-time security feed for Sui ecosystem</p>
+      <div className="surface overflow-hidden mt-6">
+        <div className="px-5 py-4 border-b border-line flex items-center justify-between">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-sui flex items-center gap-2">
+              <Radio className="w-3.5 h-3.5 animate-pulse-dot" strokeWidth={1.75} />
+              live feed
+            </p>
+            <h2 className="text-[18px] mt-1">Recent threats</h2>
+          </div>
+          <a
+            href="https://suiscan.xyz/testnet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[11.5px] text-low hover:text-sui transition-colors flex items-center gap-1"
+          >
+            suiscan <ArrowUpRight className="w-3.5 h-3.5" strokeWidth={1.75} />
+          </a>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="glass-card stat-card-purple p-5">
-            <div className="text-primary text-sm font-semibold mb-2">Total Threats</div>
-            <div className="text-3xl font-bold text-status-danger">{stats?.total || 0}</div>
-          </div>
-
-          <div className="glass-card stat-card-purple p-5">
-            <div className="text-primary text-sm font-semibold mb-2">Categories</div>
-            <div className="space-y-1">
-              {Object.entries(stats?.byCategory || {}).map(([cat, count]) => (
-                <div key={cat} className="flex justify-between text-sm text-gray-300">
-                  <span>{cat}</span>
-                  <span className="text-lightblue">{count}</span>
-                </div>
-              ))}
+        <div className="divide-y divide-line-soft">
+          {loading && (
+            <div className="p-5 space-y-3">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-2/5" />
             </div>
-          </div>
+          )}
 
-          <div className="glass-card stat-card-purple p-5">
-            <div className="text-primary text-sm font-semibold mb-2">Severity</div>
-            <div className="space-y-1">
-              {Object.entries(stats?.bySeverity || {}).map(([sev, count]) => (
-                <div key={sev} className="flex justify-between text-sm text-gray-300">
-                  <span>{sev}</span>
-                  <span className="text-lightblue">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          {!loading && threats.length === 0 && (
+            <EmptyState
+              title="No threats yet"
+              body="The registry is empty on this network. First report becomes the first row."
+            />
+          )}
 
-        <div className="glass-card overflow-hidden">
-          <div className="p-5 border-b border-border">
-            <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-1">Live Feed</p>
-            <h2 className="text-xl font-bold text-white">Recent Threats</h2>
-          </div>
-          <div className="divide-y divide-border">
-            {threats.map((threat) => (
-              <div key={threat.packageId} className="p-5 hover:bg-ocean-mid/30 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-2 gap-2">
-                  <div className="font-mono text-sm text-lightblue break-all">
-                    {threat.packageId.slice(0, 20)}...
+          {!loading &&
+            threats.map((threat) => (
+              <div
+                key={`${threat.packageId}-${threat.timestamp}`}
+                className="p-5 hover:bg-surface-2/60 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
+                  <div className="font-mono text-[13px] text-aqua break-all">
+                    {threat.packageId.slice(0, 24)}…
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
-                    {threat.category && (
-                      <span className="px-2 py-1 bg-status-danger/20 text-status-danger text-xs rounded">
-                        {threat.category}
-                      </span>
-                    )}
-                    {threat.severity && (
-                      <span className="px-2 py-1 bg-status-warning/20 text-status-warning text-xs rounded">
-                        {threat.severity}
-                      </span>
-                    )}
+                    {threat.category && <StatusPill label={threat.category} tone="brand" />}
+                    {threat.severity && <StatusPill label={threat.severity} />}
                   </div>
                 </div>
                 {threat.reasons && (
-                  <div className="text-sm text-gray-300 mb-2">
-                    {threat.reasons.join(' • ')}
-                  </div>
+                  <div className="text-[13.5px] text-mid mb-2">{threat.reasons.join(' · ')}</div>
                 )}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-lightblue">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-[12px] text-low font-mono">
                   <span>{new Date(threat.timestamp).toLocaleString()}</span>
                   <a
                     href={`https://suiscan.xyz/testnet/tx/${threat.txDigest}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sui-cyan hover:text-sui-aqua"
+                    className="text-sui hover:text-aqua transition-colors flex items-center gap-1"
                   >
-                    View on Suiscan →
+                    view tx <ArrowUpRight className="w-3 h-3" strokeWidth={1.75} />
                   </a>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        <div className="glass-card p-5 mt-6">
-          <h3 className="text-lg font-bold text-white mb-4">Integration Example</h3>
-          <div className="terminal">
-            <div className="terminal-header">
-              <div className="terminal-dot red" />
-              <div className="terminal-dot yellow" />
-              <div className="terminal-dot green" />
-            </div>
-            <pre className="terminal-body overflow-x-auto text-xs">
-{`// Subscribe to threat feed
-import { SuiClient } from '@mysten/sui/client';
-
-const client = new SuiClient({ 
-  url: 'https://fullnode.testnet.sui.io' 
-});
-
-client.subscribeEvent({
-  filter: {
-    MoveEventType: '${process.env.NEXT_PUBLIC_PACKAGE_ID}::registry::ThreatReported'
-  },
-  onMessage: async (event) => {
-    const { malicious_package_id, walrus_blob_id } = event.parsedJson;
-    console.log('New threat detected:', malicious_package_id);
-  }
-});`}
-            </pre>
-          </div>
         </div>
       </div>
+
+      <details className="surface p-5 mt-6 group">
+        <summary className="cursor-pointer list-none flex items-center justify-between">
+          <h3 className="text-[15.5px] font-bold">Integration example</h3>
+          <span className="font-mono text-[11px] text-sui group-open:hidden">SHOW →</span>
+          <span className="font-mono text-[11px] text-sui hidden group-open:inline">HIDE</span>
+        </summary>
+        <CodeBlock code={sampleCode} title="poll-threats.ts" className="mt-4" />
+      </details>
     </div>
   );
 }

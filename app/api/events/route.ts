@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { SuiClient } from '@mysten/sui/client';
+import { queryEventsPage } from '@/lib/sui-rpc';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -8,35 +8,58 @@ const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd
 
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
-  const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
 
   const stream = new ReadableStream({
     async start(controller) {
-      let cursor: string | null = null;
+      const seen = new Set<string>();
+      let primed = false;
 
       const poll = async () => {
         try {
-          const events = await suiClient.queryEvents({
-            query: { MoveEventType: `${PACKAGE_ID}::registry::ThreatReported` },
-            cursor: cursor as any,
+          const { events } = await queryEventsPage({
+            eventType: `${PACKAGE_ID}::registry::ThreatReported`,
+            direction: 'descending',
             limit: 10,
-            order: 'descending',
           });
 
-          for (const event of events.data) {
-            const data = `data: ${JSON.stringify(event.parsedJson)}\n\n`;
-            controller.enqueue(encoder.encode(data));
+          const fresh = [];
+          for (const event of events) {
+            const key = `${event.txDigest}:${event.sequenceNumber}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            fresh.push(event);
           }
 
-          if (events.hasNextPage) {
-            cursor = events.nextCursor as any;
+          if (!primed) {
+            primed = true;
+          } else {
+            for (const event of fresh) {
+              const data = `data: ${JSON.stringify(event.parsedJson)}\n\n`;
+              controller.enqueue(encoder.encode(data));
+            }
+          }
+
+          if (seen.size > 500) {
+            seen.clear();
           }
 
           setTimeout(poll, 5000);
         } catch (error) {
-          controller.error(error);
+          try {
+            controller.error(error);
+          } catch {
+            controller.close();
+          }
         }
       };
+
+      request.signal.addEventListener('abort', () => {
+        try {
+          controller.close();
+        } catch {
+          // stream already closed
+        }
+      });
 
       poll();
     },

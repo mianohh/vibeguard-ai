@@ -70,4 +70,9 @@ module reputation_registry::registry {
     public fun get_total_threats(registry: &ThreatRegistry): u64 {
         registry.total_threats_logged
     }
+
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx)
+    }
 }

@@ -60,7 +60,7 @@ export class VibeGuard {
 
   constructor(config: VibeGuardConfig = {}) {
     this.apiKey = config.apiKey;
-    this.baseUrl = config.baseUrl || 'https://vibeguardai.vercel.app';
+    this.baseUrl = config.baseUrl || 'https://vibeguardai.xyz';
   }
 
   async analyzeTransaction(options: AnalysisOptions): Promise<AnalysisResult> {

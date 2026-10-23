@@ -1,206 +1,165 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+import StatusPill, { levelTone } from '@/app/components/ui/StatusPill';
+import StatTile from '@/app/components/ui/StatTile';
+import SectionHeading from '@/app/components/ui/SectionHeading';
+import { Skeleton } from '@/app/components/ui/Skeleton';
+
+interface ComponentStatus {
+  status: string;
+  latency: number | null;
+  description: string;
+}
 
 interface StatusData {
   status: string;
-  uptime: number;
-  averageLatencyMs: number;
+  averageLatencyMs: number | null;
   totalTransactionsAnalyzed: number;
   totalThreatsBlocked: number;
   lastChecked: string;
-  components: {
-    [key: string]: {
-      status: string;
-      latency: number;
-      description: string;
-    };
-  };
+  components: Record<string, ComponentStatus>;
 }
+
+const componentLabels: Record<string, string> = {
+  teeEnclave: 'TEE enclave',
+  localThreatAgent: 'Threat engine',
+  suiRpc: 'Sui RPC',
+  walrusStorage: 'Walrus storage',
+  sealEncryption: 'Seal encryption',
+  reputationRegistry: 'Reputation registry',
+};
 
 export default function StatusPage() {
   const [data, setData] = useState<StatusData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+  const load = useCallback(async (manual = false) => {
+    if (manual) setRefreshing(true);
+    try {
+      const res = await fetch('/api/status', { cache: 'no-store' });
+      const json = await res.json();
+      setData(json);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      if (manual) setRefreshing(false);
+    }
   }, []);
 
-  const fetchStatus = async () => {
-    try {
-      const response = await fetch('/api/status');
-      const json = await response.json();
-      setData(json);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch status:', error);
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    load();
+    const interval = setInterval(() => load(), 30000);
+    return () => clearInterval(interval);
+  }, [load]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen relative">
-        <div className="ocean-background" />
-        <div className="purple-section-blur" />
-        <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="text-sui-cyan text-xl">Loading status...</div>
-        </div>
-      </div>
-    );
-  }
+  const overall = data?.status || 'operational';
 
   return (
-    <div className="min-h-screen relative">
-      <div className="ocean-background" />
-      <div className="purple-section-blur" />
-      
-      <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
-        
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="sui-symbol w-12 h-12" />
-            <h1 className="text-4xl font-display font-bold">
-              <span className="gradient-text-purple">VibeGuard Status</span>
-            </h1>
-          </div>
-          <p className="text-lightblue text-lg">
-            Real-time system health and performance metrics
+    <div className="shell py-10 lg:py-14 max-w-4xl">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-9">
+        <SectionHeading
+          kicker="System status"
+          title={error ? 'Status unavailable' : overall === 'operational' ? 'All systems operational' : 'Partial disruption'}
+          lede={
+            data
+              ? `Live health of every layer in the pipeline · last checked ${new Date(data.lastChecked).toLocaleTimeString()}`
+              : 'Querying every layer of the pipeline…'
+          }
+        />
+        <button
+          onClick={() => load(true)}
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 text-[13px] text-low border border-line rounded-[var(--radius-ctl)] px-4 py-2.5 hover:text-hi hover:border-sui/40 transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+          Refresh
+        </button>
+      </div>
+
+      {error && (
+        <div className="border border-danger-line bg-danger-soft rounded-[var(--radius-card)] px-5 py-4 text-[14px] text-mid mb-6" role="alert">
+          Could not reach the status endpoint. This page itself is served; the issue is one of the
+          upstream checks.
+        </div>
+      )}
+
+      <div
+        className={`flex items-center gap-4 px-5 py-4 rounded-[var(--radius-card)] border mb-6 ${
+          levelTone(overall) === 'safe'
+            ? 'bg-safe-soft border-safe-line'
+            : levelTone(overall) === 'warn'
+              ? 'bg-warn-soft border-warn-line'
+              : 'bg-danger-soft border-danger-line'
+        }`}
+        role="status"
+      >
+        <span
+          className={`w-3 h-3 rounded-full flex-shrink-0 animate-pulse-dot ${
+            levelTone(overall) === 'safe' ? 'bg-safe' : levelTone(overall) === 'warn' ? 'bg-warn' : 'bg-danger'
+          }`}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-hi font-semibold text-[15px] capitalize">{overall.replace('_', ' ')}</p>
+          <p className="font-mono text-[11.5px] text-low">
+            {data
+              ? `median latency ${data.averageLatencyMs != null ? `${data.averageLatencyMs}ms` : '—'}`
+              : 'running checks…'}
           </p>
         </div>
+        <StatusPill label={overall} />
+      </div>
 
-        {/* Hero Status Banner */}
-        <div className="glass-card p-5 lg:p-8 mb-8 lg:mb-12 text-center border border-white/10">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="w-4 h-4 rounded-full bg-status-safe animate-pulse-glow shadow-[0_0_20px_rgba(0,255,163,0.5)]" />
-            <h2 className="text-3xl font-bold text-status-safe">
-              All Systems Operational
-            </h2>
-          </div>
-          <p className="text-gray-300 text-lg">
-            VibeGuard infrastructure is running smoothly
-          </p>
-          <p className="text-lightblue text-sm mt-2">
-            Last checked: {data ? new Date(data.lastChecked).toLocaleString() : 'N/A'}
-          </p>
+      <div className="grid sm:grid-cols-2 gap-3.5 mb-6">
+        <StatTile
+          label="transactions analyzed"
+          value={data ? data.totalTransactionsAnalyzed.toLocaleString() : '—'}
+        />
+        <StatTile
+          label="threats blocked"
+          value={data ? data.totalThreatsBlocked.toLocaleString() : '—'}
+        />
+      </div>
+
+      <div className="surface overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-line">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-low">Components</p>
         </div>
+        <div className="divide-y divide-line-soft">
+          {!data &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="px-5 py-4 flex items-center justify-between gap-4">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-8 lg:mb-12">
-          {/* Uptime */}
-          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
-            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
-              Uptime
-            </div>
-            <div className="text-4xl font-bold text-status-safe mb-1">
-              {data?.uptime}%
-            </div>
-            <div className="text-lightblue text-xs">
-              Last 30 days
-            </div>
-          </div>
-
-          {/* Average Latency */}
-          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
-            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
-              Avg Latency
-            </div>
-            <div className="text-4xl font-bold text-sui-cyan mb-1">
-              {data?.averageLatencyMs}ms
-            </div>
-            <div className="text-lightblue text-xs">
-              Threat detection speed
-            </div>
-          </div>
-
-          {/* Total Scanned */}
-          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
-            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
-              Total Scanned
-            </div>
-            <div className="text-4xl font-bold text-white mb-1">
-              {data?.totalTransactionsAnalyzed.toLocaleString()}
-            </div>
-            <div className="text-lightblue text-xs">
-              Transactions analyzed
-            </div>
-          </div>
-
-          {/* Threats Blocked */}
-          <div className="glass-card stat-card-purple p-6 hover:border-sui-cyan transition-all">
-            <div className="text-primary text-sm font-semibold mb-2 uppercase tracking-wide">
-              Threats Blocked
-            </div>
-            <div className="text-4xl font-bold text-status-danger mb-1">
-              {data?.totalThreatsBlocked.toLocaleString()}
-            </div>
-            <div className="text-lightblue text-xs">
-              Malicious transactions
-            </div>
-          </div>
-        </div>
-
-        {/* System Components */}
-        <div className="glass-card p-5 lg:p-8">
-          <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-1">Infrastructure</p>
-          <h3 className="text-xl lg:text-2xl font-bold text-white mb-4 lg:mb-6">
-            System Components
-          </h3>
-          
-          <div className="space-y-4">
-            {data && Object.entries(data.components).map(([key, component]) => (
-              <div
-                key={key}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-ocean-mid/50 rounded-lg border border-ocean-surface hover:border-sui-cyan/50 transition-all gap-3"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-3 h-3 rounded-full bg-status-safe animate-pulse-glow shadow-[0_0_12px_rgba(0,255,163,0.5)]" />
-                  <div>
-                    <div className="text-white font-semibold">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </div>
-                    <div className="text-lightblue text-sm">
-                      {component.description}
-                    </div>
-                  </div>
+          {data &&
+            Object.entries(data.components).map(([key, comp]) => (
+              <div key={key} className="px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <p className="text-[14.5px] text-hi font-medium">
+                    {componentLabels[key] || key}
+                  </p>
+                  <p className="text-[12.5px] text-low">{comp.description}</p>
                 </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <div className="text-sui-cyan font-mono text-sm">
-                      {component.latency}ms
-                    </div>
-                    <div className="text-lightblue text-xs">
-                      Response time
-                    </div>
-                  </div>
-                  <div className="px-3 py-1 bg-status-safe/10 border border-white/10 rounded-full">
-                    <span className="text-status-safe text-xs font-semibold uppercase">
-                      Operational
-                    </span>
-                  </div>
+                <div className="flex items-center gap-4">
+                  <span className="font-mono text-[12px] text-faint tabular">
+                    {comp.latency ? `${comp.latency}ms` : '—'}
+                  </span>
+                  <StatusPill label={comp.status} />
                 </div>
               </div>
             ))}
-          </div>
         </div>
-
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <div className="flex items-center justify-center gap-4">
-            <a href="/" className="text-lightblue hover:text-sui-cyan transition-colors text-sm">
-              ← Back to Console
-            </a>
-            <span className="text-ocean-surface">|</span>
-            <a href="/api-docs" className="text-lightblue hover:text-sui-cyan transition-colors text-sm">
-              API Documentation
-            </a>
-          </div>
-        </div>
-
       </div>
+
+      <p className="mt-5 font-mono text-[11.5px] text-faint text-center">
+        checks run server-side every 30 seconds · this page polls every 30 seconds
+      </p>
     </div>
   );
 }

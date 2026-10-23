@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { suiRpcAdapter, executeTransactionBlock } from '@/lib/sui-rpc';
 
 export const maxDuration = 10; // Vercel Hobby limit
 
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
             reasons:              r.reasons,
             reporter,
           }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(45000),
         }).then(async res => {
           if (!res.ok) throw new Error(`enclave error: ${await res.text()}`);
           return res.json() as Promise<EnclaveSignResponse>;
@@ -83,9 +83,7 @@ export async function POST(req: Request) {
     }
 
     // ── Step 2: build single PTB for all assembled reports
-    const suiRpcUrl = process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com';
-    const suiClient = new SuiClient({ url: suiRpcUrl });
-    const tx        = new Transaction();
+    const tx = new Transaction();
 
     for (const a of assembled) {
       if (SEAL_PKG && ENCLAVE_CFG) {
@@ -117,13 +115,12 @@ export async function POST(req: Request) {
     tx.setGasOwner(reporter);
     tx.setGasBudget(gasBudget);
 
-    const builtBytes = await tx.build({ client: suiClient });
+    const builtBytes = await tx.build({ client: suiRpcAdapter });
     const { signature: sponsorSig } = await sponsor.signTransaction(builtBytes);
 
-    const result = await suiClient.executeTransactionBlock({
+    const result = await executeTransactionBlock({
       transactionBlock: builtBytes,
-      signature:        [sponsorSig],
-      options:          { showEffects: true },
+      signature: [sponsorSig],
     });
 
     if (result.effects?.status?.status !== 'success') {

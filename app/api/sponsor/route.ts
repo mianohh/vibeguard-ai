@@ -1,9 +1,7 @@
-import { SuiClient } from '@mysten/sui/client';
 import { fromBase64, toBase64 } from '@mysten/sui/utils';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
-
-const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
+import { suiRpcAdapter, getSuiCoins } from '@/lib/sui-rpc';
 
 function addReportCalls(
   tx: Transaction,
@@ -48,11 +46,11 @@ export async function POST(req: Request) {
     const sponsorKeypair = Ed25519Keypair.fromSecretKey(secretKey);
     const sponsorAddress = sponsorKeypair.toSuiAddress();
 
-    const coins = await suiClient.getCoins({ owner: sponsorAddress, coinType: '0x2::sui::SUI' });
-    if (coins.data.length === 0) {
+    const coins = await getSuiCoins(sponsorAddress);
+    if (coins.length === 0) {
       return Response.json({ error: 'Sponsor wallet has insufficient funds' }, { status: 503 });
     }
-    const totalBalance = coins.data.reduce((sum, c) => sum + BigInt(c.balance), BigInt(0));
+    const totalBalance = coins.reduce((sum, c) => sum + BigInt(c.balance ?? 0), BigInt(0));
     if (totalBalance < BigInt(5_000_000)) {
       console.warn(`[sponsor] LOW GAS WARNING: ${totalBalance} MIST remaining`);
       return Response.json({ error: 'Sponsor wallet critically low on gas' }, { status: 503 });
@@ -77,7 +75,6 @@ export async function POST(req: Request) {
       }
       for (const report of body.reports) addReportCalls(tx, report, opts);
       gasBudget = 5_000_000 * body.reports.length + 1_000_000;
-      console.log(`[sponsor] batch tx built batchSize=${body.reports.length} gasBudget=${gasBudget}`);
     } else {
       // ── Single-report path ────────────────────────────────────────────────
       if (!body.packageId || !body.registryId || !body.maliciousPackageId || !body.walrusBlobId || !body.blobObjectId || !body.sender) {
@@ -85,14 +82,13 @@ export async function POST(req: Request) {
       }
       addReportCalls(tx, body, opts);
       gasBudget = 10_000_000;
-      console.log(`[sponsor] single tx built gasBudget=${gasBudget}`);
     }
 
     tx.setSender(body.sender);
     tx.setGasOwner(sponsorAddress);
     tx.setGasBudget(gasBudget);
 
-    const builtTxBytes = await tx.build({ client: suiClient });
+    const builtTxBytes = await tx.build({ client: suiRpcAdapter });
     const sponsorSignatureResult = await sponsorKeypair.signTransaction(builtTxBytes);
 
     return Response.json({

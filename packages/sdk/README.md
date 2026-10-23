@@ -4,7 +4,7 @@ Pre-signature transaction security for the Sui ecosystem. Analyzes unsigned tran
 
 Detected threats are automatically signed by the enclave and registered on-chain. No API key required.
 
-**[Platform](https://vibeguardai.vercel.app)** | **[API Docs](https://vibeguardai.vercel.app/api-docs)** | **[Threat Portal](https://vibeguardai.vercel.app/report)**
+**[Platform](https://vibeguardai.xyz)** | **[API Docs](https://vibeguardai.xyz/api-docs)** | **[Threat Portal](https://vibeguardai.xyz/report)**
 
 ---
 
@@ -96,15 +96,15 @@ await guard.registerWebhook('https://your-app.com/webhook', ['ThreatReported'], 
 
 ```bash
 # Analyze a transaction
-curl -X POST https://vibeguardai.vercel.app/api/explain \
+curl -X POST https://vibeguardai.xyz/api/explain \
   -H "Content-Type: application/json" \
   -d '{"transactionBytes":"AAACAA...","network":"mainnet","userAddress":"0x...","userIntent":"Claim airdrop"}'
 
 # Query threats
-curl "https://vibeguardai.vercel.app/api/threats?category=Honeypot"
+curl "https://vibeguardai.xyz/api/threats?category=Honeypot"
 
 # Real-time SSE stream
-curl "https://vibeguardai.vercel.app/api/events"
+curl "https://vibeguardai.xyz/api/events"
 ```
 
 ---

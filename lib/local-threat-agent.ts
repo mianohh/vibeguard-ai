@@ -2,7 +2,7 @@ import { EffectsSummary, RiskAnalysis, GeminiExplanation } from '@/types';
 import { loadAgentConfig, ThreatAgentConfig } from './agent-config';
 
 /**
- * LocalThreatAgent - Sovereign threat analysis with Seal-protected configuration
+ * LocalThreatAgent - deterministic threat analysis with Seal-protected configuration
  * 
  * The agent's proprietary scoring weights and heuristic rules are encrypted
  * under a Seal PCR-based policy, ensuring they can only be accessed inside
@@ -156,14 +156,15 @@ export class LocalThreatAgent {
   }
 
   private isBlacklistedPackage(effects: EffectsSummary): boolean {
-    // TODO: Query on-chain ReputationRegistry for blacklisted packages
-    // For now, check against known malicious patterns in object types
+    // On-chain registry blacklist check is handled upstream in reputation.ts
+    // (checkReputation short-circuits before simulation reaches this agent).
+    // This method catches any object-type patterns not yet indexed on-chain.
     const suspiciousPatterns = [
-      '0xbad1bad1', // Example malicious package
-      '0xdead', // Example scam package
+      '0xbad1bad1',
+      '0xdead',
     ];
 
-    return effects.objectChanges.some(obj => 
+    return effects.objectChanges.some(obj =>
       suspiciousPatterns.some(pattern => obj.objectType?.includes(pattern))
     );
   }

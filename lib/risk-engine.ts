@@ -75,17 +75,12 @@ export class RiskEngine {
       // Not a red flag — intentional send. Will fall through to YELLOW.
     }
 
-    // Intent mismatch detection
-    if (userIntent) {
-      const intentLower = userIntent.toLowerCase();
-      const isClaimIntent = /claim|airdrop|free|reward|gift/i.test(intentLower);
-      const isMintIntent = /mint|nft|create/i.test(intentLower);
-      const isReceiveIntent = /receive|get|earn/i.test(intentLower);
-      
-      // If user expects to RECEIVE but assets are LEAVING
-      if ((isClaimIntent || isMintIntent || isReceiveIntent) && significantOutgoing) {
-        flags.push('INTENT MISMATCH: You expect to receive assets, but this sends assets away');
-      }
+    // Intent mismatch detection.
+    // Unified inflow-intent keyword list — MUST stay in sync with
+    // intent_expects_inflow() in src/nautilus-server/src/apps/vibeguard/mod.rs.
+    const INFLOW_INTENT_RE = /claim|airdrop|mint|receive|collect|reward|earn|free|gift|refund|compensation|giveaway|voucher/i;
+    if (userIntent && INFLOW_INTENT_RE.test(userIntent) && significantOutgoing) {
+      flags.push('INTENT MISMATCH: You expect to receive assets, but this sends assets away');
     }
 
     // Transaction failure

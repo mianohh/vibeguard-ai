@@ -22,13 +22,15 @@ echo "PCR2: $PCR2"
 echo "Enclave URL: http://$PUBLIC_IP:3000"
 echo ""
 
-# Load contract addresses from .env
-if [ ! -f ".env" ]; then
-    echo "❌ .env file not found"
+# Load contract addresses from env file
+if [ -f ".env.local" ]; then
+    source .env.local
+elif [ -f ".env" ]; then
+    source .env
+else
+    echo "❌ No .env.local or .env file found"
     exit 1
 fi
-
-source .env
 
 echo "Seal Enclave Package: $SEAL_ENCLAVE_PACKAGE_ID"
 echo "Enclave Config Object: $ENCLAVE_CONFIG_OBJECT_ID"
@@ -36,7 +38,7 @@ echo ""
 
 # Get public key from live enclave
 echo "Fetching public key from enclave..."
-PUBLIC_KEY=$(curl -s "http://$PUBLIC_IP:3000/health_check" | jq -r .pk)
+PUBLIC_KEY=$(curl -s "http://$PUBLIC_IP:3000/health_check" | jq -r .public_key)
 
 echo "Public Key: $PUBLIC_KEY"
 echo ""

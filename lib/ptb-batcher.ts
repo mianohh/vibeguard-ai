@@ -1,7 +1,7 @@
-import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { suiRpcAdapter, executeTransactionBlock } from './sui-rpc';
 
 export interface PendingReport {
   maliciousPackageId: string;
@@ -203,9 +203,7 @@ async function _flush(batch: PendingReport[]): Promise<void> {
   }
 
   // ── Step 2: build single PTB ────────────────────────────────────────────────
-  const suiRpcUrl = process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com';
-  const suiClient = new SuiClient({ url: suiRpcUrl });
-  const tx        = new Transaction();
+  const tx = new Transaction();
 
   for (const a of assembled) {
     if (SEAL_PKG && ENCLAVE_CFG && a.enclaveSignature) {
@@ -239,13 +237,12 @@ async function _flush(batch: PendingReport[]): Promise<void> {
 
   console.log(`[ptb-batcher] ptb-build batchSize=${assembled.length} moveCalls=${assembled.length * 2} gasBudget=${gasBudget}`);
 
-  const builtBytes = await tx.build({ client: suiClient });
+  const builtBytes = await tx.build({ client: suiRpcAdapter });
   const { signature: sponsorSig } = await sponsor.signTransaction(builtBytes);
 
-  const result = await suiClient.executeTransactionBlock({
+  const result = await executeTransactionBlock({
     transactionBlock: builtBytes,
-    signature:        [sponsorSig],
-    options:          { showEffects: true },
+    signature: [sponsorSig],
   });
 
   if (result.effects?.status?.status !== 'success') {

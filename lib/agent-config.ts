@@ -1,13 +1,11 @@
 /**
  * LocalThreatAgent Configuration
- * 
- * This file contains the proprietary threat-scoring weights and heuristic rules
- * that power VibeGuard's sovereign threat detection engine.
- * 
+ *
+ * Threat-scoring weights and heuristic rules for the VibeGuard detection engine.
+ *
  * In production, this configuration is encrypted under a Seal PCR-based policy
  * and can only be decrypted inside the approved Nautilus enclave.
  */
-
 export interface ThreatAgentConfig {
   version: string;
   

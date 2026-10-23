@@ -59,8 +59,8 @@ pub async fn get_attestation(
         pcr0: state.pcr0.clone(),
         pcr1: state.pcr1.clone(),
         pcr2: state.pcr2.clone(),
-        provider: "gcp_sev".to_string(),
-        mode: TeeMode::GcpSev,
+        provider: state.provider.clone(),
+        mode: state.mode.clone(),
         attestation_document: None,
     })
 }

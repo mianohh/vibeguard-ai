@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import ZkLoginButton from '../components/ZkLoginButton';
 import Toast from '../components/Toast';
 import { publishThreatReportToWalrus, type ThreatReport } from '@/lib/walrus';
-import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-
-const client = new SuiClient({ url: getFullnodeUrl('testnet') });
+import { CircleCheck, Info, Loader2, Send, ShieldCheck, TriangleAlert } from 'lucide-react';
+import Field, { inputClass } from '@/app/components/ui/Field';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
+import VerdictBanner from '@/app/components/ui/VerdictBanner';
+import SectionHeading from '@/app/components/ui/SectionHeading';
 
 interface ToastState {
   show: boolean;
@@ -15,6 +18,12 @@ interface ToastState {
   type: 'success' | 'error';
   details?: string;
 }
+
+const steps = [
+  { n: '01', label: 'Describe the scam' },
+  { n: '02', label: 'Verify proof (optional)' },
+  { n: '03', label: 'Submit gasless' },
+];
 
 export default function ReportPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -26,6 +35,7 @@ export default function ReportPage() {
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<'verified' | 'failed' | null>(null);
   const [verificationData, setVerificationData] = useState<any>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
 
   useEffect(() => {
@@ -52,9 +62,9 @@ export default function ReportPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transactionBytes: proofTxHash,
-          network: 'devnet',
-          userIntent: 'Verify malicious behavior'
-        })
+          network: 'testnet',
+          userIntent: 'Verify malicious behavior',
+        }),
       });
 
       const result = await response.json();
@@ -64,25 +74,25 @@ export default function ReportPage() {
         setVerificationData(result);
         setToast({
           show: true,
-          message: 'Threat Verified!',
+          message: 'Threat verified',
           type: 'success',
-          details: `Analysis confirmed malicious behavior:\n${result.explanation?.headline || 'High-risk transaction detected'}`
+          details: `${result.explanation?.headline || 'High-risk transaction detected'}`,
         });
       } else {
         setVerificationResult('failed');
         setToast({
           show: true,
-          message: 'Verification Failed',
+          message: 'Verification failed',
           type: 'error',
-          details: 'Transaction did not show malicious behavior. Submit as unverified report.'
+          details: 'Transaction did not show malicious behavior. You can still submit as unverified.',
         });
       }
     } catch (error) {
       setToast({
         show: true,
-        message: 'Verification Error',
+        message: 'Verification error',
         type: 'error',
-        details: 'Failed to analyze transaction. You can still submit as unverified.'
+        details: 'Failed to analyze transaction. You can still submit as unverified.',
       });
     } finally {
       setVerifying(false);
@@ -93,10 +103,11 @@ export default function ReportPage() {
     e.preventDefault();
 
     if (!packageId || !description) {
-      alert('Please fill in all fields');
+      setFormError('Add the package ID and a short description of the scam so others can recognize it.');
       return;
     }
 
+    setFormError(null);
     setSubmitting(true);
 
     try {
@@ -127,7 +138,7 @@ export default function ReportPage() {
         plainEnglish: verificationData?.explanation?.plainEnglish || description,
         recommendedAction: verificationData?.explanation?.recommendedAction || 'Do Not Sign',
         reportedAt: new Date().toISOString(),
-        reportedBy: sessionInfo.reportedBy
+        reportedBy: sessionInfo.reportedBy,
       };
 
       setLoadingStage('Uploading threat evidence to Walrus decentralized storage...');
@@ -140,8 +151,9 @@ export default function ReportPage() {
         walrusBlobObjectId = walrusResult.blobObjectId;
       } catch (walrusError) {
         console.error('Walrus upload failed:', walrusError);
-        // Do not proceed with fake blob ID - it would poison the on-chain registry
-        throw new Error(`Walrus upload failed: ${walrusError instanceof Error ? walrusError.message : 'Unknown error'}. Cannot proceed without valid blob storage.`);
+        throw new Error(
+          `Walrus upload failed: ${walrusError instanceof Error ? walrusError.message : 'Unknown error'}. Cannot proceed without valid blob storage.`
+        );
       }
 
       if (!walrusBlobId) {
@@ -156,7 +168,7 @@ export default function ReportPage() {
         maliciousPackageId: packageId,
         walrusBlobId,
         blobObjectId: walrusBlobObjectId,
-        sender: userAddress
+        sender: userAddress,
       };
 
       const sponsorResponse = await fetch('/api/sponsor', {
@@ -180,25 +192,26 @@ export default function ReportPage() {
 
       setLoadingStage('Executing gasless transaction...');
 
-      const result = await client.executeTransactionBlock({
-        transactionBlock: txBytesUint8Array,
-        signature: [userSignature, sponsorSignature],
-        options: {
-          showEffects: true,
-          showObjectChanges: true,
-          showEvents: true,
-        },
+      const executeResponse = await fetch('/api/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionBlock: sponsoredTxBytes,
+          signature: [userSignature, sponsorSignature],
+          network: 'testnet',
+        }),
       });
+      const result = await executeResponse.json();
 
-      if (result.effects?.status?.status !== 'success') {
-        throw new Error(`Transaction failed: ${result.effects?.status?.error || 'Unknown error'}`);
+      if (!executeResponse.ok || result.effects?.status?.status !== 'success') {
+        throw new Error(`Transaction failed: ${result.error || result.effects?.status?.error || 'Unknown error'}`);
       }
 
       setToast({
         show: true,
-        message: 'Report Submitted Successfully!',
+        message: 'Report submitted',
         type: 'success',
-        details: `Transaction: ${result.digest}\nPackage: ${packageId}\nWalrus Blob: ${walrusBlobId}`
+        details: `tx: ${result.digest}\npackage: ${packageId}\nblob: ${walrusBlobId}`,
       });
 
       setPackageId('');
@@ -206,14 +219,13 @@ export default function ReportPage() {
       setProofTxHash('');
       setVerificationResult(null);
       setVerificationData(null);
-
     } catch (error) {
       console.error('Failed to submit report:', error);
       setToast({
         show: true,
-        message: 'Failed to Submit Report',
+        message: 'Failed to submit report',
         type: 'error',
-        details: `Error: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check your connection and try again.\nIf the problem persists, contact support.`
+        details: `${error instanceof Error ? error.message : 'Unknown error'}\n\nCheck your connection and try again.`,
       });
     } finally {
       setSubmitting(false);
@@ -221,11 +233,10 @@ export default function ReportPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen relative">
-      <div className="ocean-background" />
-      <div className="purple-section-blur" />
+  const activeStep = !packageId || !description ? 0 : verificationResult === null ? 1 : 2;
 
+  return (
+    <div className="shell py-10 lg:py-14 max-w-5xl">
       {toast.show && (
         <Toast
           message={toast.message}
@@ -235,135 +246,190 @@ export default function ReportPage() {
         />
       )}
 
-      <div className="relative z-10 container mx-auto px-4 py-6 lg:py-10 max-w-5xl section-divider">
-        <div className="glass-card p-4 sm:p-6 lg:p-8 liquid-expand">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 flex-wrap gap-4">
-            <div>
-              <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Community Protection</p>
-              <div className="flex items-center gap-3 mb-2">
-                <svg className="w-8 h-8 text-status-danger" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <h1 className="text-3xl font-bold text-white tracking-tight">
-                  Report Malicious Contract
-                </h1>
-              </div>
-              <p className="text-lightblue">
-                Help protect the Sui community by reporting suspicious contracts
-              </p>
-            </div>
-            <ZkLoginButton />
-          </div>
-
-          <div className="border-t border-ocean-surface pt-8">
-            <div className="glass-card bg-sui-blue/10 border border-white/10 p-6 mb-6">
-              <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-2">AI Analysis Pipeline</p>
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-sui-cyan" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-                </svg>
-                <h3 className="font-semibold text-primary">
-                  Automated Verification with VibeGuard AI
-                </h3>
-              </div>
-              <p className="text-sui-aqua/80 text-sm">
-                Provide a transaction hash to automatically verify malicious behavior using our AI analysis pipeline. Verified reports are auto-approved and added to the blacklist immediately.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-primary mb-3 tracking-wide">
-                  MALICIOUS PACKAGE ID
-                </label>
-                <input
-                  type="text"
-                  placeholder="0x..."
-                  value={packageId}
-                  onChange={(e) => setPackageId(e.target.value)}
-                  className="w-full px-4 py-3 bg-ocean-mid/50 border border-ocean-surface rounded-lg text-gray-200 placeholder-gray-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan transition-all duration-200 disabled:bg-ocean-surface/30 disabled:cursor-not-allowed"
-                  disabled={!isLoggedIn}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-primary mb-3 tracking-wide">
-                  THREAT DESCRIPTION
-                </label>
-                <textarea
-                  placeholder="Describe the malicious behavior..."
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 bg-ocean-mid/50 border border-ocean-surface rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan transition-all duration-200 resize-none disabled:bg-ocean-surface/30 disabled:cursor-not-allowed"
-                  disabled={!isLoggedIn}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-primary mb-3 tracking-wide">
-                  PROOF TRANSACTION HASH (OPTIONAL)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="0x... or transaction digest"
-                    value={proofTxHash}
-                    onChange={(e) => setProofTxHash(e.target.value)}
-                    className="flex-1 px-4 py-3 bg-ocean-mid/50 border border-ocean-surface rounded-lg text-gray-200 placeholder-gray-500 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sui-cyan/50 focus:border-sui-cyan transition-all duration-200 disabled:bg-ocean-surface/30 disabled:cursor-not-allowed"
-                    disabled={!isLoggedIn}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleVerify}
-                    disabled={!isLoggedIn || !proofTxHash.trim() || verifying}
-                    className="px-6 py-3 bg-status-safe hover:bg-status-safe/80 disabled:bg-ocean-surface disabled:text-gray-500 disabled:cursor-not-allowed text-ocean-deepest font-semibold rounded-lg border border-white/10 transition-all duration-200 shadow-verified"
-                  >
-                    {verifying ? 'Verifying...' : 'Verify'}
-                  </button>
-                </div>
-                {verificationResult === 'verified' && (
-                  <p className="text-xs text-status-safe mt-2 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Threat verified - report will be auto-approved
-                  </p>
-                )}
-                {verificationResult === 'failed' && (
-                  <p className="text-xs text-status-warning mt-2 flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    Verification failed - will be submitted as unverified
-                  </p>
-                )}
-                <p className="text-xs text-lightblue mt-2 leading-relaxed">
-                  Provide a transaction hash that demonstrates the malicious behavior for instant verification
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={!isLoggedIn || submitting}
-                className="btn-purple w-full disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="relative z-10">
-                  {!isLoggedIn ? 'Login to Submit Report' : submitting ? (
-                    <div className="flex items-center justify-center space-x-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>{loadingStage || 'Submitting...'}</span>
-                    </div>
-                  ) : 'Submit Report'}
-                </span>
-              </button>
-
-              <div className="text-center text-xs text-lightblue mt-4">
-                Powered by <span className="text-primary font-semibold">Google OAuth</span> & <span className="text-primary font-semibold">Walrus Decentralized Storage</span>
-              </div>
-            </form>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5 mb-9">
+        <SectionHeading
+          kicker="Community protection"
+          title="Report a malicious contract"
+          lede="Under a minute. Gas is covered, evidence is stored on Walrus, and every verified claim is independently checkable on Sui."
+        />
+        <div className="flex-shrink-0 pt-1">
+          <ZkLoginButton />
         </div>
+      </div>
+
+      <ol className="flex flex-wrap gap-x-6 gap-y-2 mb-7 font-mono text-[11.5px] uppercase tracking-[0.1em]">
+        {steps.map((s, i) => (
+          <li
+            key={s.n}
+            className={`flex items-center gap-2 ${i <= activeStep ? 'text-sui' : 'text-faint'}`}
+          >
+            <span
+              className={`w-5 h-5 rounded-full grid place-items-center text-[10px] border ${
+                i <= activeStep ? 'bg-sui/15 border-sui/50 text-sui' : 'border-line text-faint'
+              }`}
+            >
+              {i < activeStep ? '✓' : s.n}
+            </span>
+            {s.label}
+          </li>
+        ))}
+      </ol>
+
+      <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
+        <form onSubmit={handleSubmit} className="surface p-5 sm:p-7 space-y-6 animate-fade-up">
+          <Field label="Malicious package ID" htmlFor="report-package-id" required error={formError ?? undefined}>
+            <input
+              id="report-package-id"
+              type="text"
+              placeholder="0x…"
+              value={packageId}
+              onChange={(e) => setPackageId(e.target.value)}
+              className={inputClass}
+              disabled={!isLoggedIn}
+            />
+          </Field>
+
+          <Field
+            label="What does this scam do?"
+            htmlFor="report-description"
+            required
+            hint="Plain language. The next visitor reads this to recognize the scam."
+          >
+            <textarea
+              id="report-description"
+              placeholder="e.g. Fakes an airdrop claim, then drains your wallet via a hidden permission grant…"
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-[#070c16] border border-line rounded-[var(--radius-ctl)] text-hi placeholder:text-faint text-sm px-3.5 py-3 transition-colors focus:outline-none focus:border-sui/60 focus:ring-2 focus:ring-sui/25 disabled:opacity-50 disabled:cursor-not-allowed resize-none leading-relaxed"
+              disabled={!isLoggedIn}
+            />
+          </Field>
+
+          <Field
+            label="Proof transaction (optional)"
+            htmlFor="report-proof-tx"
+            hint="A RED verdict from this transaction auto-verifies the report."
+          >
+            <div className="flex gap-2.5">
+              <input
+                id="report-proof-tx"
+                type="text"
+                placeholder="0x… or transaction digest"
+                value={proofTxHash}
+                onChange={(e) => setProofTxHash(e.target.value)}
+                className={`${inputClass} flex-1`}
+                disabled={!isLoggedIn}
+              />
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={handleVerify}
+                disabled={!isLoggedIn || !proofTxHash.trim() || verifying}
+                className="px-5 shrink-0"
+              >
+                {verifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
+                    Checking
+                  </>
+                ) : (
+                  'Verify'
+                )}
+              </Button>
+            </div>
+            {verificationResult === 'verified' && (
+              <div className="mt-3">
+                <VerdictBanner
+                  level="VERIFIED"
+                  headline="Threat verified: auto-approved"
+                  body="The engine returned a RED verdict for this transaction. Your report will publish as verified."
+                />
+              </div>
+            )}
+            {verificationResult === 'failed' && (
+              <div className="mt-3">
+                <VerdictBanner
+                  level="YELLOW"
+                  headline="No malicious behavior found"
+                  body="This transaction scored GREEN/YELLOW. You can still submit and it will be marked unverified."
+                />
+              </div>
+            )}
+          </Field>
+
+          {!isLoggedIn && (
+            <p className="font-mono text-[12px] text-faint border border-line rounded-[var(--radius-ctl)] px-3.5 py-3 bg-surface-1">
+              Sign in with Google above to enable reporting. No wallet, no gas, no setup.
+            </p>
+          )}
+
+          <div className="border-t border-line-soft pt-5">
+            <Button type="submit" full size="lg" disabled={!isLoggedIn || submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.75} />
+                  {loadingStage || 'Submitting…'}
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" strokeWidth={1.75} />
+                  Submit report (gas sponsored)
+                </>
+              )}
+            </Button>
+            <p className="mt-3.5 text-center font-mono text-[11px] text-faint">
+              evidence → walrus · anchored → sui · auth → google sign-in only
+            </p>
+          </div>
+        </form>
+
+        <aside className="space-y-5 lg:sticky lg:top-24">
+          <Card className="p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Info className="w-4 h-4 text-sui" strokeWidth={1.75} />
+              <h3 className="text-[14.5px] font-semibold">How verification works</h3>
+            </div>
+            <p className="text-sm text-low leading-relaxed">
+              We simulate the proof transaction on Sui, parse what it actually does, and compare it
+              against the claimed intent using the same multi-layer analysis as the main console. A RED
+              verdict means the chain evidence agrees with you.
+            </p>
+            <div className="mt-4 space-y-2.5 font-mono text-[11.5px] text-low">
+              <div className="flex gap-2.5">
+                <CircleCheck className="w-3.5 h-3.5 text-safe mt-0.5 flex-shrink-0" strokeWidth={2} />
+                signed analysis result, not an opinion
+              </div>
+              <div className="flex gap-2.5">
+                <CircleCheck className="w-3.5 h-3.5 text-safe mt-0.5 flex-shrink-0" strokeWidth={2} />
+                raw evidence stored on walrus
+              </div>
+              <div className="flex gap-2.5">
+                <CircleCheck className="w-3.5 h-3.5 text-safe mt-0.5 flex-shrink-0" strokeWidth={2} />
+                registry is on-chain, anyone can audit
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <ShieldCheck className="w-4 h-4 text-safe" strokeWidth={1.75} />
+              <h3 className="text-[14.5px] font-semibold">Why it’s free</h3>
+            </div>
+            <p className="text-sm text-low leading-relaxed">
+              Sponsoring report gas is cheap for us and decisive for the network: every scam added to
+              the registry protects the next person who is about to sign.
+            </p>
+          </Card>
+
+          <div className="flex items-start gap-2.5 px-4 py-3.5 border border-warn-line bg-warn-soft rounded-[var(--radius-tile)]">
+            <TriangleAlert className="w-4 h-4 text-warn mt-0.5 flex-shrink-0" strokeWidth={1.75} />
+            <p className="text-[13px] text-mid leading-relaxed">
+              Reports are public and permanent. Only flag contracts you genuinely believe are
+              malicious. False reports waste reviewers’ time.
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
   );

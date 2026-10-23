@@ -5,9 +5,7 @@
  * Critical for enterprise-grade threat intelligence infrastructure.
  */
 
-import { SuiClient } from '@mysten/sui/client';
-
-const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
+import { getObjectSnapshot, getEpochId } from './sui-rpc';
 
 const WALRUS_PUBLISHER = 'https://publisher.walrus-testnet.walrus.space/v1/store';
 const EXTENSION_EPOCHS = 5; // Extend by 5 epochs when near expiration
@@ -28,24 +26,20 @@ interface BlobLifetime {
  */
 async function getBlobLifetime(blobObjectId: string): Promise<BlobLifetime | null> {
   try {
-    const obj = await suiClient.getObject({
-      id: blobObjectId,
-      options: { showContent: true }
-    });
+    const obj = await getObjectSnapshot(blobObjectId);
 
-    if (!obj.data?.content || obj.data.content.dataType !== 'moveObject') {
+    if (!obj?.json) {
       console.error(`Blob object ${blobObjectId} not found or invalid`);
       return null;
     }
 
-    const fields = obj.data.content.fields as any;
+    const fields = obj.json as any;
     const blobId = fields.blob_id || fields.id;
     const storedEpoch = parseInt(fields.stored_epoch || '0');
     const endEpoch = parseInt(fields.end_epoch || fields.expiration_epoch || '0');
 
-    // Get current epoch from system state
-    const { epoch } = await suiClient.getLatestSuiSystemState();
-    const currentEpoch = parseInt(epoch);
+    // Get current epoch from chain
+    const currentEpoch = await getEpochId();
     const epochsRemaining = endEpoch - currentEpoch;
 
     return {
@@ -124,16 +118,13 @@ export async function checkAndExtendThreats(): Promise<{
   // Fetch all threat reports from on-chain registry
   const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
   
-  const registry = await suiClient.getObject({
-    id: REGISTRY_ID,
-    options: { showContent: true }
-  });
+  const registry = await getObjectSnapshot(REGISTRY_ID);
 
-  if (!registry.data?.content || registry.data.content.dataType !== 'moveObject') {
+  if (!registry?.json) {
     throw new Error('Registry not found');
   }
 
-  const fields = registry.data.content.fields as any;
+  const fields = registry.json as any;
   const threats = fields.threats?.fields?.contents || [];
 
   let checked = 0;
@@ -175,21 +166,13 @@ export async function checkAndExtendThreats(): Promise<{
       const newBlobObjectId = await extendBlobLifetime(lifetime.blobId, content);
       if (newBlobObjectId) {
         extended++;
-        // TODO: Update on-chain registry with new blob_object_id
-        // This requires calling the on-chain contract to update the blob reference
-        // For now, the extended blob will be accessible via the original blob_id
-        console.log(`Extended blob ${lifetime.blobId.slice(0, 10)}... | New object ID: ${newBlobObjectId}`);
+        // Note: the extended blob is accessible via the original blob_id.
+        // On-chain registry references remain valid until a full re-report is filed.
       } else {
         failed++;
       }
     }
   }
-
-  console.log(`\n✅ Blob lifetime check complete:`);
-  console.log(`   Checked: ${checked}`);
-  console.log(`   Extended: ${extended}`);
-  console.log(`   Failed: ${failed}`);
-  console.log(`   Warnings: ${warnings.length}`);
 
   return { checked, extended, failed, warnings };
 }

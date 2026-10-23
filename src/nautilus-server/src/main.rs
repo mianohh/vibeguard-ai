@@ -6,7 +6,6 @@ use fastcrypto::traits::{KeyPair, ToFromBytes};
 use nautilus_server::app::{process_data, sign_report};
 use nautilus_server::attestation::create_tee_provider;
 use nautilus_server::common::{get_attestation, health_check};
-use nautilus_server::apps::vibeguard::threat_agent::AgentConfig;
 use nautilus_server::AppState;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
@@ -17,7 +16,7 @@ use tracing::info;
 /// This ensures the public key is stable across restarts.
 fn load_persistent_keypair() -> Result<Ed25519KeyPair> {
     let keypair_path = std::env::var("KEYPAIR_PATH")
-        .unwrap_or_else(|_| "/home/ec2-user/nautilus-server/enclave-keypair.json".to_string());
+        .unwrap_or_else(|_| "enclave-keypair.json".to_string());
 
     let json = std::fs::read_to_string(&keypair_path)
         .with_context(|| format!("Failed to read keypair file: {}", keypair_path))?;
@@ -67,26 +66,19 @@ async fn main() -> Result<()> {
     info!("   PCR1: {}...", &pcr1[..16]);
     info!("   PCR2: {}...", &pcr2[..16]);
 
-    // Agent config — use env var if set, otherwise defaults
-    let agent_config = if let Ok(config_json) = std::env::var("AGENT_CONFIG") {
-        serde_json::from_str::<AgentConfig>(&config_json)
-            .unwrap_or_else(|e| {
-                tracing::warn!("Failed to parse AGENT_CONFIG: {}, using defaults", e);
-                AgentConfig::default()
-            })
-    } else {
-        AgentConfig::default()
-    };
+    let provider_name = tee.provider_name().to_string();
+    let provider_mode = tee.mode();
 
     let api_key = std::env::var("API_KEY").unwrap_or_else(|_| "dummy".to_string());
 
     let state = Arc::new(AppState {
         eph_kp,
         api_key,
-        agent_config,
         pcr0,
         pcr1,
         pcr2,
+        provider: provider_name,
+        mode: provider_mode,
     });
 
     let cors = CorsLayer::new().allow_methods(Any).allow_headers(Any);
@@ -99,9 +91,10 @@ async fn main() -> Result<()> {
         .layer(cors)
         .with_state(state);
 
-    info!("✅ Server ready on http://0.0.0.0:3000");
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    info!("✅ Server ready on http://0.0.0.0:{}", port);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     axum::serve(listener, app).await?;
 
     Ok(())

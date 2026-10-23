@@ -12,6 +12,10 @@
  * match the policy defined here. This protects proprietary threat-scoring rules and
  * heuristic weights from unauthorized extraction.
  *
+ * NOTE: MOCK_PCR* values below are development placeholders.
+ * For production, fetch real PCRs via: GET http://<ENCLAVE_URL>/get_attestation
+ * then replace these values before running this script.
+ *
  * Usage:
  *   AGENT_CONFIG='{"weights":{...}}' npx ts-node scripts/seal-setup.ts
  *

@@ -2,14 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { generateNonce, generateRandomness, getExtendedEphemeralPublicKey } from '@mysten/sui/zklogin';
-import { SuiClient } from '@mysten/sui/client';
+import { generateNonce, generateRandomness, getExtendedEphemeralPublicKey, decodeJwt } from '@mysten/sui/zklogin';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '920125293845-8ocp43b7fg1er9o7dcscbg3ne93mh1iv.apps.googleusercontent.com';
 const PROVER_URL = 'https://prover-dev.mystenlabs.com/v1';
-const SUI_RPC_URL = process.env.NEXT_PUBLIC_SUI_RPC_URL || process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com';
-const SUI_CLIENT = new SuiClient({ url: SUI_RPC_URL });
+const SUI_GRAPHQL_URL = process.env.NEXT_PUBLIC_SUI_GRAPHQL_URL || 'https://graphql.testnet.sui.io/graphql';
+
+async function fetchSuiEpoch(): Promise<number> {
+  const response = await fetch(SUI_GRAPHQL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: '{ epoch { epochId } }' }),
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    throw new Error(`Sui network lookup failed (HTTP ${response.status})`);
+  }
+  const payload = await response.json();
+  const epochId = payload?.data?.epoch?.epochId;
+  if (typeof epochId !== 'number') {
+    throw new Error(payload?.errors?.[0]?.message || 'Sui network lookup failed');
+  }
+  return epochId;
+}
 
 interface ZkLoginBurnerSession {
   zkLoginAddress: string;
@@ -44,10 +60,15 @@ export default function ZkLoginButton() {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const idToken = params.get('id_token');
+    const oauthError = params.get('error');
+    const oauthErrorDescription = params.get('error_description');
 
     if (idToken) {
       handleOAuthCallback(idToken);
       // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (oauthError) {
+      alert(`Google sign-in failed: ${oauthErrorDescription || oauthError}`);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -60,8 +81,8 @@ export default function ZkLoginButton() {
       sessionStorage.removeItem('burner_address');
       
       // Step 1: Get current epoch for maxEpoch calculation
-      const { epoch } = await SUI_CLIENT.getLatestSuiSystemState();
-      const maxEpoch = Number(epoch) + 20;
+      const epoch = await fetchSuiEpoch();
+      const maxEpoch = epoch + 20;
       
       // Step 2: Generate ephemeral keypair for zkLogin
       const ephemeralKeyPair = new Ed25519Keypair();
@@ -97,7 +118,7 @@ export default function ZkLoginButton() {
     
     try {
       // Step 1: Decode JWT to get user info
-      const payload = JSON.parse(atob(idToken.split('.')[1]));
+      const payload = decodeJwt(idToken);
       
       // Step 2: Retrieve stored zkLogin session data
       const secretKeyString = sessionStorage.getItem('zklogin_secret_key');
@@ -139,25 +160,25 @@ export default function ZkLoginButton() {
       const addressSeed = genAddressSeed(
         BigInt(userSalt),
         'sub',
-        zkProof.issBase64Details.value,
-        zkProof.headerBase64
+        payload.sub,
+        payload.aud
       ).toString();
-      
-      const decodedJwt = JSON.parse(atob(idToken.split('.')[1]));
+
       const zkLoginAddress = computeZkLoginAddressFromSeed(
         BigInt(addressSeed),
-        decodedJwt.iss
+        payload.iss
       );
       
       // Step 5: Generate deterministic burner wallet from zkLogin address
       const burnerWallet = await createZkLoginBackedBurner(zkLoginAddress);
       
       // Step 6: Store complete session
+      const email = (payload as { email?: string }).email || 'user@gmail.com';
       const session: ZkLoginBurnerSession = {
         zkLoginAddress,
         burnerAddress: burnerWallet.address,
         burnerSecretKey: burnerWallet.secretKeyBase64,
-        email: payload.email || 'user@gmail.com',
+        email,
         jwt: idToken,
         zkProof,
         maxEpoch,
@@ -170,7 +191,7 @@ export default function ZkLoginButton() {
       
       setUserAddress(burnerWallet.address);
       setIsLoggedIn(true);
-      setUserEmail(payload.email || 'user@gmail.com');
+      setUserEmail(email);
       
     } catch (error) {
       alert(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -234,41 +255,44 @@ export default function ZkLoginButton() {
 
   if (isGeneratingProof) {
     return (
-      <div className="flex items-center gap-3 px-6 py-2 bg-sui-blue/10 border border-sui-blue/30 rounded-lg">
-        <div className="w-4 h-4 border-2 border-sui-blue/30 border-t-sui-blue rounded-full animate-spin"></div>
-        <span className="text-sm text-sui-blue/80">Authenticating...</span>
+      <div className="flex items-center gap-3 px-5 py-3 bg-sui/10 border border-sui/35 rounded-[var(--radius-ctl)]">
+        <span className="w-4 h-4 border-2 border-sui/30 border-t-sui rounded-full animate-spin" />
+        <span className="text-sm text-aqua font-mono">Generating zk proof…</span>
       </div>
     );
   }
 
+  if (!isLoggedIn) {
+    return (
+      <button
+        onClick={handleLogin}
+        className="inline-flex items-center gap-2 bg-sui text-ink text-sm font-semibold px-5 py-3 rounded-[var(--radius-ctl)] shadow-glow hover:bg-[#5cadff] transition-all cursor-pointer"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
+        </svg>
+        Sign in with Google
+      </button>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-4">
-      {!isLoggedIn ? (
-        <button
-          onClick={handleLogin}
-          className="px-6 py-2 bg-sui-blue text-ocean-deepest rounded-lg hover:bg-sui-blue/90 transition-colors font-medium shadow-sui-glow"
-        >
-          🔐 Sign in with Google
-        </button>
-      ) : (
-        <div className="flex items-center gap-3">
-          <div className="text-sm">
-            <div className="text-lightblue">
-              {userEmail && <span className="mr-2">📧 {userEmail}</span>}
-              <span className="text-sui-blue">🔐 Authenticated</span>
-            </div>
-            <div className="text-lightpurple">
-              Connected: {userAddress?.slice(0, 6)}...{userAddress?.slice(-4)}
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-ocean-mid text-lightblue rounded-lg hover:bg-ocean-surface transition-colors text-sm border border-border"
-          >
-            Logout
-          </button>
+    <div className="flex items-center gap-3">
+      <div className="px-4 py-2.5 bg-surface-2 border border-line rounded-[var(--radius-ctl)]">
+        <div className="flex items-center gap-2 text-[13px]">
+          <span className="w-1.5 h-1.5 rounded-full bg-safe animate-pulse-dot" />
+          <span className="text-mid font-medium truncate max-w-[16ch] sm:max-w-none">{userEmail}</span>
         </div>
-      )}
+        <div className="font-mono text-[11px] text-faint mt-0.5">
+          {userAddress?.slice(0, 6)}…{userAddress?.slice(-4)}
+        </div>
+      </div>
+      <button
+        onClick={handleLogout}
+        className="px-3.5 py-2.5 text-[13px] text-low border border-line rounded-[var(--radius-ctl)] hover:text-hi hover:border-sui/40 transition-colors cursor-pointer"
+      >
+        Sign out
+      </button>
     </div>
   );
 }

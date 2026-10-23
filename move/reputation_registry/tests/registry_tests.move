@@ -1,140 +1,129 @@
 #[test_only]
 module reputation_registry::registry_tests {
-    use reputation_registry::registry::{Self, AdminCap, ReputationRegistry};
+    use reputation_registry::registry::{Self, ThreatRegistry};
     use sui::test_scenario::{Self as ts};
     use std::string;
 
     const ADMIN: address = @0xAD;
-    const USER: address = @0xUSER;
+    const USER: address = @0x1234;
     const MALICIOUS_PKG: address = @0xBAD;
+    const BLOB_OBJECT: address = @0xB10B;
 
     #[test]
     fun test_init_registry() {
-        let mut scenario = ts::begin(ADMIN);
-        
+        let scenario = ts::begin(ADMIN);
+
         registry::init_for_testing(ts::ctx(&mut scenario));
-        
+
         ts::next_tx(&mut scenario, ADMIN);
-        
-        assert!(ts::has_most_recent_for_sender<AdminCap>(&scenario), 0);
-        assert!(ts::has_most_recent_shared<ReputationRegistry>(), 1);
-        
+
+        assert!(ts::has_most_recent_shared<ThreatRegistry>(), 0);
+
         ts::end(scenario);
     }
 
     #[test]
     fun test_report_malicious_contract() {
-        let mut scenario = ts::begin(ADMIN);
-        
+        let scenario = ts::begin(ADMIN);
+
         registry::init_for_testing(ts::ctx(&mut scenario));
-        
+
         ts::next_tx(&mut scenario, USER);
-        
-        let mut registry = ts::take_shared<ReputationRegistry>(&scenario);
-        
+
+        let registry = ts::take_shared<ThreatRegistry>(&scenario);
+
         // User reports malicious contract with Walrus blob
         registry::report_malicious_contract(
             &mut registry,
             MALICIOUS_PKG,
             string::utf8(b"walrus_blob_abc123xyz"),
-            4, // Critical severity
+            BLOB_OBJECT,
             ts::ctx(&mut scenario)
         );
-        
-        // Verify it's blacklisted
-        assert!(registry::is_blacklisted(&registry, MALICIOUS_PKG), 2);
-        
-        // Check entry details
-        let entry = registry::get_entry(&registry, MALICIOUS_PKG);
-        assert!(registry::entry_package_id(entry) == MALICIOUS_PKG, 3);
-        assert!(registry::entry_severity(entry) == 4, 4);
-        assert!(registry::entry_reporter(entry) == USER, 5);
-        
-        // Verify Walrus blob ID is stored
-        let blob_id = registry::entry_walrus_blob_id(entry);
-        assert!(blob_id == string::utf8(b"walrus_blob_abc123xyz"), 6);
-        
+
+        // Verify it's flagged
+        assert!(registry::is_threat_reported(&registry, MALICIOUS_PKG), 1);
+        assert!(!registry::is_threat_reported(&registry, @0x9999), 2);
+
+        // Verify Walrus blob IDs are stored
+        assert!(
+            registry::get_threat_blob_id(&registry, MALICIOUS_PKG) == string::utf8(b"walrus_blob_abc123xyz"),
+            3
+        );
+        assert!(registry::get_threat_blob_object_id(&registry, MALICIOUS_PKG) == BLOB_OBJECT, 4);
+
         // Check total reports
-        assert!(registry::get_total_reports(&registry) == 1, 7);
-        
+        assert!(registry::get_total_threats(&registry) == 1, 5);
+
         ts::return_shared(registry);
         ts::end(scenario);
     }
 
     #[test]
-    fun test_update_existing_report() {
-        let mut scenario = ts::begin(ADMIN);
-        
+    fun test_duplicate_report_dedups() {
+        let scenario = ts::begin(ADMIN);
+
         registry::init_for_testing(ts::ctx(&mut scenario));
-        
+
         ts::next_tx(&mut scenario, USER);
-        
-        let mut registry = ts::take_shared<ReputationRegistry>(&scenario);
-        
+
+        let registry = ts::take_shared<ThreatRegistry>(&scenario);
+
         // First report
         registry::report_malicious_contract(
             &mut registry,
             MALICIOUS_PKG,
             string::utf8(b"blob_v1"),
-            2,
+            BLOB_OBJECT,
             ts::ctx(&mut scenario)
         );
-        
-        // Update with new evidence
+
+        // Duplicate report for the same package
         registry::report_malicious_contract(
             &mut registry,
             MALICIOUS_PKG,
-            string::utf8(b"blob_v2_updated"),
-            4,
+            string::utf8(b"blob_v2"),
+            BLOB_OBJECT,
             ts::ctx(&mut scenario)
         );
-        
-        // Verify updated
-        let entry = registry::get_entry(&registry, MALICIOUS_PKG);
-        assert!(registry::entry_walrus_blob_id(entry) == string::utf8(b"blob_v2_updated"), 8);
-        assert!(registry::entry_severity(entry) == 4, 9);
-        
-        // Total reports should still be 1 (update, not new)
-        assert!(registry::get_total_reports(&registry) == 1, 10);
-        
+
+        // Dedup: record retained, total unchanged
+        assert!(registry::get_threat_blob_id(&registry, MALICIOUS_PKG) == string::utf8(b"blob_v1"), 6);
+        assert!(registry::get_total_threats(&registry) == 1, 7);
+
         ts::return_shared(registry);
         ts::end(scenario);
     }
 
     #[test]
-    fun test_admin_remove_package() {
-        let mut scenario = ts::begin(ADMIN);
-        
+    fun test_multiple_packages_tracked() {
+        let scenario = ts::begin(ADMIN);
+
         registry::init_for_testing(ts::ctx(&mut scenario));
-        
+
         ts::next_tx(&mut scenario, USER);
-        
-        let mut registry = ts::take_shared<ReputationRegistry>(&scenario);
-        
+
+        let registry = ts::take_shared<ThreatRegistry>(&scenario);
+
         registry::report_malicious_contract(
             &mut registry,
             MALICIOUS_PKG,
-            string::utf8(b"blob_test"),
-            1,
+            string::utf8(b"blob_a"),
+            BLOB_OBJECT,
             ts::ctx(&mut scenario)
         );
-        
-        assert!(registry::is_blacklisted(&registry, MALICIOUS_PKG), 11);
-        
-        ts::return_shared(registry);
-        
-        // Admin removes false positive
-        ts::next_tx(&mut scenario, ADMIN);
-        
-        let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
-        let mut registry = ts::take_shared<ReputationRegistry>(&scenario);
-        
-        registry::remove_package(&admin_cap, &mut registry, MALICIOUS_PKG);
-        
-        assert!(!registry::is_blacklisted(&registry, MALICIOUS_PKG), 12);
-        assert!(registry::get_total_reports(&registry) == 0, 13);
-        
-        ts::return_to_sender(&scenario, admin_cap);
+        registry::report_malicious_contract(
+            &mut registry,
+            @0xFACE,
+            string::utf8(b"blob_b"),
+            BLOB_OBJECT,
+            ts::ctx(&mut scenario)
+        );
+
+        assert!(registry::is_threat_reported(&registry, MALICIOUS_PKG), 8);
+        assert!(registry::is_threat_reported(&registry, @0xFACE), 9);
+        assert!(registry::get_total_threats(&registry) == 2, 10);
+
         ts::return_shared(registry);
         ts::end(scenario);
     }

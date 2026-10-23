@@ -1,104 +1,94 @@
-'use client';
-
 import Link from 'next/link';
+import Image from 'next/image';
 
-const footerLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Demo', href: '/demo' },
-  { label: 'Report Threat', href: '/report' },
-  { label: 'API Docs', href: '/api-docs' },
-  { label: 'Status', href: '/status' },
-];
-
-const techStack = [
-  { name: 'Sui Network', color: 'text-sui-blue' },
-  { name: 'Walrus Protocol', color: 'text-sui-cyan' },
-  { name: 'GCP Confidential VMs', color: 'text-status-warning' },
+const columns = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Analyze a transaction', href: '/#analyze' },
+      { label: 'Interactive demo', href: '/demo' },
+      { label: 'Threat dashboard', href: '/dashboard' },
+      { label: 'Ecosystem', href: '/ecosystem' },
+    ],
+  },
+  {
+    title: 'Developers',
+    links: [
+      { label: 'API documentation', href: '/api-docs' },
+      { label: 'System status', href: '/status' },
+      { label: 'GitHub', href: 'https://github.com/mianohh/vibeguard-ai', external: true },
+    ],
+  },
+  {
+    title: 'Reporting',
+    links: [
+      { label: 'Report a scam', href: '/report' },
+      { label: 'Verification guide', href: '/api-docs#enclave' },
+      { label: 'API docs', href: '/api-docs' },
+    ],
+  },
 ];
 
 export default function Footer() {
   return (
-    <footer className="bg-body-bg relative border-t border-border">
-      <div className="bg-linear-to-r from-primary/20 to-secondary/20 hidden lg:block absolute w-full h-full top-0 -left-1/2 blur-390" />
-
-      <div className="container relative z-10 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="sui-symbol w-8 h-8" />
-              <span className="text-xl font-bold text-white font-display">VibeGuard AI</span>
-            </div>
-            <p className="text-slate-400 text-sm font-normal max-w-96 leading-6 mb-5">
-              Pre-transaction security layer for the Sui blockchain. Eliminate blind signing
-              with AI-powered threat detection, enclave-verified analysis, and decentralized
-              evidence storage.
+    <footer className="border-t border-line-soft mt-auto">
+      <div className="shell py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center gap-2.5 text-hi font-bold text-[16px]">
+              <Image src="/vibeguard-icon.png" alt="" width={26} height={26} className="w-[26px] h-[26px] block" aria-hidden />
+              VibeGuard
+            </Link>
+            <p className="mt-3.5 text-[13.5px] leading-relaxed text-low max-w-64">
+              Pre-transaction analysis for Sui. Simulate transactions and review signed analysis records.
             </p>
-            <div className="flex gap-3">
-              <a
-                href="https://github.com/mianohh/vibeguard-ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white rounded-lg transition-all duration-300"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
-              </a>
-              <a
-                href="https://www.npmjs.com/package/vibeguard-sui-security"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-ocean-mid border border-border flex items-center justify-center hover:border-primary transition-colors"
-                aria-label="npm"
-              >
-                <svg className="w-5 h-5 text-lightblue" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l5.771.084v13.52h3.912V5.407l5.78-.102v13.434h3.482V3.59H9.182l-.036.108v14.443H5.13z"/>
-                </svg>
-              </a>
+            <a
+              href="https://github.com/mianohh/vibeguard-ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
+              className="mt-4 inline-flex w-9 h-9 items-center justify-center rounded-[var(--radius-ctl)] border border-line bg-surface-1 text-low hover:text-hi hover:border-sui/50 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+          </div>
+
+          {columns.map((col) => (
+            <div key={col.title}>
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint mb-3.5">{col.title}</p>
+              <ul className="space-y-2.5">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-[13.5px] text-low hover:text-sui transition-colors"
+                      {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          <div>
-            <p className="text-white text-lg font-semibold mb-4">Quick Links</p>
-            <ul>
-              {footerLinks.map((link) => (
-                <li key={link.href} className="mb-3">
-                  <Link
-                    href={link.href}
-                    className="text-slate-400 text-sm font-normal hover:text-sui-blue transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className="text-white text-lg font-semibold mb-4">Secured By</p>
-            <ul className="space-y-3">
-              {techStack.map((tech) => (
-                <li key={tech.name} className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full bg-current ${tech.color}`} />
-                  <span className="text-slate-400 text-sm">{tech.name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="py-4 px-4 border-t border-border">
-        <p className="text-center text-slate-400 text-sm">
-          &copy; {new Date().getFullYear()} VibeGuard AI. Built on{' '}
-          <a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sui-blue hover:text-sui-blue/80 transition-colors">
-            Sui Network
-          </a>
-          {' '}with{' '}
-          <a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sui-blue hover:text-sui-blue/80 transition-colors">
-            Walrus Protocol
-          </a>
-        </p>
+      <div className="border-t border-line-soft">
+        <div className="shell py-5 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono text-[11.5px] text-faint">
+          <span>© {new Date().getFullYear()} VibeGuard AI</span>
+          <span>
+            Built on{' '}
+            <a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sui hover:text-aqua transition-colors">
+              Sui
+            </a>{' '}
+            +{' '}
+            <a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sui hover:text-aqua transition-colors">
+              Walrus
+            </a>{' '}
+            · vibeguardai.xyz
+          </span>
+        </div>
       </div>
     </footer>
   );

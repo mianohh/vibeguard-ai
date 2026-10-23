@@ -3,9 +3,7 @@
  * Publishes threat reports to Walrus and returns blob_id for on-chain storage
  */
 
-import { SuiClient } from '@mysten/sui/client';
-
-const suiClient = new SuiClient({ url: process.env.SUI_RPC_URL || 'https://sui-testnet.publicnode.com' });
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_SUI_GRAPHQL_URL || 'https://graphql.testnet.sui.io/graphql';
 
 // Walrus publisher and aggregator URLs - can be overridden via environment variables
 const WALRUS_NETWORK = process.env.WALRUS_NETWORK || 'testnet';
@@ -162,8 +160,17 @@ export async function retrieveThreatReportFromWalrus(
  */
 export async function checkBlobLiveness(blobObjectId: string): Promise<boolean> {
   try {
-    const object = await suiClient.getObject({ id: blobObjectId });
-    return object.data != null && !('error' in object);
+    const response = await fetch(GRAPHQL_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: 'query($id: String!) { object(address: $id) { digest } }',
+        variables: { id: blobObjectId },
+      }),
+    });
+    if (!response.ok) return false;
+    const payload = await response.json();
+    return payload?.data?.object != null;
   } catch {
     return false;
   }
