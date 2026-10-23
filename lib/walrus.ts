@@ -3,7 +3,7 @@
  * Publishes threat reports to Walrus and returns blob_id for on-chain storage
  */
 
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_SUI_GRAPHQL_URL || 'https://graphql.testnet.sui.io/graphql';
+const GRAPHQL_URL = 'https://graphql.testnet.sui.io/graphql';
 
 // Walrus publisher and aggregator URLs - can be overridden via environment variables
 const WALRUS_NETWORK = process.env.WALRUS_NETWORK || 'testnet';

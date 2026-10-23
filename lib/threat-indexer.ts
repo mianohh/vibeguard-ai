@@ -6,7 +6,7 @@
 import { queryEventsPage } from './sui-rpc';
 import { retrieveThreatReportFromWalrus } from './walrus';
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
+const PACKAGE_ID = process.env.PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
 
 export interface IndexedThreat {
   packageId: string;

@@ -14,7 +14,7 @@ const BLACKLISTED_PACKAGES = [
 ];
 
 const REGISTRY_IDS: Record<SuiNetwork, string | null> = {
-  testnet: process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be',
+  testnet: process.env.REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be',
   mainnet: null,
   devnet: null,
 };

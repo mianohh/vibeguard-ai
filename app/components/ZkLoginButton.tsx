@@ -7,7 +7,7 @@ import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '920125293845-8ocp43b7fg1er9o7dcscbg3ne93mh1iv.apps.googleusercontent.com';
 const PROVER_URL = 'https://prover-dev.mystenlabs.com/v1';
-const SUI_GRAPHQL_URL = process.env.NEXT_PUBLIC_SUI_GRAPHQL_URL || 'https://graphql.testnet.sui.io/graphql';
+const SUI_GRAPHQL_URL = 'https://graphql.testnet.sui.io/graphql';
 
 async function fetchSuiEpoch(): Promise<number> {
   const response = await fetch(SUI_GRAPHQL_URL, {

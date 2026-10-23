@@ -439,7 +439,7 @@ console.log(data.explanation.recommendedAction);`}
           <div className="flex flex-wrap gap-x-2">
             <span className="text-mid">Endpoint:</span>
             <span className="text-sui">
-              {process.env.NEXT_PUBLIC_ENCLAVE_URL || 'https://<enclave-host>:3000'}
+              {process.env.ENCLAVE_URL || 'http://92.4.140.187:3000'}
             </span>
           </div>
           <div className="flex flex-wrap gap-x-2">

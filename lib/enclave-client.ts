@@ -12,7 +12,7 @@ import { sha512 } from '@noble/hashes/sha512';
 // Configure @noble/ed25519 to use @noble/hashes SHA-512 (required for verify)
 (ed25519 as any).etc.sha512Sync = (...m: Uint8Array[]) => sha512(ed25519.etc.concatBytes(...m));
 
-const ENCLAVE_URL = process.env.NEXT_PUBLIC_ENCLAVE_URL || process.env.ENCLAVE_URL || 'http://92.4.140.187:3000';
+const ENCLAVE_URL = process.env.ENCLAVE_URL || 'http://92.4.140.187:3000';
 
 export interface ThreatAnalysisPayload {
   transactionBytes: string;

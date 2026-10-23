@@ -116,7 +116,7 @@ export async function checkAndExtendThreats(): Promise<{
   console.log('🔍 Starting Walrus blob lifetime check...');
 
   // Fetch all threat reports from on-chain registry
-  const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
+  const REGISTRY_ID = process.env.REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
   
   const registry = await getObjectSnapshot(REGISTRY_ID);
 

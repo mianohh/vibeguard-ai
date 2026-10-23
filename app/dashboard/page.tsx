@@ -31,7 +31,7 @@ async function pollThreats() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      query: '{ events(last: 10, filter: { type: "${process.env.NEXT_PUBLIC_PACKAGE_ID}::registry::ThreatReported" }) { edges { node { contents { json } } } } }',
+      query: '{ events(last: 10, filter: { type: "0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de::registry::ThreatReported" }) { edges { node { contents { json } } } } }',
     }),
   });
   const { data } = await res.json();

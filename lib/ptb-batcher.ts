@@ -141,8 +141,8 @@ async function _runLocalWindow(): Promise<void> {
 
 async function _flush(batch: PendingReport[]): Promise<void> {
   const enclaveUrl  = process.env.ENCLAVE_URL;
-  const PACKAGE_ID  = process.env.NEXT_PUBLIC_PACKAGE_ID!;
-  const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID!;
+  const PACKAGE_ID  = process.env.PACKAGE_ID || '0xa706a721c2e2684834fd60623ad87ee43be42e241cffb038edd70fb527b494de';
+  const REGISTRY_ID = process.env.REGISTRY_ID || '0xf172e861476e122ae699384b95b99591f30b53c5f97f9384e4d1bad5aa6495be';
   const SEAL_PKG    = process.env.SEAL_ENCLAVE_PACKAGE_ID!;
   const ENCLAVE_CFG = process.env.ENCLAVE_CONFIG_OBJECT_ID!;
 
@@ -151,7 +151,7 @@ async function _flush(batch: PendingReport[]): Promise<void> {
     return;
   }
   if (!PACKAGE_ID || !REGISTRY_ID) {
-    console.error('[ptb-batcher] NEXT_PUBLIC_PACKAGE_ID or NEXT_PUBLIC_REGISTRY_ID not set — cannot flush.');
+    console.error('[ptb-batcher] PACKAGE_ID or REGISTRY_ID not set, cannot flush.');
     return;
   }
 
