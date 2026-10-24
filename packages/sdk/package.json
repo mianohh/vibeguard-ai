@@ -1,24 +1,63 @@
 {
   "name": "vibeguard-sui-security",
-  "version": "0.4.0",
-  "description": "TypeScript SDK for VibeGuard AI transaction security analysis",
+  "version": "0.6.0",
+  "description": "TypeScript SDK for VibeGuard AI pre-signature transaction security analysis on Sui",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "prepublishOnly": "npm run build"
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run build && publint && attw --pack .",
+    "prepublishOnly": "npm run verify"
   },
-  "keywords": ["sui", "blockchain", "security", "transaction", "analysis"],
+  "keywords": [
+    "sui",
+    "blockchain",
+    "security",
+    "transaction",
+    "analysis",
+    "wallet"
+  ],
   "author": "VibeGuard AI",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mianohh/vibeguard-ai.git",
+    "url": "git+https://github.com/mianohh/vibeguard-ai.git",
     "directory": "packages/sdk"
   },
+  "homepage": "https://vibeguardai.xyz",
+  "bugs": {
+    "url": "https://github.com/mianohh/vibeguard-ai/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "publint": "^0.3.25",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   }
