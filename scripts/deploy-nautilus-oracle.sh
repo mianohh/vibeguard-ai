@@ -245,7 +245,9 @@ Description=VibeGuard keep-warm curl
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/curl -sf http://localhost:3000/health_check >/dev/null
+ExecStart=/usr/bin/curl -sf http://localhost:3000/health_check
+StandardOutput=null
+StandardError=journal
 UNIT2
   sudo tee /etc/systemd/system/vibeguard-keepwarm.timer >/dev/null <<UNIT3
 [Unit]

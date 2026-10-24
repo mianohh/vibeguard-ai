@@ -445,7 +445,7 @@ console.log(data.explanation.recommendedAction);`}
           <div className="flex flex-wrap gap-x-2">
             <span className="text-mid">Public Key:</span>
             <span className="text-sui text-xs break-all">
-              fca7f87123c37761226ea680dc2dc7d7dcf4378ee72cddde3094302b33685acd
+              a1609cce97d528ebe898e42c3c6fff37309f6f8c7efc0bbd73dfab1e564ac309
             </span>
           </div>
           <div className="flex flex-wrap gap-x-2">
